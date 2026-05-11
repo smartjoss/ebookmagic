@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ebook Magic - AI Ebook Maker</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Fabric.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Quill.js for Rich Text Editing -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+</head>
+<body>
+    <!-- Auth View -->
+    <div class="auth-view" id="authView">
+        <div class="auth-card glass">
+            <div class="auth-header">
+                <i class="ph ph-magic-wand" style="font-size: 40px; color: var(--primary); margin-bottom: 10px;"></i>
+                <h2 id="authTitle">Selamat Datang</h2>
+                <p id="authSubtitle">Masuk ke akun Anda</p>
+            </div>
+            
+            <!-- Login Form -->
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Alamat Email</label>
+                    <input type="email" id="loginEmail" required placeholder="anda@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Kata Sandi</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••">
+                </div>
+                <div style="text-align: right; margin-bottom: 15px;">
+                    <a href="#" id="linkForgotPassword" style="font-size: 14px; color: var(--primary);">Lupa Kata Sandi?</a>
+                </div>
+                <button type="submit" class="btn-primary w-full" id="btnLoginSubmit">
+                    Masuk
+                </button>
+                <div style="text-align: center; margin-top: 15px; font-size: 14px;">
+                    Belum punya akun? <a href="#" id="linkShowRegister" style="color: var(--primary);">Daftar di sini</a>
+                </div>
+            </form>
+
+            <!-- Register Form (Hidden by default) -->
+            <form id="registerForm" class="hidden">
+                <div class="form-group">
+                    <label>Alamat Email</label>
+                    <input type="email" id="registerEmail" required placeholder="anda@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Kata Sandi</label>
+                    <input type="password" id="registerPassword" required placeholder="••••••••" minlength="6">
+                </div>
+                <button type="submit" class="btn-primary w-full" id="btnRegisterSubmit">
+                    Buat Akun Baru
+                </button>
+                <div style="text-align: center; margin-top: 15px; font-size: 14px;">
+                    Sudah punya akun? <a href="#" id="linkShowLogin" style="color: var(--primary);">Masuk</a>
+                </div>
+            </form>
+
+            <!-- Forgot Password Form (Hidden by default) -->
+            <form id="forgotForm" class="hidden">
+                <div class="form-group">
+                    <label>Alamat Email</label>
+                    <input type="email" id="forgotEmail" required placeholder="anda@email.com">
+                </div>
+                <button type="submit" class="btn-primary w-full" id="btnForgotSubmit">
+                    Kirim Tautan Pemulihan
+                </button>
+                <div style="text-align: center; margin-top: 15px; font-size: 14px;">
+                    <a href="#" id="linkBackToLogin" style="color: var(--primary);">Kembali ke Login</a>
+                </div>
+            </form>
+
+            <div id="authMessage" style="margin-top: 15px; text-align: center; font-size: 14px; padding: 10px; border-radius: 6px;" class="hidden"></div>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div class="app-container hidden" id="mainAppContainer">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="ph ph-magic-wand"></i>
+                    <span>Ebook Magic</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" id="navDashboard">
+                    <i class="ph ph-squares-four"></i>
+                    <span>Beranda</span>
+                </a>
+                <a href="#" class="nav-item" id="navMyEbooks">
+                    <i class="ph ph-books"></i>
+                    <span>eBook Saya</span>
+                </a>
+                <a href="#" class="nav-item" id="navGenerator">
+                    <i class="ph ph-sparkle"></i>
+                    <span>Pembuat AI</span>
+                </a>
+                <a href="#" class="nav-item" id="navTemplates">
+                    <i class="ph ph-palette"></i>
+                    <span>Template Desain</span>
+                </a>
+
+                <a href="#" class="nav-item" id="navAgency">
+                    <i class="ph ph-users-three"></i>
+                    <span>Manajemen Klien</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div style="padding: 10px; margin-bottom: 10px; border-bottom: 1px solid rgba(0,0,0,0.05);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <label style="font-size: 12px; color: var(--text-secondary); font-weight: bold;"><i class="ph ph-key"></i> API Key Anda</label>
+                        <span id="apiKeyStatus" style="font-size: 10px; color: #10B981; display: none;"><i class="ph-fill ph-check-circle"></i> Oke</span>
+                    </div>
+                    <div style="position: relative;">
+                        <input type="password" id="inputApiKey" placeholder="sk-... / AIza..." style="width: 100%; padding: 8px 30px 8px 8px; font-size: 12px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace; transition: all 0.3s ease;">
+                        <button id="btnToggleApiKey" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #999;"><i class="ph ph-eye"></i></button>
+                    </div>
+                    <small style="font-size: 10px; color: #999; display: block; margin-top: 4px;">Tersimpan otomatis saat diketik.</small>
+                </div>
+                <div class="user-profile">
+                    <img src="https://ui-avatars.com/api/?name=User&background=6C63FF&color=fff" alt="User">
+                    <div class="user-info" style="display: flex; flex-direction: column; gap: 2px;">
+                        <span class="name" style="font-size: 14px; font-weight: 600;">Anggota VIP</span>
+                        <a href="#" id="btnLogout" style="font-size: 12px; color: #ff6b6b; text-decoration: none; display: flex; align-items: center; gap: 4px;"><i class="ph ph-sign-out"></i> Keluar</a>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <div class="search-bar">
+                    <i class="ph ph-magnifying-glass"></i>
+                    <input type="text" placeholder="Cari ebook, template...">
+                </div>
+                <div class="topbar-actions">
+                    <button class="btn-icon"><i class="ph ph-bell"></i></button>
+                    <button class="btn-primary" id="btnCreateNew">
+                        <i class="ph ph-plus"></i> Buat Baru
+                    </button>
+                </div>
+            </header>
+
+            <div class="dashboard-content" id="dashboardView">
+                <div class="welcome-section">
+                    <h1>Selamat datang kembali, Kreator! 👋</h1>
+                    <p>Siap mengubah ide cemerlang Anda menjadi ebook yang menguntungkan hari ini?</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card glass">
+                        <div class="stat-icon"><i class="ph ph-book-open"></i></div>
+                        <div class="stat-details">
+                            <h3 style="margin:0; font-size: 14px; color: var(--text-secondary);">Total eBook</h3>
+                            <p class="stat-value" id="statTotalEbooks" style="margin:0; font-size: 24px; font-weight: bold; color: var(--text-primary);">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card glass">
+                        <div class="stat-icon"><i class="ph ph-download-simple"></i></div>
+                        <div class="stat-details">
+                            <h3 style="margin:0; font-size: 14px; color: var(--text-secondary);">Total Unduhan</h3>
+                            <p class="stat-value" style="margin:0; font-size: 24px; font-weight: bold; color: var(--text-primary);">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card glass">
+                        <div class="stat-icon"><i class="ph ph-coins"></i></div>
+                        <div class="stat-details">
+                            <h3 style="margin:0; font-size: 14px; color: var(--text-secondary);">Kredit AI</h3>
+                            <p class="stat-value" style="margin:0; font-size: 24px; font-weight: bold; color: var(--text-primary);">Tidak Terbatas</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px; display: flex; gap: 15px;">
+                     <button class="btn-primary" onclick="document.getElementById('btnCreateNew').click()"><i class="ph ph-plus"></i> Buat eBook Baru Sekarang</button>
+                     <button class="btn-ghost" onclick="document.getElementById('navMyEbooks').click()"><i class="ph ph-books"></i> Lihat Semua eBook</button>
+                </div>
+            </div>
+
+            <!-- My Ebooks View (Hidden by default) -->
+            <div class="my-ebooks-content hidden" id="myEbooksView">
+                <div class="generator-header" style="margin-bottom: 20px;">
+                    <h2>eBook Saya</h2>
+                    <p style="color: var(--text-secondary);">Kelola semua proyek ebook Anda.</p>
+                </div>
+                <div class="projects-grid" id="projectsGrid">
+                    <!-- Project Cards will be loaded here dynamically -->
+                    <div style="text-align: center; color: var(--text-secondary); width: 100%; grid-column: 1 / -1;">
+                        <i class="ph ph-spinner ph-spin" style="font-size: 24px;"></i>
+                        <p>Memuat proyek...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Templates View (Hidden by default) -->
+            <div class="templates-content hidden" id="templatesView" style="padding: 0 40px 40px;">
+                <div class="generator-header" style="margin-bottom: 20px;">
+                    <h2>Template Desain <span style="font-size:12px; background:var(--primary); padding:2px 8px; border-radius:12px; color:white;">BETA</span></h2>
+                    <p style="color: var(--text-secondary);">Pilih gaya desain yang cocok untuk eBook Anda.</p>
+                </div>
+                <div class="projects-grid" id="templatesGrid">
+                    <!-- Template cards will be loaded here dynamically -->
+                </div>
+            </div>
+
+            <!-- Agency Dashboard View (Hidden by default) -->
+            <div class="agency-content hidden" id="agencyView" style="padding: 0 40px 40px;">
+                <div class="generator-header" style="margin-bottom: 20px;">
+                    <h2>Manajemen Klien (Agency)</h2>
+                    <p style="color: var(--text-secondary);">Kelola akun klien Anda. Perhatikan kuota pembuatan akun.</p>
+                </div>
+                
+                <div class="stats-grid" style="margin-bottom: 30px;">
+                    <div class="stat-card glass">
+                        <div class="stat-icon"><i class="ph ph-user-circle"></i></div>
+                        <div class="stat-details">
+                            <h3 style="margin:0; font-size: 14px; color: var(--text-secondary);">Role Saat Ini</h3>
+                            <p class="stat-value" id="agencyRoleStatus" style="margin:0; font-size: 20px; font-weight: bold; color: var(--primary); text-transform: uppercase;">Memuat...</p>
+                        </div>
+                    </div>
+                    <div class="stat-card glass">
+                        <div class="stat-icon"><i class="ph ph-users"></i></div>
+                        <div class="stat-details">
+                            <h3 style="margin:0; font-size: 14px; color: var(--text-secondary);">Sisa Kuota Agency</h3>
+                            <p class="stat-value" id="agencyQuotaAgency" style="margin:0; font-size: 24px; font-weight: bold; color: var(--text-primary);">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card glass">
+                        <div class="stat-icon"><i class="ph ph-user"></i></div>
+                        <div class="stat-details">
+                            <h3 style="margin:0; font-size: 14px; color: var(--text-secondary);">Sisa Kuota Personal</h3>
+                            <p class="stat-value" id="agencyQuotaPersonal" style="margin:0; font-size: 24px; font-weight: bold; color: var(--text-primary);">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass" style="padding: 24px; border-radius: 12px; margin-bottom: 30px;">
+                    <h3 style="margin-bottom: 16px;">Buat Akun Klien Baru</h3>
+                    <form id="formCreateAgencyUser" style="display: flex; gap: 15px; align-items: flex-end;">
+                        <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                            <label>Email Klien</label>
+                            <input type="email" id="agencyNewEmail" required placeholder="email.klien@domain.com">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                            <label>Password Akun</label>
+                            <input type="password" id="agencyNewPassword" required minlength="6" placeholder="Minimal 6 karakter">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                            <label>Pilih Role (Tipe Akun)</label>
+                            <select id="agencyNewRole" style="width: 100%; padding: 16px; border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; font-size: 16px;">
+                                <option value="personal" style="color: black;">Personal (Pengguna Akhir)</option>
+                                <option value="agency" id="optRoleAgency" style="color: black;">Agency (Hanya Super Agency/Owner)</option>
+                                <option value="super_agency" id="optRoleSuperAgency" style="color: black;" class="hidden">Super Agency (Hanya Owner)</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-primary" id="btnCreateAgencyUser" style="padding: 16px 24px; height: 55px;">
+                            <i class="ph ph-plus"></i> Buat Klien
+                        </button>
+                    </form>
+                    <div id="agencyCreateMessage" style="margin-top: 15px; padding: 10px; border-radius: 6px;" class="hidden"></div>
+                </div>
+
+                <div class="glass" style="padding: 24px; border-radius: 12px;">
+                    <h3 style="margin-bottom: 16px;">Daftar Klien Anda</h3>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; text-align: left; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                    <th style="padding: 12px;">Email</th>
+                                    <th style="padding: 12px;">Role</th>
+                                    <th style="padding: 12px;">Sisa Kuota</th>
+                                    <th style="padding: 12px;">Tanggal Daftar</th>
+                                    <th style="padding: 12px;">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="agencyUsersTableBody">
+                                <!-- Users will be loaded here -->
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 20px; color: var(--text-secondary);">Memuat data klien...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Generator View (Hidden by default) -->
+            <div class="generator-content hidden" id="generatorView">
+                <div class="generator-header">
+                    <button class="btn-ghost" id="btnBack"><i class="ph ph-arrow-left"></i> Kembali</button>
+                    <h2>Buat eBook Baru dengan AI</h2>
+                </div>
+                
+                <div class="generator-wizard glass">
+                    <div class="wizard-steps">
+                        <div class="step active">1. Topik</div>
+                        <div class="step">2. Daftar Isi</div>
+                        <div class="step">3. Konten</div>
+                        <div class="step">4. Desain</div>
+                    </div>
+
+                    <div class="wizard-body">
+
+                        <div id="step1Form">
+                            <div class="form-group">
+                                <label>Apa Topik/Niche Utama Anda?</label>
+                                <input type="text" id="inputNiche" placeholder="contoh: Affiliate Marketing, Penurunan Berat Badan, dll">
+                            </div>
+                            <div class="form-group">
+                                <label>Siapa Target Pembaca Anda?</label>
+                                <input type="text" id="inputAudience" placeholder="contoh: Pemula, Ibu Rumah Tangga, Mahasiswa...">
+                            </div>
+                            <div class="form-group">
+                                <label>Jenis & Skala eBook?</label>
+                                <select id="inputType" style="width: 100%; padding: 16px; border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; font-size: 16px;">
+                                    <option value="praktis" style="color: black;">eBook Praktis / Lead Magnet (4-6 Bab | Fokus Solusi Cepat)</option>
+                                    <option value="panduan" style="color: black;">eBook Panduan Komprehensif (8-12 Bab | Materi Mendalam)</option>
+                                    <option value="masterclass" style="color: black;">eBook Masterclass / Buku Lengkap (15-20 Bab | Sangat Rinci)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group" style="margin-top: 20px;">
+                                <label style="display: flex; justify-content: space-between;">
+                                    <span>Profil Penulis (Opsional)</span>
+                                    <span style="font-size: 12px; color: var(--text-secondary);">Meningkatkan Personal Branding</span>
+                                </label>
+                                <textarea id="inputAuthorProfile" rows="2" style="width: 100%; padding: 12px; border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; font-size: 14px; resize: vertical;" placeholder="contoh: Budi Santoso, praktisi bisnis dengan 5 tahun pengalaman."></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label style="display: flex; justify-content: space-between;">
+                                    <span>Call to Action / Penawaran (Opsional)</span>
+                                    <span style="font-size: 12px; color: var(--text-secondary);">Ditambahkan di akhir eBook</span>
+                                </label>
+                                <textarea id="inputCTA" rows="2" style="width: 100%; padding: 12px; border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; font-size: 14px; resize: vertical;" placeholder="contoh: Arahkan pembaca untuk join grup Telegram atau membeli produk X."></textarea>
+                            </div>
+                            <button class="btn-primary w-full" id="btnGenerateTitles">
+                                <i class="ph ph-lightbulb"></i> Dapatkan Ide Judul Menarik (Hook)
+                            </button>
+                        </div>
+
+                        <div id="titleResults" class="hidden" style="margin-top: 20px;">
+                            <h3 style="color: var(--primary); margin-bottom: 10px;">Pilih Judul Ebook Anda:</h3>
+                            <div id="titleOptionsGrid" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+                                <!-- Cards injected here via JS -->
+                            </div>
+                            
+                            <div id="coverPromptBox" class="hidden" style="padding: 15px; background: rgba(108, 99, 255, 0.1); border: 1px dashed var(--primary); border-radius: 8px; margin-bottom: 15px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <span style="font-size: 13px; font-weight: 600; color: var(--primary);"><i class="ph ph-image"></i> Prompt AI Untuk Cover</span>
+                                    <button id="btnCopyCoverPrompt" class="btn-icon" style="background: white; border: 1px solid #ddd; padding: 4px; border-radius: 4px;" title="Salin Prompt"><i class="ph ph-copy"></i></button>
+                                </div>
+                                <p id="coverPromptText" style="font-family: monospace; font-size: 12px; color: var(--text-primary); margin: 0; user-select: all;"></p>
+                            </div>
+
+                            <button class="btn-primary w-full hidden" id="btnGenerateOutline" disabled>
+                                <i class="ph ph-sparkle"></i> Buat Daftar Isi Berdasarkan Judul Ini
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="wizard-results hidden" id="outlineResults">
+                        <h3>Hasil Daftar Isi Anda:</h3>
+                        <div class="skeleton-loader hidden" id="loadingSkeleton">
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-line"></div>
+                        </div>
+                        <div class="outline-content" id="outlineContent"></div>
+                        <div class="wizard-actions mt-4">
+                            <button class="btn-primary w-full" id="btnProceedToChapters">Lanjut Tulis Bab (AI)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chapter Writer View (Hidden by default) -->
+            <div class="writer-content hidden" id="chapterWriterView">
+                <div class="writer-header">
+                    <button class="btn-ghost" id="btnBackToOutline"><i class="ph ph-arrow-left"></i> Kembali</button>
+                    <h2>AI Penulis Bab</h2>
+                    <button class="btn-primary hidden" id="btnProceedToEditor" style="display:none;">Lanjut ke Editor Desain <i class="ph ph-arrow-right"></i></button>
+                </div>
+                
+                <div class="writer-layout">
+                    <!-- Left Sidebar for Outline -->
+                    <div class="writer-sidebar glass">
+                        <h3>Daftar Isi Anda</h3>
+                        <ul class="writer-outline-list" id="writerOutlineList">
+                            <!-- Populated dynamically -->
+                        </ul>
+                    </div>
+
+                    <!-- Right Main Area for Editor -->
+                    <div class="writer-main glass">
+                        <div class="writer-main-header">
+                            <h3 id="currentChapterTitle">Pilih bab yang ingin ditulis</h3>
+                            <div style="display:flex; gap:10px;">
+                                <button class="btn-ghost" id="btnGenerateImagePrompt" style="padding: 8px 15px; border: 1px solid var(--secondary); color: var(--secondary);"><i class="ph ph-image"></i> Prompt Gambar AI</button>
+                                <button class="btn-primary" id="btnGenerateChapterContent"><i class="ph ph-sparkle"></i> Tulis Konten (AI)</button>
+                            </div>
+                        </div>
+                        <div id="imagePromptContainer" class="hidden" style="margin-top: 15px; padding: 15px; background: rgba(108, 99, 255, 0.1); border: 1px dashed var(--primary); border-radius: 8px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-size: 14px; font-weight: 600; color: var(--primary);"><i class="ph ph-magic-wand"></i> Ide Prompt AI Image</span>
+                                <div style="display: flex; gap: 8px;">
+                                    <button id="btnCopyPrompt" class="btn-icon" style="background: white; border: 1px solid #ddd; padding: 4px; border-radius: 4px;" title="Salin Prompt"><i class="ph ph-copy"></i></button>
+                                    <button id="btnClosePrompt" class="btn-icon" style="background: white; border: 1px solid #ddd; padding: 4px; border-radius: 4px; color: #ff6b6b;" title="Tutup Prompt"><i class="ph ph-x"></i></button>
+                                </div>
+                            </div>
+                            <p id="imagePromptText" style="font-family: monospace; font-size: 13px; color: var(--text-primary); margin: 0; user-select: all;"></p>
+                        </div>
+                        <div id="quillEditor" style="height: 500px; background: rgba(0,0,0,0.1); border-radius: 8px; margin-top: 16px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Editor View (Hidden by default) -->
+            <div class="editor-content hidden" id="editorView">
+                <div class="editor-header">
+                    <button class="btn-ghost" id="btnBackToDashboard"><i class="ph ph-arrow-left"></i> Beranda</button>
+                    <div class="editor-tools">
+                        <select id="textStyleSelector" style="padding: 4px; border-radius: 4px; border: 1px solid #ddd; font-size: 12px; cursor: pointer; max-width: 100px;">
+                            <option value="normal">Normal</option>
+                            <option value="h1">Heading 1</option>
+                            <option value="h2">Heading 2</option>
+                            <option value="h3">Heading 3</option>
+                        </select>
+                        <select id="fontFamilySelector" style="padding: 4px; border-radius: 4px; border: 1px solid #ddd; font-size: 12px; cursor: pointer; max-width: 120px;">
+                            <option value="Inter">Inter</option>
+                            <option value="Outfit">Outfit</option>
+                            <option value="Roboto">Roboto</option>
+                            <option value="Merriweather">Merriweather</option>
+                            <option value="Playfair Display">Playfair Display</option>
+                            <option value="sans-serif">Sans-Serif</option>
+                            <option value="serif">Serif</option>
+                        </select>
+                        <div style="width: 1px; height: 24px; background: rgba(0,0,0,0.1); margin: 0 5px;"></div>
+                        <button class="btn-icon" id="btnAddText" title="Tambah Teks"><i class="ph ph-text-t"></i></button>
+                        <label for="imageUploadInput" class="btn-icon" title="Unggah Gambar" style="cursor: pointer; display: flex; align-items: center; justify-content: center; margin: 0;"><i class="ph ph-image"></i></label>
+                        <input type="file" id="imageUploadInput" accept="image/*" class="hidden">
+                        <button class="btn-icon" id="btnAddRect" title="Tambah Kotak"><i class="ph ph-square"></i></button>
+                        <button class="btn-icon" id="btnDeleteObj" title="Hapus yang Dipilih"><i class="ph ph-trash"></i></button>
+                        <div style="width: 1px; height: 24px; background: rgba(0,0,0,0.1); margin: 0 5px;"></div>
+                        <button class="btn-icon" id="btnAlignLeft" title="Rata Kiri"><i class="ph ph-text-align-left"></i></button>
+                        <button class="btn-icon" id="btnAlignCenter" title="Rata Tengah"><i class="ph ph-text-align-center"></i></button>
+                        <button class="btn-icon" id="btnAlignRight" title="Rata Kanan"><i class="ph ph-text-align-right"></i></button>
+                        <div style="width: 1px; height: 24px; background: rgba(0,0,0,0.1); margin: 0 5px;"></div>
+                        <button class="btn-icon" id="btnFullWidth" title="Atur Layar Penuh (Hilangkan Margin)" style="color: var(--primary);"><i class="ph ph-arrows-out-line-horizontal"></i> Atur Layar</button>
+                        <input type="color" id="colorPicker" value="#000000" title="Ubah Warna">
+                    </div>
+                    <div class="editor-actions">
+                        <button class="btn-primary" id="btnSaveProject" style="background: var(--secondary);"><i class="ph ph-floppy-disk"></i> Simpan Proyek</button>
+                        <button class="btn-primary" id="btnExportPDF"><i class="ph ph-file-pdf"></i> Ekspor PDF</button>
+                    </div>
+                </div>
+                
+                <div class="editor-workspace glass">
+                    <div class="canvas-container-wrapper" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+                        <canvas id="ebookCanvas" width="800" height="1131"></canvas>
+                        
+                        <!-- Multi-page controls -->
+                        <div class="canvas-pagination" style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-top: 20px; background: rgba(0,0,0,0.2); padding: 10px 20px; border-radius: 20px;">
+                            <button class="btn-icon" id="btnPrevPage" style="background: var(--surface); color: white;"><i class="ph ph-caret-left"></i></button>
+                            <span id="pageIndicator" style="color: white; font-weight: bold;">Halaman 1 / 1</span>
+                            <button class="btn-icon" id="btnNextPage" style="background: var(--surface); color: white;"><i class="ph ph-caret-right"></i></button>
+                            <div style="width: 2px; height: 20px; background: rgba(255,255,255,0.2);"></div>
+                            <button class="btn-ghost" id="btnAddPage" style="color: white; border: 1px solid rgba(255,255,255,0.3); padding: 5px 15px;"><i class="ph ph-plus"></i> Tambah Halaman</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="/js/app.js?v=3.9"></script>
+</body>
+</html>

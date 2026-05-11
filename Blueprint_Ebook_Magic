@@ -1,0 +1,591 @@
+Blueprint Lengkap — AI eBook Maker Web Application
+Konsep Produk:
+
+Aplikasi AI untuk membuat eBook otomatis dari ide mentah menjadi PDF siap jual dalam hitungan menit.
+
+1. VISI PRODUK
+Tujuan Utama
+
+Menyelesaikan masalah:
+
+bingung mulai menulis,
+tidak bisa menyusun isi,
+stuck menulis,
+desain jelek,
+tidak tahu cara jual,
+dan proses bikin eBook terlalu lama.
+Positioning
+
+“Canva + ChatGPT + Google Docs + PDF Generator khusus bikin eBook digital.”
+
+Target Market
+Affiliate marketer
+Pebisnis online
+Coach / mentor
+Penulis pemula
+Content creator
+Reseller digital
+Agency
+UMKM
+Pengajar / trainer
+2. CORE FEATURES (FITUR UTAMA)
+A. AI IDEA GENERATOR
+
+User cukup input:
+
+niche
+target market
+tujuan ebook
+
+AI menghasilkan:
+
+judul
+subtitle
+hook
+positioning
+target pembaca
+Contoh
+
+Input:
+
+Niche: Affiliate Marketing
+
+Output:
+
+Judul:
+Affiliate 1 Jam Pertama
+
+Subtitle:
+Panduan Pemula Menghasilkan Komisi dari HP
+B. AI OUTLINE GENERATOR
+
+AI membuat:
+
+daftar isi
+chapter
+sub chapter
+flow ebook
+Output
+BAB 1 — Kenapa Banyak Orang Gagal Affiliate
+BAB 2 — Memilih Produk
+BAB 3 — Teknik Konten
+BAB 4 — Funnel WhatsApp
+C. AI CHAPTER WRITER
+
+User klik:
+
+Generate Chapter
+
+AI otomatis membuat:
+
+isi bab
+storytelling
+poin
+CTA
+studi kasus
+D. TEMPLATE DESIGN ENGINE
+
+Pilihan template:
+
+Islamic
+Modern
+Minimalist
+Dark
+Corporate
+Soft pastel
+Premium gold
+E. DRAG & DROP EDITOR
+
+Mirip Canva:
+
+edit text
+gambar
+icon
+warna
+font
+layout
+F. AI COVER GENERATOR
+
+Generate:
+
+judul cover
+mockup
+visual
+
+Prompt otomatis.
+
+G. EXPORT ENGINE
+
+Export:
+
+PDF
+PNG
+DOCX
+H. AI SALES PAGE GENERATOR
+
+Auto generate:
+
+headline
+benefits
+CTA
+FAQ
+testimonial section
+I. AI PROMOTION GENERATOR
+
+Generate:
+
+caption FB
+WA broadcast
+TikTok script
+email marketing
+J. AFFILIATE SYSTEM
+
+Fitur:
+
+referral link
+tier affiliate
+komisi
+leaderboard
+3. USER FLOW
+STEP 1
+
+User login/register
+
+↓
+
+STEP 2
+
+Klik:
+
+Create New eBook
+
+↓
+
+STEP 3
+
+Input:
+
+niche
+audience
+tujuan
+
+↓
+
+STEP 4
+
+AI generate:
+
+title
+outline
+chapters
+
+↓
+
+STEP 5
+
+Pilih template design
+
+↓
+
+STEP 6
+
+Edit manual jika perlu
+
+↓
+
+STEP 7
+
+Export PDF
+
+↓
+
+STEP 8
+
+Generate sales page & promosi
+
+4. TEKNOLOGI STACK
+FRONTEND
+HTML5
+CSS3
+JavaScript ES6
+Library
+TailwindCSS
+Fabric.js
+Quill.js
+SortableJS
+PDF.js
+BACKEND
+Node.js
+Express.js
+DATABASE
+MongoDB
+AUTH
+JWT Authentication
+STORAGE
+Cloudinary / AWS S3
+AI ENGINE
+OpenAI API
+Claude API
+Gemini API
+PDF ENGINE
+jsPDF
+html2canvas
+PAYMENT
+Midtrans
+Xendit
+5. FOLDER STRUCTURE
+ebook-maker/
+│
+├── public/
+│   ├── css/
+│   ├── js/
+│   ├── images/
+│
+├── src/
+│   ├── components/
+│   ├── pages/
+│   ├── layouts/
+│   ├── services/
+│   ├── api/
+│   ├── utils/
+│
+├── server/
+│   ├── routes/
+│   ├── controllers/
+│   ├── middleware/
+│   ├── models/
+│
+├── templates/
+│
+├── exports/
+│
+└── package.json
+6. DATABASE DESIGN
+USERS
+{
+  name,
+  email,
+  password,
+  role,
+  credits,
+  affiliateCode,
+  createdAt
+}
+EBOOKS
+{
+  userId,
+  title,
+  niche,
+  outline,
+  chapters,
+  template,
+  cover,
+  createdAt
+}
+AFFILIATES
+{
+  userId,
+  referralCode,
+  commissions,
+  referrals
+}
+7. UI/UX STRUCTURE
+DASHBOARD
+Sidebar
+Dashboard
+My eBooks
+Templates
+AI Tools
+Affiliate
+Billing
+Settings
+MAIN AREA
+Cards
+Total eBooks
+Downloads
+Affiliate Earnings
+AI Credits
+8. HALAMAN YANG DIBUTUHKAN
+PUBLIC
+Landing page
+Pricing
+Login
+Register
+MEMBER AREA
+Dashboard
+Ebook editor
+AI generator
+Export page
+Affiliate dashboard
+9. AI PROMPT ENGINE
+Prompt Title Generator
+const prompt = `
+Buatkan 10 judul ebook yang menarik tentang ${niche}
+Target market: ${audience}
+`;
+Prompt Chapter Generator
+const prompt = `
+Tulis bab ebook profesional dengan gaya santai.
+Judul Bab: ${chapter}
+Target pembaca: ${audience}
+`;
+10. HTML STRUCTURE
+Dashboard Layout
+<div class="dashboard">
+
+  <aside class="sidebar">
+    Sidebar Menu
+  </aside>
+
+  <main class="content">
+
+    <header>
+      Top Navigation
+    </header>
+
+    <section class="editor">
+      Ebook Editor
+    </section>
+
+  </main>
+
+</div>
+11. CSS ARCHITECTURE
+:root{
+  --primary:#6C63FF;
+  --dark:#111827;
+  --light:#ffffff;
+}
+
+body{
+  font-family:sans-serif;
+  background:#f5f5f5;
+}
+12. JAVASCRIPT ARCHITECTURE
+Ebook Generator
+async function generateEbook() {
+
+  const response = await fetch('/api/generate', {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json'
+    },
+    body: JSON.stringify({
+      niche,
+      audience
+    })
+  });
+
+  const data = await response.json();
+
+  renderEbook(data);
+
+}
+13. EXPORT PDF SYSTEM
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
+async function exportPDF(){
+
+  const element = document.getElementById('ebook');
+
+  const canvas = await html2canvas(element);
+
+  const img = canvas.toDataURL('image/png');
+
+  const pdf = new jsPDF();
+
+  pdf.addImage(img,'PNG',0,0);
+
+  pdf.save('ebook.pdf');
+
+}
+14. AI WORKFLOW SYSTEM
+INPUT USER
+   ↓
+AI TITLE GENERATOR
+   ↓
+AI OUTLINE GENERATOR
+   ↓
+AI CHAPTER WRITER
+   ↓
+DESIGN ENGINE
+   ↓
+PDF EXPORT
+   ↓
+PROMOTION GENERATOR
+15. PREMIUM FEATURES
+A. AI HUMANIZER
+
+Agar tulisan tidak terasa robotik.
+
+B. AUTO STORYTELLING
+
+AI otomatis menambahkan cerita.
+
+C. VIRAL TITLE ENGINE
+
+Judul lebih click-worthy.
+
+D. AI ISLAMIC COPY MODE
+
+Bahasa lebih islami dan santun.
+
+E. WHATSAPP CTA GENERATOR
+
+Auto CTA WA.
+
+16. MONETIZATION
+Freemium
+3 ebook gratis
+Pro
+Unlimited ebook
+AI premium
+Export HD
+Affiliate system
+Agency
+Team collaboration
+White label
+17. SECURITY
+JWT Auth
+Rate limit
+Anti spam
+Cloud backup
+Auto save draft
+18. MVP ROADMAP
+PHASE 1
+Auth
+AI title
+AI outline
+AI chapter
+PDF export
+PHASE 2
+Template editor
+Cover generator
+Affiliate system
+PHASE 3
+Marketplace
+Team collaboration
+AI voice audiobook
+19. UNIQUE SELLING POINT
+“Bukan sekadar bikin ebook…”
+
+Tetapi:
+
+mencari ide,
+menulis,
+mendesain,
+export,
+sampai promosi.
+
+Dalam satu platform.
+
+20. REKOMENDASI NAMA BRAND
+Satu Kata
+Ebookify
+Bukulin
+Naskahku
+Kitabin
+TulisPro
+Eboox
+Digibook
+Nulisin
+Bookora
+PenaAI
+Dua Kata
+Ebook Magic
+Auto Ebook
+Smart Writer
+AI Penulis
+Buku Digital
+21. ANTI-GRAVITY PROMPT
+Untuk Agent Coding AI
+Buatkan web app modern bernama "AI Ebook Maker".
+
+Gunakan:
+- HTML
+- CSS
+- JavaScript
+- Node.js
+- Express
+- MongoDB
+
+Fitur:
+- AI title generator
+- AI outline generator
+- AI chapter writer
+- drag and drop editor
+- ebook templates
+- export PDF
+- authentication
+- affiliate system
+- dashboard analytics
+
+Design:
+- modern SaaS UI
+- responsive
+- dark/light mode
+- glassmorphism
+- smooth animation
+
+Struktur:
+- clean architecture
+- reusable components
+- scalable folder structure
+
+Tambahkan:
+- API integration OpenAI
+- auto save draft
+- loading skeleton
+- toast notification
+- error handling
+- SEO optimization
+
+Output:
+- full source code
+- modular structure
+- production ready
+- comments documentation
+22. FUTURE EXPANSION
+AI Audiobook
+AI Translator
+AI Voice Narration
+Marketplace Ebook
+Ebook Affiliate Marketplace
+AI Funnel Builder
+AI Landing Page Builder
+Mobile App
+Chrome Extension
+23. STRATEGI VIRAL
+Konten Marketing
+Hook:
+“Bikin ebook 5 menit pakai AI”
+“Tidak bisa nulis? AI bantu semua”
+“Dari ide kosong jadi PDF siap jual”
+24. KONSEP BESAR PRODUK
+Transformasi User
+
+Dari:
+
+Bingung bikin ebook
+
+Menjadi:
+
+Punya produk digital siap jual
+25. REKOMENDASI TAMBAHAN SUPER PENTING
+Tambahkan:
+AI tone selector
+AI niche analyzer
+Ebook marketplace
+Prompt marketplace
+Team collaboration
+AI image generator
+AI infographic builder
+
+Karena ini yang bisa membuat produk:
+
+lebih sulit ditiru kompetitor
+
+dan:
+
+lebih tinggi value subscription-nya.
