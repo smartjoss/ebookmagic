@@ -260,7 +260,15 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const data = await response.json();
 
-            if (data.error) throw new Error(data.error);
+            if (data.error) {
+                if (data.error.includes('JWT expired') || data.error.includes('Unauthorized')) {
+                    alert('Sesi Anda telah berakhir. Silakan login kembali.');
+                    localStorage.removeItem('ebookMagicUser');
+                    location.reload();
+                    return;
+                }
+                throw new Error(data.error);
+            }
 
             if (!data.ebooks || data.ebooks.length === 0) {
                 projectsGrid.innerHTML = '<p style="grid-column: 1/-1; color: var(--text-secondary); text-align: center; padding: 20px;">No projects found. Click "Create New" to start!</p>';
