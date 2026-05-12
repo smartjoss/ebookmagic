@@ -299,11 +299,43 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="project-info">
                         <h4>${ebook.title || 'Untitled Ebook'}</h4>
                         <span>Updated ${date}</span>
+                        <div style="display: flex; gap: 8px; margin-top: 10px;">
+                            <button class="btn-primary edit-btn" style="flex: 1; padding: 6px 10px; font-size: 12px; border-radius: 4px;"><i class="ph ph-pencil-simple"></i> Edit</button>
+                            <button class="btn-ghost delete-btn" style="flex: 1; padding: 6px 10px; font-size: 12px; border-radius: 4px; border: 1px solid #ff4444; color: #ff4444;"><i class="ph ph-trash"></i> Hapus</button>
+                        </div>
                     </div>
                 `;
                 
+                const editBtn = card.querySelector('.edit-btn');
+                const deleteBtn = card.querySelector('.delete-btn');
+
+                // Delete Project
+                deleteBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    if(confirm('Yakin ingin menghapus proyek ini secara permanen?')) {
+                        deleteBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Menghapus...';
+                        try {
+                            const res = await fetch(`/api/ebooks/${ebook.id}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Authorization': `Bearer ${window.currentUser.token || ''}`
+                                }
+                            });
+                            if(!res.ok) throw new Error('Gagal menghapus');
+                            card.remove();
+                            // Update counter
+                            const stat = document.getElementById('statTotalEbooks');
+                            if (stat) stat.innerText = Math.max(0, parseInt(stat.innerText) - 1);
+                        } catch(err) {
+                            console.error(err);
+                            alert('Gagal menghapus proyek.');
+                            deleteBtn.innerHTML = '<i class="ph ph-trash"></i> Hapus';
+                        }
+                    }
+                });
+
                 // On click, load the project into memory and go to editor
-                card.addEventListener('click', () => {
+                const loadProjectData = () => {
                     window.currentProjectId = ebook.id;
                     window.currentOutlineData = { title: ebook.title, outline: ebook.outline };
                     window.currentNiche = ebook.niche;
@@ -370,6 +402,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         canvasPages = [];
                         currentCanvasPage = 0;
                     }
+                };
+
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    loadProjectData();
                 });
 
                 projectsGrid.appendChild(card);

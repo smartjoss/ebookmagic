@@ -622,6 +622,32 @@ app.get('/api/ebooks', async (req, res) => {
     }
 });
 
+app.delete('/api/ebooks/:id', async (req, res) => {
+    const { id } = req.params;
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+    
+    if (!supabase) return res.status(500).json({ error: 'Database is not connected.' });
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+        const userSupabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+            global: { headers: { Authorization: `Bearer ${token}` } }
+        });
+
+        const { error } = await userSupabase
+            .from('ebooks')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Delete Error:', error.message);
+        res.status(500).json({ error: 'Failed to delete project' });
+    }
+});
+
 app.get('/app', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/app.html'));
 });
