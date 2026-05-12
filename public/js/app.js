@@ -412,6 +412,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 };
 
+                card.addEventListener('click', () => loadProjectData());
+
                 editBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     loadProjectData();
@@ -598,6 +600,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(typeof titleResults !== 'undefined' && titleResults) titleResults.classList.add('hidden');
         if(typeof coverPromptBox !== 'undefined' && coverPromptBox) coverPromptBox.classList.add('hidden');
         if(typeof btnGenerateOutline !== 'undefined' && btnGenerateOutline) btnGenerateOutline.classList.add('hidden');
+        if(typeof step1Form !== 'undefined' && step1Form) step1Form.classList.remove('hidden');
         
         const inputNiche = document.getElementById('inputNiche');
         if(inputNiche) inputNiche.value = '';
