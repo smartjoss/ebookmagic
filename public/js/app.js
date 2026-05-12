@@ -362,12 +362,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     
                     const btnProceedToChapters = document.getElementById('btnProceedToChapters');
-                    if (btnProceedToChapters) {
-                        btnProceedToChapters.click();
-                    } else {
-                        document.getElementById('chapterWriterView').classList.remove('hidden');
-                        document.getElementById('editorView').classList.remove('hidden');
-                        initCanvas();
+                    try {
+                        if (btnProceedToChapters) {
+                            btnProceedToChapters.click();
+                        }
+                    } catch(err) {
+                        console.error('Error during transition:', err);
+                    } finally {
+                        // Guarantee visibility
+                        const cwView = document.getElementById('chapterWriterView');
+                        const eView = document.getElementById('editorView');
+                        if (cwView) cwView.classList.remove('hidden');
+                        if (eView) eView.classList.remove('hidden');
+                        if (typeof initCanvas === 'function') initCanvas();
                     }
                     
                     // Load Canvas Data
@@ -1019,9 +1026,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof editorView !== 'undefined' && editorView) editorView.classList.add('hidden');
         
         if (window.openedFromDashboard) {
-            if(dashboardView) dashboardView.classList.remove('hidden');
+            hideAllViews();
             if(myEbooksView) myEbooksView.classList.remove('hidden');
-            setActiveNav(navDashboard);
+            setActiveNav(navMyEbooks);
             window.openedFromDashboard = false;
         } else {
             generatorView.classList.remove('hidden');
