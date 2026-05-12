@@ -811,13 +811,63 @@ document.addEventListener('DOMContentLoaded', () => {
     const writerOutlineList = document.getElementById('writerOutlineList');
     const currentChapterTitle = document.getElementById('currentChapterTitle');
     const btnGenerateChapterContent = document.getElementById('btnGenerateChapterContent');
+    const btnSaveOutlineOnly = document.getElementById('btnSaveOutlineOnly');
     
     let quill;
     let activeChapterElement = null;
     window.chaptersContent = {}; // Store all written chapters
 
+    if (btnSaveOutlineOnly) {
+        btnSaveOutlineOnly.addEventListener('click', async () => {
+            if(!window.currentUser) return alert('Anda harus login untuk menyimpan.');
+            if(!window.currentOutlineData) return alert('Daftar isi kosong.');
+
+            btnSaveOutlineOnly.disabled = true;
+            const originalText = btnSaveOutlineOnly.innerHTML;
+            btnSaveOutlineOnly.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Menyimpan...';
+
+            try {
+                const payload = {
+                    projectId: window.currentProjectId,
+                    userId: window.currentUser.id,
+                    title: window.currentOutlineData.title || 'Untitled Ebook',
+                    niche: window.currentNiche || '',
+                    outline: window.currentOutlineData.outline || [],
+                    chapters: {},
+                    canvasData: {},
+                    token: window.currentUser.token
+                };
+
+                const response = await fetch('/api/save-ebook', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                if(result.error) throw new Error(result.error);
+                if (result.projectId) window.currentProjectId = result.projectId;
+
+                alert('✅ Konsep eBook berhasil disimpan! Anda bisa melihatnya nanti di menu "eBook Saya".');
+            } catch(error) {
+                console.error(error);
+                alert('❌ Gagal menyimpan konsep: ' + error.message);
+            } finally {
+                btnSaveOutlineOnly.disabled = false;
+                btnSaveOutlineOnly.innerHTML = originalText;
+            }
+        });
+    }
+
     btnProceedToChapters.addEventListener('click', () => {
         if(!window.currentOutlineData) return alert('Please generate an outline first.');
+        
+        // Freemium Block
+        if (window.userProfile && ['free', 'personal'].includes(window.userProfile.role)) {
+            alert('Akses Premium Diperlukan!\\n\\nSebagai Free Member, Anda hanya bisa membuat Kerangka (Daftar Isi).\\nSilakan klik "Simpan Konsep eBook" lalu Upgrade lisensi Anda untuk meng-unlock fitur Penulisan Bab Otomatis, Desain Sampul, dan Ekspor PDF!');
+            return;
+        }
+        
         generatorView.classList.add('hidden');
         chapterWriterView.classList.remove('hidden');
         editorView.classList.remove('hidden'); // Show Canvas Editor below the Writer
