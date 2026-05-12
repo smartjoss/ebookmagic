@@ -549,9 +549,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Reset generator state
     function resetGeneratorState() {
-        outlineResults.classList.add('hidden');
-        document.getElementById('inputNiche').value = '';
-        document.getElementById('inputAudience').value = '';
+        if(typeof outlineResults !== 'undefined' && outlineResults) outlineResults.classList.add('hidden');
+        if(typeof titleResults !== 'undefined' && titleResults) titleResults.classList.add('hidden');
+        if(typeof coverPromptBox !== 'undefined' && coverPromptBox) coverPromptBox.classList.add('hidden');
+        if(typeof btnGenerateOutline !== 'undefined' && btnGenerateOutline) btnGenerateOutline.classList.add('hidden');
+        
+        const inputNiche = document.getElementById('inputNiche');
+        if(inputNiche) inputNiche.value = '';
+        const inputAudience = document.getElementById('inputAudience');
+        if(inputAudience) inputAudience.value = '';
+        const inputAuthorProfile = document.getElementById('inputAuthorProfile');
+        if(inputAuthorProfile) inputAuthorProfile.value = '';
+        const inputCTA = document.getElementById('inputCTA');
+        if(inputCTA) inputCTA.value = '';
+        
+        window.selectedEbookTitle = null;
+        window.selectedEbookSubtitle = null;
+        
+        // Reset step indicators
+        document.querySelectorAll('.wizard-steps .step').forEach((el, index) => {
+            if (index === 0) el.classList.add('active');
+            else el.classList.remove('active');
+        });
     }
 
     const btnGenerateTitles = document.getElementById('btnGenerateTitles');
