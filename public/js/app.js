@@ -412,10 +412,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 };
 
-                card.addEventListener('click', () => loadProjectData());
+                card.addEventListener('click', () => {
+                    window.openedFromDashboard = true;
+                    loadProjectData();
+                });
 
                 editBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
+                    window.openedFromDashboard = true;
                     loadProjectData();
                 });
 
@@ -1001,7 +1005,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnBackToOutline.addEventListener('click', () => {
         chapterWriterView.classList.add('hidden');
-        generatorView.classList.remove('hidden');
+        if (typeof editorView !== 'undefined' && editorView) editorView.classList.add('hidden');
+        
+        if (window.openedFromDashboard) {
+            if(dashboardView) dashboardView.classList.remove('hidden');
+            if(myEbooksView) myEbooksView.classList.remove('hidden');
+            setActiveNav(navDashboard);
+            window.openedFromDashboard = false;
+        } else {
+            generatorView.classList.remove('hidden');
+        }
     });
 
     btnGenerateChapterContent.addEventListener('click', async () => {
