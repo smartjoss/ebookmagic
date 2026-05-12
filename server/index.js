@@ -115,17 +115,17 @@ app.get('/api/user/profile', async (req, res) => {
 
         let finalProfile = profile;
 
-        if (profileError || !profile || profile.role === 'free') {
-            // Auto-upgrade to owner for testing/first user
-            finalProfile = { role: 'owner', quota_agency: 9999, quota_personal: 9999 };
+        if (profileError || !profile) {
+            // Jika belum ada profil (baru daftar), buatkan profil bawaan (personal)
+            finalProfile = { role: 'personal', quota_agency: 0, quota_personal: 0 };
             
-            // Try to fix the DB as well silently
-            await userSupabase.from('user_profiles').upsert({
+            // Simpan profil personal ke database secara asinkron
+            userSupabase.from('user_profiles').upsert({
                 id: user.id,
-                role: 'owner',
-                quota_agency: 9999,
-                quota_personal: 9999
-            });
+                role: 'personal',
+                quota_agency: 0,
+                quota_personal: 0
+            }).then();
         }
 
         res.json({ success: true, profile: finalProfile });
