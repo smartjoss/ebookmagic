@@ -618,7 +618,7 @@ app.get('/api/ebooks', async (req, res) => {
         res.json({ success: true, ebooks: data });
     } catch (error) {
         console.error('Fetch Error:', error.message);
-        res.status(500).json({ error: 'Failed to fetch projects' });
+        res.status(500).json({ error: 'Failed to fetch projects: ' + error.message });
     }
 });
 
