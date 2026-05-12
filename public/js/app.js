@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
+    let canvasPages = [];
+    let currentCanvasPage = 0;
     
     // --- AUTHENTICATION LOGIC ---
     const authView = document.getElementById('authView');
@@ -600,11 +602,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Reset generator state
     function resetGeneratorState() {
-        if(typeof outlineResults !== 'undefined' && outlineResults) outlineResults.classList.add('hidden');
-        if(typeof titleResults !== 'undefined' && titleResults) titleResults.classList.add('hidden');
-        if(typeof coverPromptBox !== 'undefined' && coverPromptBox) coverPromptBox.classList.add('hidden');
-        if(typeof btnGenerateOutline !== 'undefined' && btnGenerateOutline) btnGenerateOutline.classList.add('hidden');
-        if(typeof step1Form !== 'undefined' && step1Form) step1Form.classList.remove('hidden');
+        const oRes = document.getElementById('outlineResults');
+        if(oRes) oRes.classList.add('hidden');
+        
+        const tRes = document.getElementById('titleResults');
+        if(tRes) tRes.classList.add('hidden');
+        
+        const cpBox = document.getElementById('coverPromptBox');
+        if(cpBox) cpBox.classList.add('hidden');
+        
+        const btnGenOut = document.getElementById('btnGenerateOutline');
+        if(btnGenOut) btnGenOut.classList.add('hidden');
+        
+        const s1Form = document.getElementById('step1Form');
+        if(s1Form) s1Form.classList.remove('hidden');
         
         const inputNiche = document.getElementById('inputNiche');
         if(inputNiche) inputNiche.value = '';
@@ -1129,8 +1140,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnBackToDashboard = document.getElementById('btnBackToDashboard');
 
     let canvas;
-    let canvasPages = [];
-    let currentCanvasPage = 0;
+
 
     function saveCurrentPage() {
         if (canvas && canvasPages.length > 0) {
