@@ -1898,7 +1898,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td style="padding: 12px;">
                             ${window.userProfile && window.userProfile.role === 'owner' ? 
                                 `<button onclick="addQuota('${u.id}')" class="btn-ghost" style="padding:4px 8px; font-size: 11px;">+ Kuota</button>
-                                 <button onclick="changeRole('${u.id}', '${u.role}')" class="btn-ghost" style="padding:4px 8px; font-size: 11px; margin-left: 5px;">Ubah Role</button>` : 
+                                 <button onclick="changeRole('${u.id}', '${u.role}')" class="btn-ghost" style="padding:4px 8px; font-size: 11px; margin-left: 5px;">Ubah Role</button>
+                                 <button onclick="deleteClient('${u.id}')" class="btn-ghost" style="padding:4px 8px; font-size: 11px; margin-left: 5px; color: #ff6b6b;" title="Hapus Klien"><i class="ph ph-trash"></i></button>` : 
                                 '<span style="color: #666; font-size: 12px;">-</span>'}
                         </td>
                     </tr>
@@ -2012,6 +2013,25 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else if (newRole && !['free', 'personal', 'agency', 'super_agency'].includes(newRole.trim().toLowerCase())) {
             alert('Status tidak valid. Harap masukkan salah satu dari: free, personal, agency, super_agency');
+        }
+    };
+
+    window.deleteClient = async function(userId) {
+        if (!confirm('Apakah Anda yakin ingin menghapus klien ini secara permanen? Tindakan ini tidak dapat dibatalkan dan semua data ebook klien akan hilang!')) return;
+        
+        try {
+            const res = await fetch(`/api/agency/users/${userId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${window.currentUser.token}` }
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+            
+            alert('Klien berhasil dihapus secara permanen.');
+            loadAgencyUsers();
+        } catch (error) {
+            console.error(error);
+            alert('Gagal: ' + error.message);
         }
     };
 });

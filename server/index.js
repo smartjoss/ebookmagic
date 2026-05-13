@@ -295,6 +295,45 @@ app.post('/api/agency/update-role', async (req, res) => {
     }
 });
 
+app.delete('/api/agency/users/:id', async (req, res) => {
+    const { id: targetUserId } = req.params;
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+    
+    if (!supabase) return res.status(500).json({ error: 'Database is not connected.' });
+
+    try {
+        const userSupabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+            global: { headers: { Authorization: `Bearer ${token}` } }
+        });
+        const { data: { user }, error: userError } = await userSupabase.auth.getUser();
+        if (userError) throw userError;
+
+        const { data: profile } = await userSupabase.from('user_profiles').select('role').eq('id', user.id).single();
+        if (!profile || profile.role !== 'owner') {
+            throw new Error('Hanya Owner yang bisa menghapus klien secara permanen.');
+        }
+
+        // Try to delete from Supabase Auth if SERVICE_ROLE_KEY is available
+        if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+            const adminSupabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+            const { error: authDeleteError } = await adminSupabase.auth.admin.deleteUser(targetUserId);
+            if (authDeleteError) console.error("Warning: Failed to delete from auth:", authDeleteError);
+        }
+
+        // Delete from user_profiles
+        const { error: deleteProfileError } = await userSupabase.from('user_profiles').delete().eq('id', targetUserId);
+        if (deleteProfileError) throw deleteProfileError;
+        
+        // Also delete their ebooks
+        await userSupabase.from('ebooks').delete().eq('user_id', targetUserId);
+
+        res.json({ success: true, message: `Klien berhasil dihapus.` });
+    } catch (error) {
+        res.status(400).json({ success: false, error: error.message });
+    }
+});
+
 // --- AI GENERATION ENDPOINTS ---
 
 app.post('/api/generate-titles', async (req, res) => {
