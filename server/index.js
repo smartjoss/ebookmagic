@@ -492,7 +492,7 @@ app.post('/api/generate-outline', async (req, res) => {
 
 // API Endpoint for generating chapter content
 app.post('/api/generate-chapter', async (req, res) => {
-    const { chapterTitle, niche, audience, type, apiKey } = req.body;
+    const { chapterTitle, niche, audience, type, tone, apiKey } = req.body;
 
     const isGemini = apiKey && apiKey.startsWith('AIza');
 
@@ -511,6 +511,17 @@ app.post('/api/generate-chapter', async (req, res) => {
         chapterLengthInstructions = "Bahas materi ini dengan SANGAT MENDETAIL layaknya sebuah ensiklopedia atau buku masterclass premium. Berikan studi kasus mendalam, penjabaran teknis langkah demi langkah, dan buat isi bab ini sangat panjang dan berbobot.";
     }
 
+    let toneInstructions = "Gunakan nada bicara yang komunikatif namun otoritatif (menarik seperti tulisan blogger terkenal).";
+    if (tone === 'humanizer') {
+        toneInstructions = "Gunakan gaya bahasa AI Humanizer: SANGAT santai, seperti ngobrol akrab dengan teman di kafe. Gunakan kata ganti luwes, bahasa membumi, jangan kaku, dan hindari kata-kata bersayap layaknya teks robot.";
+    } else if (tone === 'islamic') {
+        toneInstructions = "Gunakan Islamic Copy Mode: Bahasa sangat santun, teduh, dan islami. Selipkan kalimat basmalah, 'InsyaAllah', 'Alhamdulillah', atau hikmah syariah yang relevan dengan topik secara natural.";
+    } else if (tone === 'storytelling') {
+        toneInstructions = "Gunakan gaya Storytelling: Sepanjang bab ini harus terasa seperti novel non-fiksi. Gunakan perumpamaan, konflik, dan resolusi. Mulai dan bangun argumentasi lewat studi kasus nyata atau cerita fiksi yang sangat emosional.";
+    } else if (tone === 'wa_cta') {
+        toneInstructions = "Gunakan gaya tulisan persuasif. PENTING: Di bagian paling akhir teks, buatlah Call-To-Action (CTA) yang sangat kuat agar pembaca segera menghubungi admin via WhatsApp untuk konsultasi, beli produk, atau tanya jawab.";
+    }
+
     try {
         const prompt = `
         Anda adalah seorang penulis bayangan (ghostwriter) dan copywriter ahli.
@@ -521,7 +532,7 @@ app.post('/api/generate-chapter', async (req, res) => {
         Judul Bab: "${chapterTitle}"
         
         Persyaratan Utama (Wajib ditulis dalam BAHASA INDONESIA yang luwes):
-        1. Gunakan nada bicara yang komunikatif namun otoritatif (menarik seperti tulisan blogger terkenal).
+        1. ${toneInstructions}
         2. Masukkan hook bercerita (storytelling) pendek di awal bab.
         3. ${chapterLengthInstructions}
         4. Wajib sertakan poin-poin (bullet points) yang bisa langsung dipraktikkan.

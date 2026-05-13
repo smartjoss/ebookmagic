@@ -453,8 +453,15 @@
                     <div class="writer-main glass">
                         <div class="writer-main-header">
                             <h3 id="currentChapterTitle">Pilih bab yang ingin ditulis</h3>
-                            <div style="display:flex; gap:10px;">
+                            <div style="display:flex; gap:10px; align-items: center;">
                                 <button class="btn-ghost" id="btnGenerateImagePrompt" style="padding: 8px 15px; border: 1px solid var(--secondary); color: var(--secondary);"><i class="ph ph-image"></i> Prompt Gambar AI</button>
+                                <select id="chapterToneSelector" title="Gaya Bahasa AI" style="padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-size: 13px; outline: none;">
+                                    <option value="standar">Standar / Panduan</option>
+                                    <option value="humanizer">AI Humanizer (Santai)</option>
+                                    <option value="islamic">Islamic Copy Mode</option>
+                                    <option value="storytelling">Storytelling (Bercerita)</option>
+                                    <option value="wa_cta">Akhiri dgn WA CTA</option>
+                                </select>
                                 <button class="btn-primary" id="btnGenerateChapterContent"><i class="ph ph-sparkle"></i> Tulis Konten (AI)</button>
                             </div>
                         </div>
@@ -509,7 +516,9 @@
                     </div>
                     <div class="editor-actions">
                         <button class="btn-primary" id="btnSaveProject" style="background: var(--secondary);"><i class="ph ph-floppy-disk"></i> Simpan Proyek</button>
-                        <button class="btn-primary" id="btnExportPDF"><i class="ph ph-file-pdf"></i> Ekspor PDF</button>
+                        <button class="btn-primary" id="btnExportPDF"><i class="ph ph-file-pdf"></i> PDF</button>
+                        <button class="btn-primary" id="btnExportDOCX" style="background: #2b579a;"><i class="ph ph-file-doc"></i> Word</button>
+                        <button class="btn-primary" id="btnExportPNG" style="background: #10b981;"><i class="ph ph-image"></i> PNG</button>
                     </div>
                 </div>
                 

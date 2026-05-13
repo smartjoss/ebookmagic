@@ -1146,6 +1146,9 @@ document.addEventListener('DOMContentLoaded', () => {
         quill.setText('AI is writing your chapter. This might take a few seconds...\n');
 
         try {
+            const toneSelector = document.getElementById('chapterToneSelector');
+            const selectedTone = toneSelector ? toneSelector.value : 'standar';
+
             const response = await fetch('/api/generate-chapter', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1154,6 +1157,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     niche: window.currentNiche, 
                     audience: window.currentAudience,
                     type: window.currentEbookType || 'praktis',
+                    tone: selectedTone,
                     apiKey: window.userApiKey,
                     authorProfile: window.currentAuthorProfile,
                     cta: window.currentCTA
