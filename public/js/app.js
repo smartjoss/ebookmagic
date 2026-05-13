@@ -346,10 +346,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // On click, load the project into memory and go to editor
                 const loadProjectData = () => {
+                    let parsedOutline = ebook.outline;
+                    if (typeof parsedOutline === 'string') {
+                        try { parsedOutline = JSON.parse(parsedOutline); } catch(e) { parsedOutline = []; }
+                    }
+                    // Handle legacy data where the whole object was saved instead of the array
+                    if (parsedOutline && typeof parsedOutline === 'object' && !Array.isArray(parsedOutline)) {
+                        parsedOutline = parsedOutline.outline || [];
+                    }
+                    if (!Array.isArray(parsedOutline)) {
+                        parsedOutline = [];
+                    }
+
+                    let parsedChapters = ebook.chapters;
+                    if (typeof parsedChapters === 'string') {
+                        try { parsedChapters = JSON.parse(parsedChapters); } catch(e) { parsedChapters = {}; }
+                    }
+
                     window.currentProjectId = ebook.id;
-                    window.currentOutlineData = { title: ebook.title, outline: ebook.outline };
+                    window.currentOutlineData = { title: ebook.title || 'Untitled Ebook', subtitle: ebook.niche || '', outline: parsedOutline };
                     window.currentNiche = ebook.niche;
-                    window.chaptersContent = ebook.chapters || {};
+                    window.chaptersContent = parsedChapters || {};
                     window.currentAuthorProfile = ebook.canvas_data ? (ebook.canvas_data.authorProfile || '') : '';
                     window.currentCTA = ebook.canvas_data ? (ebook.canvas_data.cta || '') : '';
                     
@@ -368,13 +385,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     } catch(err) {
                         console.error('Error during transition:', err);
-                    } finally {
-                        // Guarantee visibility
-                        const cwView = document.getElementById('chapterWriterView');
-                        const eView = document.getElementById('editorView');
-                        if (cwView) cwView.classList.remove('hidden');
-                        if (eView) eView.classList.remove('hidden');
-                        if (typeof initCanvas === 'function') initCanvas();
                     }
                     
                     // Load Canvas Data
@@ -474,6 +484,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if(templatesView) templatesView.classList.add('hidden');
         const agencyView = document.getElementById('agencyView');
         if(agencyView) agencyView.classList.add('hidden');
+        const affiliateView = document.getElementById('affiliateView');
+        if(affiliateView) affiliateView.classList.add('hidden');
     }
 
     navDashboard.addEventListener('click', (e) => {
@@ -579,6 +591,87 @@ document.addEventListener('DOMContentLoaded', () => {
             const agencyView = document.getElementById('agencyView');
             if(agencyView) agencyView.classList.remove('hidden');
             loadAgencyUsers();
+        });
+    }
+
+    const navAffiliate = document.getElementById('navAffiliate');
+    if (navAffiliate) {
+        navAffiliate.addEventListener('click', (e) => {
+            e.preventDefault();
+            setActiveNav(navAffiliate);
+            hideAllViews();
+            const affiliateView = document.getElementById('affiliateView');
+            if (affiliateView) affiliateView.classList.remove('hidden');
+            
+            // Set Affiliate Link
+            const affiliateLinkInput = document.getElementById('affiliateLinkInput');
+            if (affiliateLinkInput && window.currentUser) {
+                const protocol = window.location.protocol;
+                const host = window.location.host;
+                affiliateLinkInput.value = `${protocol}//${host}/?ref=${window.currentUser.id}`;
+            }
+        });
+    }
+
+    // Affiliate & Free Member Handlers
+    const btnCopyAffiliateLink = document.getElementById('btnCopyAffiliateLink');
+    if (btnCopyAffiliateLink) {
+        btnCopyAffiliateLink.addEventListener('click', () => {
+            const input = document.getElementById('affiliateLinkInput');
+            if (input) {
+                navigator.clipboard.writeText(input.value).then(() => {
+                    const originalText = btnCopyAffiliateLink.innerHTML;
+                    btnCopyAffiliateLink.innerHTML = '<i class="ph ph-check"></i> Tersalin!';
+                    setTimeout(() => {
+                        btnCopyAffiliateLink.innerHTML = originalText;
+                    }, 2000);
+                });
+            }
+        });
+    }
+
+    const formCreateFreeMember = document.getElementById('formCreateFreeMember');
+    if (formCreateFreeMember) {
+        formCreateFreeMember.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('freeMemberEmail').value;
+            const password = document.getElementById('freeMemberPassword').value;
+            const btn = document.getElementById('btnCreateFreeMember');
+            const msgDiv = document.getElementById('freeMemberMessage');
+            
+            btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Menambahkan...';
+            btn.disabled = true;
+            msgDiv.classList.add('hidden');
+
+            try {
+                // Gunakan endpoint register untuk membuat free member
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, role: 'free', ref: window.currentUser ? window.currentUser.id : null })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    msgDiv.classList.remove('hidden');
+                    msgDiv.style.backgroundColor = 'rgba(74, 222, 128, 0.1)';
+                    msgDiv.style.color = '#4ade80';
+                    msgDiv.style.border = '1px solid rgba(74, 222, 128, 0.3)';
+                    msgDiv.innerText = 'Berhasil menambahkan member gratis!';
+                    formCreateFreeMember.reset();
+                } else {
+                    throw new Error(data.error || 'Gagal menambahkan member');
+                }
+            } catch (err) {
+                msgDiv.classList.remove('hidden');
+                msgDiv.style.backgroundColor = 'rgba(255, 107, 107, 0.1)';
+                msgDiv.style.color = '#ff6b6b';
+                msgDiv.style.border = '1px solid rgba(255, 107, 107, 0.3)';
+                msgDiv.innerText = err.message;
+            } finally {
+                btn.innerHTML = '<i class="ph ph-plus"></i> Tambah Member';
+                btn.disabled = false;
+            }
         });
     }
 
@@ -952,10 +1045,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     btnProceedToChapters.addEventListener('click', () => {
-        if(!window.currentOutlineData) return alert('Please generate an outline first.');
+        if(!window.currentOutlineData || !Array.isArray(window.currentOutlineData.outline) || window.currentOutlineData.outline.length === 0) {
+            alert('Kerangka (Daftar Isi) tidak ditemukan atau kosong!\\n\\nSilakan isi Form AI untuk membuat ulang Kerangka Ebook Anda sebelum menulis bab.');
+            
+            // Redirect to Generator View
+            if (typeof hideAllViews === 'function') hideAllViews();
+            const gView = document.getElementById('generatorView');
+            if (gView) gView.classList.remove('hidden');
+            
+            return;
+        }
         
         // Freemium Block
-        if (window.userProfile && ['free', 'personal'].includes(window.userProfile.role)) {
+        if (window.userProfile && window.userProfile.role === 'free') {
             alert('Akses Premium Diperlukan!\\n\\nSebagai Free Member, Anda hanya bisa membuat Kerangka (Daftar Isi).\\nSilakan klik "Simpan Konsep eBook" lalu Upgrade lisensi Anda untuk meng-unlock fitur Penulisan Bab Otomatis, Desain Sampul, dan Ekspor PDF!');
             return;
         }
@@ -1275,7 +1377,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 // Set up Title based on Template
-                const titleText = new fabric.Textbox(outline.title, {
+                const titleText = new fabric.Textbox(outline.title || 'Untitled Ebook', {
                     left: 50,
                     top: 240,
                     width: 495,
@@ -1289,7 +1391,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 titleText.setControlsVisibility({ mt: false, mb: false });
 
                 // Set up Subtitle based on Template
-                const subtitleText = new fabric.Textbox(outline.subtitle, {
+                const subtitleText = new fabric.Textbox(outline.subtitle || '', {
                     left: 70,
                     top: 240 + titleText.getScaledHeight() + 30, // Position dynamically below title
                     width: 455,

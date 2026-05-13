@@ -54,7 +54,7 @@ app.post('/api/auth/login', async (req, res) => {
 
 // 2. Register
 app.post('/api/auth/register', async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password, role, ref } = req.body;
     if (!supabase) return res.status(500).json({ error: 'Supabase Database is not connected yet.' });
 
     try {
@@ -65,6 +65,20 @@ app.post('/api/auth/register', async (req, res) => {
             }
             throw error;
         }
+
+        if (data.user) {
+            const profileData = {
+                id: data.user.id,
+                role: role || 'free',
+                quota_agency: 0,
+                quota_personal: 0
+            };
+            if (ref) profileData.parent_id = ref;
+            
+            const { error: profileError } = await supabase.from('user_profiles').upsert(profileData);
+            if (profileError) console.error("Failed to insert profile on register:", profileError.message);
+        }
+
         res.json({ 
             success: true, 
             message: 'Registrasi berhasil! Silakan Login.', 
@@ -116,16 +130,16 @@ app.get('/api/user/profile', async (req, res) => {
         let finalProfile = profile;
 
         if (profileError || !profile) {
-            // Jika belum ada profil (baru daftar), buatkan profil bawaan (personal)
-            finalProfile = { role: 'personal', quota_agency: 0, quota_personal: 0 };
+            // Jika belum ada profil (baru daftar), buatkan profil bawaan (free)
+            finalProfile = { role: 'free', quota_agency: 0, quota_personal: 0 };
             
-            // Simpan profil personal ke database secara asinkron
+            // Simpan profil free ke database secara asinkron
             userSupabase.from('user_profiles').upsert({
                 id: user.id,
-                role: 'personal',
+                role: 'free',
                 quota_agency: 0,
                 quota_personal: 0
-            }).then();
+            }).then().catch(e => console.error("Error saving profile:", e));
         }
 
         res.json({ success: true, profile: finalProfile });

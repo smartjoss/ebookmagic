@@ -117,6 +117,11 @@
                     <i class="ph ph-users-three"></i>
                     <span>Manajemen Klien</span>
                 </a>
+
+                <a href="#" class="nav-item" id="navAffiliate">
+                    <i class="ph ph-link"></i>
+                    <span>Affiliasi & Undang</span>
+                </a>
             </nav>
 
             <div class="sidebar-footer">
@@ -298,6 +303,43 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Affiliate View (Hidden by default) -->
+            <div class="affiliate-content hidden" id="affiliateView" style="padding: 0 40px 40px;">
+                <div class="generator-header" style="margin-bottom: 20px;">
+                    <h2>Affiliasi & Undang Member</h2>
+                    <p style="color: var(--text-secondary);">Undang teman atau tambahkan member gratis ke sistem.</p>
+                </div>
+                
+                <div class="glass" style="padding: 24px; border-radius: 12px; margin-bottom: 30px;">
+                    <h3 style="margin-bottom: 16px;">Link Affiliasi Anda</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 10px;">Gunakan link ini untuk mengundang orang lain mendaftar.</p>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="affiliateLinkInput" readonly style="flex: 1; padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white;">
+                        <button class="btn-primary" id="btnCopyAffiliateLink" style="padding: 0 20px;"><i class="ph ph-copy"></i> Salin Link</button>
+                    </div>
+                </div>
+
+                <div class="glass" style="padding: 24px; border-radius: 12px;">
+                    <h3 style="margin-bottom: 16px;">Tambah Member Gratis (Free Member)</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">Daftarkan member baru secara manual dengan akses gratis.</p>
+                    <form id="formCreateFreeMember" style="display: flex; gap: 15px; align-items: flex-end;">
+                        <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                            <label>Email Member</label>
+                            <input type="email" id="freeMemberEmail" required placeholder="email@domain.com">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                            <label>Password</label>
+                            <input type="password" id="freeMemberPassword" required minlength="6" placeholder="Minimal 6 karakter">
+                        </div>
+                        <button type="submit" class="btn-primary" id="btnCreateFreeMember" style="padding: 16px 24px; height: 55px;">
+                            <i class="ph ph-plus"></i> Tambah Member
+                        </button>
+                    </form>
+                    <div id="freeMemberMessage" style="margin-top: 15px; padding: 10px; border-radius: 6px;" class="hidden"></div>
+                </div>
+            </div>
+
 
             <!-- AI Generator View (Hidden by default) -->
             <div class="generator-content hidden" id="generatorView">
