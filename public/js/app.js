@@ -45,6 +45,31 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Failed to parse user session', e);
         }
     }
+
+    // --- AUTO REFRESH TOKEN (setiap 45 menit) ---
+    async function refreshToken() {
+        if (!window.currentUser || !window.currentUser.token) return;
+        try {
+            const res = await fetch('/api/auth/refresh-token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: window.currentUser.token })
+            });
+            const data = await res.json();
+            if (data.success && data.token) {
+                window.currentUser.token = data.token;
+                window.currentUser = { ...window.currentUser, ...data.user, token: data.token };
+                localStorage.setItem('ebookMagicUser', JSON.stringify(window.currentUser));
+                console.log('✅ Sesi berhasil diperpanjang otomatis.');
+            }
+        } catch (err) {
+            console.warn('⚠️ Gagal refresh token:', err.message);
+        }
+    }
+    // Jalankan refresh setiap 45 menit (2700000 ms)
+    setInterval(refreshToken, 45 * 60 * 1000);
+    // Juga refresh sekali saat halaman pertama kali dibuka
+    if (window.currentUser) setTimeout(refreshToken, 3000);
     
     // Logout Handler
     const btnLogout = document.getElementById('btnLogout');

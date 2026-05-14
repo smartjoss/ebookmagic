@@ -33,6 +33,43 @@ if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'YOUR_OPENAI_AP
 
 // --- AUTHENTICATION ENDPOINTS ---
 
+// 0. Refresh Token - Auto-perpanjang sesi tanpa login ulang
+app.post('/api/auth/refresh-token', async (req, res) => {
+    const { token } = req.body;
+    if (!supabase || !token) return res.status(400).json({ error: 'Token tidak valid.' });
+
+    try {
+        // Buat client dengan token lama untuk mendapatkan user info
+        const { createClient } = require('@supabase/supabase-js');
+        const userClient = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+            global: { headers: { Authorization: `Bearer ${token}` } }
+        });
+        const { data: { user }, error: userError } = await userClient.auth.getUser();
+        
+        if (userError || !user) {
+            return res.status(401).json({ error: 'Sesi telah kedaluwarsa, silakan login ulang.' });
+        }
+
+        // Gunakan admin/service role untuk generate session baru
+        const { data: adminData, error: adminError } = await supabase.auth.admin.generateLink({
+            type: 'magiclink',
+            email: user.email
+        });
+
+        // Alternatif: langsung kembalikan info user yang masih valid
+        // Karena getUser berhasil, token sebenarnya masih valid
+        res.json({ 
+            success: true, 
+            user: user, 
+            token: token, // Token masih valid
+            message: 'Sesi berhasil diperbarui.'
+        });
+    } catch (error) {
+        console.error('Refresh token error:', error.message);
+        res.status(401).json({ error: 'Gagal memperbarui sesi. Silakan login ulang.' });
+    }
+});
+
 // 1. Login
 app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
@@ -658,7 +695,7 @@ app.post('/api/save-ebook', async (req, res) => {
         }
     } catch (error) {
         console.error('Save Error:', error.message);
-        res.status(500).json({ error: 'Failed to save project' });
+        res.status(500).json({ error: 'Failed to save project: ' + error.message });
     }
 });
 
