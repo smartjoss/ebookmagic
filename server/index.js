@@ -492,7 +492,7 @@ app.post('/api/generate-outline', async (req, res) => {
 
 // API Endpoint for generating chapter content
 app.post('/api/generate-chapter', async (req, res) => {
-    const { chapterTitle, niche, audience, type, tone, apiKey } = req.body;
+    const { chapterTitle, niche, audience, type, tone, apiKey, authorProfile, cta } = req.body;
 
     const isGemini = apiKey && apiKey.startsWith('AIza');
 
@@ -531,6 +531,9 @@ app.post('/api/generate-chapter', async (req, res) => {
         Target Pembaca: ${audience}
         Judul Bab: "${chapterTitle}"
         
+        ${authorProfile ? `Profil Penulis (Sebagai Konteks): ${authorProfile}\n        (PENTING: Jika bab ini berjudul 'Tentang Penulis' atau mirip, ceritakan profil ini dengan menarik. Jika bukan, jadikan ini sebagai konteks bahwa penulis adalah ahli di bidang ini).` : ''}
+        ${cta ? `Call-to-Action / Penawaran Spesial: ${cta}\n        (PENTING: Jika bab ini adalah bab penutup atau tentang penawaran, WAJIB sertakan Call-to-Action ini dengan bahasa yang sangat persuasif di bagian akhir).` : ''}
+
         Persyaratan Utama (Wajib ditulis dalam BAHASA INDONESIA yang luwes):
         1. ${toneInstructions}
         2. Masukkan hook bercerita (storytelling) pendek di awal bab.
