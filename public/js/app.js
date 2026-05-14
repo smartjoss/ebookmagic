@@ -370,6 +370,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.currentAuthorProfile = ebook.canvas_data ? (ebook.canvas_data.authorProfile || '') : '';
                     window.currentCTA = ebook.canvas_data ? (ebook.canvas_data.cta || '') : '';
                     
+                    // Load Canvas Data BEFORE proceeding to chapters/editor
+                    let cData = ebook.canvas_data;
+                    if (typeof cData === 'string') {
+                        try { cData = JSON.parse(cData); } catch(e) {}
+                    }
+                    
+                    if(cData && Object.keys(cData).length > 0) {
+                        if (cData.pages) {
+                            canvasPages = cData.pages;
+                            currentCanvasPage = cData.currentPage || 0;
+                        } else {
+                            canvasPages = Array.isArray(cData) ? cData : [JSON.stringify(cData)];
+                            currentCanvasPage = 0;
+                        }
+                    } else {
+                        canvasPages = [];
+                        currentCanvasPage = 0;
+                    }
+
                     if (typeof hideAllViews === 'function') {
                         hideAllViews();
                     } else {
@@ -385,49 +404,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     } catch(err) {
                         console.error('Error during transition:', err);
-                    }
-                    
-                    // Load Canvas Data
-                    let cData = ebook.canvas_data;
-                    if (typeof cData === 'string') {
-                        try { cData = JSON.parse(cData); } catch(e) {}
-                    }
-                    
-                    if(cData && Object.keys(cData).length > 0) {
-                        if (cData.pages) {
-                            canvasPages = cData.pages;
-                            currentCanvasPage = cData.currentPage || 0;
-                            setTimeout(() => {
-                                canvas.loadFromJSON(canvasPages[currentCanvasPage], function() {
-                                    canvas.getObjects().forEach(obj => {
-                                        if (obj.type === 'textbox') {
-                                            obj.setControlsVisibility({ mt: false, mb: false });
-                                            if (typeof obj.initDimensions === 'function') obj.initDimensions();
-                                        }
-                                    });
-                                    canvas.renderAll();
-                                });
-                                updatePageIndicator();
-                            }, 100);
-                        } else {
-                            canvasPages = Array.isArray(cData) ? cData : [JSON.stringify(cData)];
-                            currentCanvasPage = 0;
-                            setTimeout(() => {
-                                canvas.loadFromJSON(canvasPages[0], function() {
-                                    canvas.getObjects().forEach(obj => {
-                                        if (obj.type === 'textbox') {
-                                            obj.setControlsVisibility({ mt: false, mb: false });
-                                            if (typeof obj.initDimensions === 'function') obj.initDimensions();
-                                        }
-                                    });
-                                    canvas.renderAll();
-                                });
-                                updatePageIndicator();
-                            }, 100);
-                        }
-                    } else {
-                        canvasPages = [];
-                        currentCanvasPage = 0;
                     }
                 };
 
@@ -506,9 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     navGenerator.addEventListener('click', (e) => {
         e.preventDefault();
-        setActiveNav(navGenerator);
-        hideAllViews();
-        generatorView.classList.remove('hidden');
+        btnCreateNew.click(); // Reset state and go to generator
     });
 
     const TEMPLATES_DATA = [
@@ -1313,11 +1287,22 @@ document.addEventListener('DOMContentLoaded', () => {
             // Global listener to fix non-breaking spaces and recalculate bounds when typing/pasting
             canvas.on('text:changed', function(e) {
                 if (e.target && e.target.type === 'textbox') {
-                    // Convert non-breaking spaces to normal spaces so wrapping works
                     let text = e.target.text || '';
-                    if (text.includes(String.fromCharCode(160))) {
-                        e.target.set('text', text.replace(new RegExp(String.fromCharCode(160), 'g'), ' '));
+                    
+                    // Convert non-breaking spaces and other invisible chars to normal spaces so wrapping works
+                    if (/[\u00A0\u200B\u202F\uFEFF]/.test(text)) {
+                        e.target.set('text', text.replace(/[\u00A0\u200B\u202F\uFEFF]/g, ' '));
                     }
+                    
+                    // Prevent textbox from expanding beyond canvas width due to long pasted words
+                    const maxWidth = canvas.getWidth() - e.target.left;
+                    if (e.target.width > maxWidth && maxWidth > 50) {
+                        e.target.set('width', maxWidth);
+                    } else if (e.target.width > canvas.getWidth()) {
+                        e.target.set('width', canvas.getWidth());
+                        e.target.set('left', 0);
+                    }
+
                     if (typeof e.target.initDimensions === 'function') {
                         e.target.initDimensions();
                     }
@@ -1357,77 +1342,79 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             canvas.on('selection:created', updateUIFromSelection);
             canvas.on('selection:updated', updateUIFromSelection);
+        } // End of if (!canvas)
 
-            if (canvasPages.length === 0) {
-                // Determine template and content
-                const template = window.selectedTemplateDetails || TEMPLATES_DATA[0];
-                const outline = window.currentOutlineData || { title: 'Judul Ebook Ajaib', subtitle: 'Deskripsi fantastis dari mahakarya Anda' };
-                
-                // Parse font family correctly for Fabric
-                const primaryFont = template.font.replace(/['"]/g, '').split(',')[0].trim();
+        if (canvasPages.length === 0) {
+            canvas.clear();
+            
+            // Determine template and content
+            const template = window.selectedTemplateDetails || TEMPLATES_DATA[0];
+            const outline = window.currentOutlineData || { title: 'Judul Ebook Ajaib', subtitle: 'Deskripsi fantastis dari mahakarya Anda' };
+            
+            // Parse font family correctly for Fabric
+            const primaryFont = template.font.replace(/['"]/g, '').split(',')[0].trim();
 
-                // Set canvas background
-                canvas.backgroundColor = template.bg;
+            // Set canvas background
+            canvas.backgroundColor = template.bg;
 
-                // Add decorative accent line
-                const shape = new fabric.Rect({
-                    left: 800/2 - 50,
-                    top: 200,
-                    width: 100,
-                    height: 6,
-                    fill: template.accent,
-                    rx: 3,
-                    ry: 3
-                });
+            // Add decorative accent line
+            const shape = new fabric.Rect({
+                left: 800/2 - 50,
+                top: 200,
+                width: 100,
+                height: 6,
+                fill: template.accent,
+                rx: 3,
+                ry: 3
+            });
 
-                // Set up Title based on Template
-                const titleText = new fabric.Textbox(outline.title || 'Untitled Ebook', {
-                    left: 50,
-                    top: 240,
-                    width: 495,
-                    fontSize: 42,
-                    fontFamily: primaryFont,
-                    fontWeight: 800,
-                    textAlign: 'center',
-                    fill: template.textColor,
-                    lineHeight: 1.2
-                });
-                titleText.setControlsVisibility({ mt: false, mb: false });
+            // Set up Title based on Template
+            const titleText = new fabric.Textbox(outline.title || 'Untitled Ebook', {
+                left: 50,
+                top: 240,
+                width: 495,
+                fontSize: 42,
+                fontFamily: primaryFont,
+                fontWeight: 800,
+                textAlign: 'center',
+                fill: template.textColor,
+                lineHeight: 1.2
+            });
+            titleText.setControlsVisibility({ mt: false, mb: false });
 
-                // Set up Subtitle based on Template
-                const subtitleText = new fabric.Textbox(outline.subtitle || '', {
-                    left: 70,
-                    top: 240 + titleText.getScaledHeight() + 30, // Position dynamically below title
-                    width: 455,
-                    fontSize: 18,
-                    fontFamily: primaryFont,
-                    textAlign: 'center',
-                    fill: template.textColor,
-                    opacity: 0.8,
-                    lineHeight: 1.5
-                });
-                subtitleText.setControlsVisibility({ mt: false, mb: false });
+            // Set up Subtitle based on Template
+            const subtitleText = new fabric.Textbox(outline.subtitle || '', {
+                left: 70,
+                top: 240 + titleText.getScaledHeight() + 30, // Position dynamically below title
+                width: 455,
+                fontSize: 18,
+                fontFamily: primaryFont,
+                textAlign: 'center',
+                fill: template.textColor,
+                opacity: 0.8,
+                lineHeight: 1.5
+            });
+            subtitleText.setControlsVisibility({ mt: false, mb: false });
 
-                // Add author placeholder at the bottom
-                const authorText = new fabric.Textbox('Penulis: ' + (window.currentUser?.user_metadata?.full_name || 'Nama Anda'), {
-                    left: 50,
-                    top: 750,
-                    width: 495,
-                    fontSize: 16,
-                    fontFamily: primaryFont,
-                    fontWeight: 'bold',
-                    textAlign: 'center',
-                    fill: template.accent
-                });
-                authorText.setControlsVisibility({ mt: false, mb: false });
+            // Add author placeholder at the bottom
+            const authorText = new fabric.Textbox('Penulis: ' + (window.currentUser?.user_metadata?.full_name || 'Nama Anda'), {
+                left: 50,
+                top: 750,
+                width: 495,
+                fontSize: 16,
+                fontFamily: primaryFont,
+                fontWeight: 'bold',
+                textAlign: 'center',
+                fill: template.accent
+            });
+            authorText.setControlsVisibility({ mt: false, mb: false });
 
-                canvas.add(shape, titleText, subtitleText, authorText);
-                canvasPages.push(JSON.stringify(canvas.toJSON()));
-                currentCanvasPage = 0;
-                updatePageIndicator();
-            } else {
-                loadPage(currentCanvasPage);
-            }
+            canvas.add(shape, titleText, subtitleText, authorText);
+            canvasPages.push(JSON.stringify(canvas.toJSON()));
+            currentCanvasPage = 0;
+            updatePageIndicator();
+        } else {
+            loadPage(currentCanvasPage);
         }
     }
 
@@ -1457,6 +1444,69 @@ document.addEventListener('DOMContentLoaded', () => {
         canvas.add(text);
         canvas.setActiveObject(text);
     });
+
+    // Toggle Bold
+    const btnToggleBold = document.getElementById('btnToggleBold');
+    if(btnToggleBold) {
+        btnToggleBold.addEventListener('click', () => {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && activeObject.type === 'textbox') {
+                if (activeObject.isEditing) {
+                    const styles = activeObject.getSelectionStyles();
+                    const isBold = styles.some(s => s.fontWeight === 'bold' || s.fontWeight === 700 || s.fontWeight === 800);
+                    activeObject.setSelectionStyles({ fontWeight: isBold ? 'normal' : 'bold' });
+                } else {
+                    const isBold = activeObject.fontWeight === 'bold' || activeObject.fontWeight === 700 || activeObject.fontWeight === 800;
+                    activeObject.set('fontWeight', isBold ? 'normal' : 'bold');
+                }
+                canvas.renderAll();
+            }
+        });
+    }
+
+    // Toggle Italic
+    const btnToggleItalic = document.getElementById('btnToggleItalic');
+    if(btnToggleItalic) {
+        btnToggleItalic.addEventListener('click', () => {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && activeObject.type === 'textbox') {
+                if (activeObject.isEditing) {
+                    const styles = activeObject.getSelectionStyles();
+                    const isItalic = styles.some(s => s.fontStyle === 'italic');
+                    activeObject.setSelectionStyles({ fontStyle: isItalic ? 'normal' : 'italic' });
+                } else {
+                    const isItalic = activeObject.fontStyle === 'italic';
+                    activeObject.set('fontStyle', isItalic ? 'normal' : 'italic');
+                }
+                canvas.renderAll();
+            }
+        });
+    }
+
+    // Toggle Bullet Points
+    const btnToggleBullet = document.getElementById('btnToggleBullet');
+    if(btnToggleBullet) {
+        btnToggleBullet.addEventListener('click', () => {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && activeObject.type === 'textbox') {
+                let lines = activeObject.text.split('\n');
+                // Check if ALL non-empty lines have bullets
+                let hasBullets = lines.every(line => line.trim() === '' || line.trim().startsWith('•'));
+                
+                if (hasBullets) {
+                    // Remove bullets
+                    lines = lines.map(line => line.trim().startsWith('•') ? line.replace(/^(\s*)•\s*/, '$1') : line);
+                } else {
+                    // Add bullets
+                    lines = lines.map(line => (line.trim() !== '' && !line.trim().startsWith('•')) ? '• ' + line : line);
+                }
+                
+                activeObject.set('text', lines.join('\n'));
+                if (typeof activeObject.initDimensions === 'function') activeObject.initDimensions();
+                canvas.renderAll();
+            }
+        });
+    }
 
     ['Left', 'Center', 'Right'].forEach(align => {
         const btn = document.getElementById(`btnAlign${align}`);
@@ -1826,6 +1876,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (data.success && data.profile) {
                 window.userProfile = data.profile;
+                
+                const roleBadge = document.getElementById('userRoleBadge');
+                if (roleBadge) {
+                    let displayName = 'Member Gratis';
+                    const r = data.profile.role;
+                    if (r === 'owner') displayName = 'Owner / Admin';
+                    else if (r === 'super_agency') displayName = 'Super Agency';
+                    else if (r === 'agency') displayName = 'Agency VIP';
+                    else if (r === 'personal') displayName = 'Member VIP';
+                    
+                    roleBadge.innerText = displayName;
+                }
                 
                 // Hide Agency tab if NOT allowed (it is visible by default now)
                 const role = data.profile.role;

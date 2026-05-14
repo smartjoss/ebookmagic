@@ -375,7 +375,7 @@ app.post('/api/generate-titles', async (req, res) => {
         let data;
         if (isGemini) {
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
             const result = await model.generateContent(prompt);
             let text = result.response.text().replace(/```json/gi, '').replace(/```/g, '').trim();
             data = JSON.parse(text);
@@ -453,7 +453,7 @@ app.post('/api/generate-outline', async (req, res) => {
         let data;
         if (isGemini) {
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
             const result = await model.generateContent(prompt);
             let text = result.response.text();
             text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
@@ -543,7 +543,7 @@ app.post('/api/generate-chapter', async (req, res) => {
         let htmlContent;
         if (isGemini) {
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
             const result = await model.generateContent(prompt);
             htmlContent = result.response.text().replace(/```html/g, '').replace(/```/g, '').trim();
         } else {
@@ -580,15 +580,16 @@ app.post('/api/generate-image-prompt', async (req, res) => {
     try {
         const promptText = `
         Anda adalah seorang prompt engineer ahli untuk AI Image Generator (seperti Midjourney, DALL-E).
-        Buatlah 1 (satu) buah prompt gambar berbahasa Inggris yang sangat deskriptif dan detail untuk mengilustrasikan bab berjudul "${chapterTitle}" dari sebuah buku tentang "${niche}".
-        Prompt harus mencakup subjek utama, gaya visual (misal: photorealistic, 3d render, vector art), pencahayaan, dan resolusi.
+        Buatlah 1 (satu) buah prompt gambar berbahasa Inggris yang sangat deskriptif dan unik untuk mengilustrasikan ISI dari bab berjudul "${chapterTitle}". Buku ini secara umum membahas tentang "${niche}".
+        PENTING: Pastikan visual yang dihasilkan sangat spesifik dan mencerminkan tema dari judul bab "${chapterTitle}", BUKAN sekadar gambar umum tentang topik buku. Buat adegan atau objek utama yang berbeda-beda agar setiap bab memiliki ilustrasi unik.
+        Prompt harus mencakup subjek utama yang spesifik sesuai bab, aksi/situasi, latar belakang, gaya visual (misal: photorealistic, 3d render, vector art), pencahayaan, dan resolusi.
         Jangan tambahkan penjelasan apa pun. Cukup kembalikan teks prompt bahasa Inggrisnya saja.
         `;
 
         let resultPrompt;
         if (isGemini) {
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
             const result = await model.generateContent(promptText);
             resultPrompt = result.response.text().trim();
         } else {

@@ -139,7 +139,7 @@
                 <div class="user-profile">
                     <img src="https://ui-avatars.com/api/?name=User&background=6C63FF&color=fff" alt="User">
                     <div class="user-info" style="display: flex; flex-direction: column; gap: 2px;">
-                        <span class="name" style="font-size: 14px; font-weight: 600;">Anggota VIP</span>
+                        <span class="name" id="userRoleBadge" style="font-size: 14px; font-weight: 600;">Anggota VIP</span>
                         <a href="#" id="btnLogout" style="font-size: 12px; color: #ff6b6b; text-decoration: none; display: flex; align-items: center; gap: 4px;"><i class="ph ph-sign-out"></i> Keluar</a>
                     </div>
                 </div>
@@ -456,11 +456,11 @@
                             <div style="display:flex; gap:10px; align-items: center;">
                                 <button class="btn-ghost" id="btnGenerateImagePrompt" style="padding: 8px 15px; border: 1px solid var(--secondary); color: var(--secondary);"><i class="ph ph-image"></i> Prompt Gambar AI</button>
                                 <select id="chapterToneSelector" title="Gaya Bahasa AI" style="padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-size: 13px; outline: none;">
-                                    <option value="standar">Standar / Panduan</option>
-                                    <option value="humanizer">AI Humanizer (Santai)</option>
-                                    <option value="islamic">Islamic Copy Mode</option>
-                                    <option value="storytelling">Storytelling (Bercerita)</option>
-                                    <option value="wa_cta">Akhiri dgn WA CTA</option>
+                                    <option value="standar" style="color: black;">Standar / Panduan</option>
+                                    <option value="humanizer" style="color: black;">AI Humanizer (Santai)</option>
+                                    <option value="islamic" style="color: black;">Islamic Copy Mode</option>
+                                    <option value="storytelling" style="color: black;">Storytelling (Bercerita)</option>
+                                    <option value="wa_cta" style="color: black;">Akhiri dgn WA CTA</option>
                                 </select>
                                 <button class="btn-primary" id="btnGenerateChapterContent"><i class="ph ph-sparkle"></i> Tulis Konten (AI)</button>
                             </div>
@@ -502,6 +502,9 @@
                         </select>
                         <div style="width: 1px; height: 24px; background: rgba(0,0,0,0.1); margin: 0 5px;"></div>
                         <button class="btn-icon" id="btnAddText" title="Tambah Teks"><i class="ph ph-text-t"></i></button>
+                        <button class="btn-icon" id="btnToggleBold" title="Tebalkan Teks (Bold)"><i class="ph ph-text-b"></i></button>
+                        <button class="btn-icon" id="btnToggleItalic" title="Miringkan Teks (Italic)"><i class="ph ph-text-italic"></i></button>
+                        <button class="btn-icon" id="btnToggleBullet" title="Tambah Bullet Poin"><i class="ph ph-list-bullets"></i></button>
                         <label for="imageUploadInput" class="btn-icon" title="Unggah Gambar" style="cursor: pointer; display: flex; align-items: center; justify-content: center; margin: 0;"><i class="ph ph-image"></i></label>
                         <input type="file" id="imageUploadInput" accept="image/*" class="hidden">
                         <button class="btn-icon" id="btnAddRect" title="Tambah Kotak"><i class="ph ph-square"></i></button>
