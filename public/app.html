@@ -482,16 +482,26 @@
 
             <!-- Editor View (Hidden by default) -->
             <div class="editor-content hidden" id="editorView">
-                <div class="editor-header">
-                    <button class="btn-ghost" id="btnBackToDashboard"><i class="ph ph-arrow-left"></i> Beranda</button>
-                    <div class="editor-tools">
-                        <select id="textStyleSelector" style="padding: 4px; border-radius: 4px; border: 1px solid #ddd; font-size: 12px; cursor: pointer; max-width: 100px;">
+                <div class="editor-header" style="flex-direction: column; gap: 12px; align-items: stretch;">
+                    <!-- Row 1: Navigation + Export Actions -->
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <button class="btn-ghost" id="btnBackToDashboard"><i class="ph ph-arrow-left"></i> Beranda</button>
+                        <div class="editor-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button class="btn-primary" id="btnSaveProject" style="background: var(--secondary); padding: 8px 16px; font-size: 13px;"><i class="ph ph-floppy-disk"></i> Simpan</button>
+                            <button class="btn-primary" id="btnExportPDF" style="padding: 8px 16px; font-size: 13px;"><i class="ph ph-file-pdf"></i> PDF</button>
+                            <button class="btn-primary" id="btnExportDOCX" style="background: #2b579a; padding: 8px 16px; font-size: 13px;"><i class="ph ph-file-doc"></i> Word</button>
+                            <button class="btn-primary" id="btnExportPNG" style="background: #10b981; padding: 8px 16px; font-size: 13px;"><i class="ph ph-image"></i> PNG</button>
+                        </div>
+                    </div>
+                    <!-- Row 2: Canvas Tools -->
+                    <div class="editor-tools" style="flex-wrap: wrap; gap: 6px; justify-content: center; border-top: 1px solid var(--border); padding-top: 12px;">
+                        <select id="textStyleSelector" style="padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); font-size: 12px; cursor: pointer; background: var(--surface); color: var(--text-primary); max-width: 90px;">
                             <option value="normal">Normal</option>
                             <option value="h1">Heading 1</option>
                             <option value="h2">Heading 2</option>
                             <option value="h3">Heading 3</option>
                         </select>
-                        <select id="fontFamilySelector" style="padding: 4px; border-radius: 4px; border: 1px solid #ddd; font-size: 12px; cursor: pointer; max-width: 120px;">
+                        <select id="fontFamilySelector" style="padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); font-size: 12px; cursor: pointer; background: var(--surface); color: var(--text-primary); max-width: 110px;">
                             <option value="Inter">Inter</option>
                             <option value="Outfit">Outfit</option>
                             <option value="Roboto">Roboto</option>
@@ -500,28 +510,23 @@
                             <option value="sans-serif">Sans-Serif</option>
                             <option value="serif">Serif</option>
                         </select>
-                        <div style="width: 1px; height: 24px; background: rgba(0,0,0,0.1); margin: 0 5px;"></div>
-                        <button class="btn-icon" id="btnAddText" title="Tambah Teks"><i class="ph ph-text-t"></i></button>
-                        <button class="btn-icon" id="btnToggleBold" title="Tebalkan Teks (Bold)"><i class="ph ph-text-b"></i></button>
-                        <button class="btn-icon" id="btnToggleItalic" title="Miringkan Teks (Italic)"><i class="ph ph-text-italic"></i></button>
-                        <button class="btn-icon" id="btnToggleBullet" title="Tambah Bullet Poin"><i class="ph ph-list-bullets"></i></button>
-                        <label for="imageUploadInput" class="btn-icon" title="Unggah Gambar" style="cursor: pointer; display: flex; align-items: center; justify-content: center; margin: 0;"><i class="ph ph-image"></i></label>
+                        <div style="width: 1px; height: 24px; background: var(--border); margin: 0 2px;"></div>
+                        <button class="btn-icon" id="btnAddText" title="Tambah Teks" style="width: 34px; height: 34px;"><i class="ph ph-text-t"></i></button>
+                        <button class="btn-icon" id="btnToggleBold" title="Tebalkan (Bold)" style="width: 34px; height: 34px;"><i class="ph ph-text-b"></i></button>
+                        <button class="btn-icon" id="btnToggleItalic" title="Miringkan (Italic)" style="width: 34px; height: 34px;"><i class="ph ph-text-italic"></i></button>
+                        <button class="btn-icon" id="btnToggleBullet" title="Bullet Poin" style="width: 34px; height: 34px;"><i class="ph ph-list-bullets"></i></button>
+                        <label for="imageUploadInput" class="btn-icon" title="Unggah Gambar" style="cursor: pointer; display: flex; align-items: center; justify-content: center; margin: 0; width: 34px; height: 34px;"><i class="ph ph-image"></i></label>
                         <input type="file" id="imageUploadInput" accept="image/*" class="hidden">
-                        <button class="btn-icon" id="btnAddRect" title="Tambah Kotak"><i class="ph ph-square"></i></button>
-                        <button class="btn-icon" id="btnDeleteObj" title="Hapus yang Dipilih"><i class="ph ph-trash"></i></button>
-                        <div style="width: 1px; height: 24px; background: rgba(0,0,0,0.1); margin: 0 5px;"></div>
-                        <button class="btn-icon" id="btnAlignLeft" title="Rata Kiri"><i class="ph ph-text-align-left"></i></button>
-                        <button class="btn-icon" id="btnAlignCenter" title="Rata Tengah"><i class="ph ph-text-align-center"></i></button>
-                        <button class="btn-icon" id="btnAlignRight" title="Rata Kanan"><i class="ph ph-text-align-right"></i></button>
-                        <div style="width: 1px; height: 24px; background: rgba(0,0,0,0.1); margin: 0 5px;"></div>
-                        <button class="btn-icon" id="btnFullWidth" title="Atur Layar Penuh (Hilangkan Margin)" style="color: var(--primary);"><i class="ph ph-arrows-out-line-horizontal"></i> Atur Layar</button>
-                        <input type="color" id="colorPicker" value="#000000" title="Ubah Warna">
-                    </div>
-                    <div class="editor-actions">
-                        <button class="btn-primary" id="btnSaveProject" style="background: var(--secondary);"><i class="ph ph-floppy-disk"></i> Simpan Proyek</button>
-                        <button class="btn-primary" id="btnExportPDF"><i class="ph ph-file-pdf"></i> PDF</button>
-                        <button class="btn-primary" id="btnExportDOCX" style="background: #2b579a;"><i class="ph ph-file-doc"></i> Word</button>
-                        <button class="btn-primary" id="btnExportPNG" style="background: #10b981;"><i class="ph ph-image"></i> PNG</button>
+                        <button class="btn-icon" id="btnInsertLink" title="Sisipkan Link" style="width: 34px; height: 34px;"><i class="ph ph-link"></i></button>
+                        <button class="btn-icon" id="btnAddRect" title="Tambah Kotak" style="width: 34px; height: 34px;"><i class="ph ph-square"></i></button>
+                        <button class="btn-icon" id="btnDeleteObj" title="Hapus" style="width: 34px; height: 34px; color: #ff6b6b;"><i class="ph ph-trash"></i></button>
+                        <div style="width: 1px; height: 24px; background: var(--border); margin: 0 2px;"></div>
+                        <button class="btn-icon" id="btnAlignLeft" title="Rata Kiri" style="width: 34px; height: 34px;"><i class="ph ph-text-align-left"></i></button>
+                        <button class="btn-icon" id="btnAlignCenter" title="Rata Tengah" style="width: 34px; height: 34px;"><i class="ph ph-text-align-center"></i></button>
+                        <button class="btn-icon" id="btnAlignRight" title="Rata Kanan" style="width: 34px; height: 34px;"><i class="ph ph-text-align-right"></i></button>
+                        <div style="width: 1px; height: 24px; background: var(--border); margin: 0 2px;"></div>
+                        <button class="btn-icon" id="btnFullWidth" title="Atur Layar Penuh" style="width: auto; height: 34px; padding: 0 10px; border-radius: 8px; font-size: 11px; color: var(--primary);"><i class="ph ph-arrows-out-line-horizontal"></i> Layar</button>
+                        <input type="color" id="colorPicker" value="#000000" title="Ubah Warna" style="width: 34px; height: 34px; border: none; border-radius: 6px; cursor: pointer; background: transparent;">
                     </div>
                 </div>
                 

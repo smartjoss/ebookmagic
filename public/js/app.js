@@ -1614,6 +1614,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Insert Link into Canvas
+    document.getElementById('btnInsertLink').addEventListener('click', () => {
+        const url = prompt('Masukkan URL link:', 'https://');
+        if (!url || url === 'https://') return;
+        
+        const linkText = prompt('Teks yang ditampilkan:', url);
+        if (!linkText) return;
+
+        const linkObj = new fabric.Textbox(linkText, {
+            left: 50,
+            top: 200,
+            fontSize: 16,
+            fontFamily: 'Inter',
+            fill: '#6C63FF',
+            underline: true,
+            width: 700,
+            editable: true,
+            linkUrl: url // simpan URL sebagai metadata
+        });
+        canvas.add(linkObj);
+        canvas.setActiveObject(linkObj);
+        canvas.renderAll();
+    });
+
     document.getElementById('btnAddRect').addEventListener('click', () => {
         const rect = new fabric.Rect({
             left: 100,
