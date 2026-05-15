@@ -35,33 +35,21 @@ if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'YOUR_OPENAI_AP
 
 // 0. Refresh Token - Auto-perpanjang sesi tanpa login ulang
 app.post('/api/auth/refresh-token', async (req, res) => {
-    const { token } = req.body;
-    if (!supabase || !token) return res.status(400).json({ error: 'Token tidak valid.' });
+    const { refresh_token } = req.body;
+    if (!supabase || !refresh_token) return res.status(400).json({ error: 'Token tidak valid.' });
 
     try {
-        // Buat client dengan token lama untuk mendapatkan user info
-        const { createClient } = require('@supabase/supabase-js');
-        const userClient = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
-            global: { headers: { Authorization: `Bearer ${token}` } }
-        });
-        const { data: { user }, error: userError } = await userClient.auth.getUser();
-        
-        if (userError || !user) {
+        const { data, error } = await supabase.auth.refreshSession({ refresh_token });
+
+        if (error || !data.session) {
             return res.status(401).json({ error: 'Sesi telah kedaluwarsa, silakan login ulang.' });
         }
 
-        // Gunakan admin/service role untuk generate session baru
-        const { data: adminData, error: adminError } = await supabase.auth.admin.generateLink({
-            type: 'magiclink',
-            email: user.email
-        });
-
-        // Alternatif: langsung kembalikan info user yang masih valid
-        // Karena getUser berhasil, token sebenarnya masih valid
         res.json({ 
             success: true, 
-            user: user, 
-            token: token, // Token masih valid
+            user: data.user, 
+            token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
             message: 'Sesi berhasil diperbarui.'
         });
     } catch (error) {
@@ -83,7 +71,7 @@ app.post('/api/auth/login', async (req, res) => {
              }
              throw error;
         }
-        res.json({ success: true, message: 'Login successful!', user: data.user, token: data.session.access_token });
+        res.json({ success: true, message: 'Login successful!', user: data.user, token: data.session.access_token, refresh_token: data.session.refresh_token });
     } catch (error) {
         res.status(400).json({ success: false, error: error.message });
     }
@@ -106,6 +94,7 @@ app.post('/api/auth/register', async (req, res) => {
         if (data.user) {
             const profileData = {
                 id: data.user.id,
+                email: email,
                 role: role || 'free',
                 quota_agency: 0,
                 quota_personal: 0
@@ -236,14 +225,28 @@ app.post('/api/agency/create-user', async (req, res) => {
         const { data: { user }, error: userError } = await userSupabase.auth.getUser();
         if (userError) throw userError;
 
-        // We use a fresh client without persisting session to create the target user
-        const adminSupabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
-            auth: { persistSession: false }
-        });
-
-        const { data: newUserData, error: signUpError } = await adminSupabase.auth.signUp({ email, password });
-        if (signUpError) throw signUpError;
-        if (!newUserData.user) throw new Error('Failed to create user. Email might be taken.');
+        // Use SERVICE_ROLE_KEY for reliable user creation without affecting active sessions
+        let newUserData;
+        if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+            const adminSupabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+            const { data: adminData, error: createError } = await adminSupabase.auth.admin.createUser({
+                email, password, email_confirm: true
+            });
+            if (createError) throw createError;
+            if (!adminData.user) throw new Error('Failed to create user. Email might be taken.');
+            newUserData = { user: adminData.user };
+            // Store email in user_profiles
+            await adminSupabase.from('user_profiles').update({ email }).eq('id', adminData.user.id);
+        } else {
+            // Fallback: use anon key signUp (may trigger confirmation email)
+            const anonSupabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+                auth: { persistSession: false }
+            });
+            const { data: signUpData, error: signUpError } = await anonSupabase.auth.signUp({ email, password });
+            if (signUpError) throw signUpError;
+            if (!signUpData.user) throw new Error('Failed to create user. Email might be taken.');
+            newUserData = signUpData;
+        }
 
         const cost_agency = newRole === 'agency' ? 1 : 0;
         const cost_personal = newRole === 'personal' ? 1 : 0;

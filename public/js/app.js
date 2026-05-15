@@ -48,19 +48,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- AUTO REFRESH TOKEN (setiap 45 menit) ---
     async function refreshToken() {
-        if (!window.currentUser || !window.currentUser.token) return;
+        if (!window.currentUser || !window.currentUser.refresh_token) return;
         try {
             const res = await fetch('/api/auth/refresh-token', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: window.currentUser.token })
+                body: JSON.stringify({ refresh_token: window.currentUser.refresh_token })
             });
             const data = await res.json();
             if (data.success && data.token) {
                 window.currentUser.token = data.token;
-                window.currentUser = { ...window.currentUser, ...data.user, token: data.token };
+                window.currentUser.refresh_token = data.refresh_token;
+                window.currentUser = { ...window.currentUser, ...data.user, token: data.token, refresh_token: data.refresh_token };
                 localStorage.setItem('ebookMagicUser', JSON.stringify(window.currentUser));
                 console.log('✅ Sesi berhasil diperpanjang otomatis.');
+            } else {
+                console.warn('⚠️ Refresh token expired. Memaksa login ulang.');
+                localStorage.removeItem('ebookMagicUser');
+                window.location.reload();
             }
         } catch (err) {
             console.warn('⚠️ Gagal refresh token:', err.message);
@@ -188,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (data.success) {
                 showMessage(data.message);
-                window.currentUser = { ...data.user, token: data.token }; 
+                window.currentUser = { ...data.user, token: data.token, refresh_token: data.refresh_token }; 
                 localStorage.setItem('ebookMagicUser', JSON.stringify(window.currentUser)); // Persist session
                 fetchUserProfile();
                 loadProjects(); 
@@ -392,8 +397,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.currentOutlineData = { title: ebook.title || 'Untitled Ebook', subtitle: ebook.niche || '', outline: parsedOutline };
                     window.currentNiche = ebook.niche;
                     window.chaptersContent = parsedChapters || {};
-                    window.currentAuthorProfile = ebook.canvas_data ? (ebook.canvas_data.authorProfile || '') : '';
-                    window.currentCTA = ebook.canvas_data ? (ebook.canvas_data.cta || '') : '';
+                    window.currentAudience = (canvasDataObj && canvasDataObj.audience) || ebook.niche || '';
+                    window.currentEbookType = (canvasDataObj && canvasDataObj.ebookType) || 'praktis';
+                    window.currentAuthorProfile = (canvasDataObj && canvasDataObj.authorProfile) || '';
+                    window.currentCTA = (canvasDataObj && canvasDataObj.cta) || '';
                     
                     // Load Canvas Data BEFORE proceeding to chapters/editor
                     let cData = ebook.canvas_data;
@@ -487,6 +494,27 @@ document.addEventListener('DOMContentLoaded', () => {
         if(agencyView) agencyView.classList.add('hidden');
         const affiliateView = document.getElementById('affiliateView');
         if(affiliateView) affiliateView.classList.add('hidden');
+    }
+
+    // --- SEARCH BAR LOGIC ---
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            // Navigate to My Ebooks view if not already there
+            if (query.length > 0 && myEbooksView && myEbooksView.classList.contains('hidden')) {
+                navMyEbooks.click();
+            }
+            // Filter project cards
+            const cards = document.querySelectorAll('#projectsGrid .project-card');
+            cards.forEach(card => {
+                const title = card.querySelector('.project-info h4');
+                if (title) {
+                    const match = title.textContent.toLowerCase().includes(query);
+                    card.style.display = (query.length === 0 || match) ? '' : 'none';
+                }
+            });
+        });
     }
 
     navDashboard.addEventListener('click', (e) => {
@@ -999,7 +1027,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let quill;
     let activeChapterElement = null;
-    window.chaptersContent = {}; // Store all written chapters
+    if (!window.chaptersContent) window.chaptersContent = {}; // Initialize only if not already set from loaded project
 
     if (btnSaveOutlineOnly) {
         btnSaveOutlineOnly.addEventListener('click', async () => {
@@ -1045,7 +1073,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnProceedToChapters.addEventListener('click', () => {
         if(!window.currentOutlineData || !Array.isArray(window.currentOutlineData.outline) || window.currentOutlineData.outline.length === 0) {
-            alert('Kerangka (Daftar Isi) tidak ditemukan atau kosong!\\n\\nSilakan isi Form AI untuk membuat ulang Kerangka Ebook Anda sebelum menulis bab.');
+            alert('Kerangka (Daftar Isi) tidak ditemukan atau kosong!\n\nSilakan isi Form AI untuk membuat ulang Kerangka Ebook Anda sebelum menulis bab.');
             
             // Redirect to Generator View
             if (typeof hideAllViews === 'function') hideAllViews();
@@ -1057,7 +1085,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Freemium Block
         if (window.userProfile && window.userProfile.role === 'free') {
-            alert('Akses Premium Diperlukan!\\n\\nSebagai Free Member, Anda hanya bisa membuat Kerangka (Daftar Isi).\\nSilakan klik "Simpan Konsep eBook" lalu Upgrade lisensi Anda untuk meng-unlock fitur Penulisan Bab Otomatis, Desain Sampul, dan Ekspor PDF!');
+            alert('Akses Premium Diperlukan!\n\nSebagai Free Member, Anda hanya bisa membuat Kerangka (Daftar Isi).\nSilakan klik "Simpan Konsep eBook" lalu Upgrade lisensi Anda untuk meng-unlock fitur Penulisan Bab Otomatis, Desain Sampul, dan Ekspor PDF!');
             return;
         }
         
@@ -1169,6 +1197,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Insert HTML into Quill
             quill.clipboard.dangerouslyPasteHTML(data.content);
             window.chaptersContent[chapterTitle] = data.content; // Save to memory
+            
+            // Show the "Proceed to Editor" button once content is generated
+            if (btnProceedToEditor) btnProceedToEditor.classList.remove('hidden');
         } catch(error) {
             console.error(error);
             alert('Gagal: ' + error.message);
@@ -1452,6 +1483,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Editor Tools
     document.getElementById('btnAddText').addEventListener('click', () => {
+        if (!canvas) return alert('Canvas belum siap. Silakan buka editor terlebih dahulu.');
         const text = new fabric.Textbox('Ketik di sini...', {
             left: 0,
             top: 100,
@@ -1616,6 +1648,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Insert Link into Canvas
     document.getElementById('btnInsertLink').addEventListener('click', () => {
+        if (!canvas) return alert('Canvas belum siap.');
         const url = prompt('Masukkan URL link:', 'https://');
         if (!url || url === 'https://') return;
         
@@ -1639,6 +1672,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('btnAddRect').addEventListener('click', () => {
+        if (!canvas) return alert('Canvas belum siap.');
         const rect = new fabric.Rect({
             left: 100,
             top: 100,
@@ -1653,6 +1687,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('btnDeleteObj').addEventListener('click', () => {
+        if (!canvas) return;
         const activeObjects = canvas.getActiveObjects();
         if (activeObjects.length) {
             canvas.discardActiveObject();
@@ -1664,6 +1699,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update color of active object
     document.getElementById('colorPicker').addEventListener('input', (e) => {
+        if (!canvas) return;
         const activeObject = canvas.getActiveObject();
         if (activeObject) {
             if (activeObject.type === 'textbox') {
@@ -1848,6 +1884,119 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 100);
     });
 
+    // --- EXPORT DOCX (Word) ---
+    document.getElementById('btnExportDOCX').addEventListener('click', () => {
+        if (!canvas) return alert('Canvas belum siap.');
+        const btn = document.getElementById('btnExportDOCX');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Exporting...';
+        btn.disabled = true;
+
+        setTimeout(() => {
+            try {
+                // Save current chapter if editing
+                if (typeof activeChapterElement !== 'undefined' && activeChapterElement && typeof quill !== 'undefined') {
+                    window.chaptersContent[activeChapterElement.innerText] = quill.root.innerHTML;
+                }
+
+                let htmlBody = '';
+                const title = window.currentOutlineData ? window.currentOutlineData.title : 'Ebook';
+
+                // Add chapters content
+                if (window.currentOutlineData && window.currentOutlineData.outline) {
+                    window.currentOutlineData.outline.forEach(chapterTitle => {
+                        const content = window.chaptersContent[chapterTitle];
+                        if (content) {
+                            htmlBody += `<h2>${chapterTitle}</h2>${content}<br/><br/>`;
+                        }
+                    });
+                }
+
+                if (!htmlBody) {
+                    alert('Tidak ada konten bab untuk diekspor. Silakan tulis konten terlebih dahulu.');
+                    return;
+                }
+
+                const fullHtml = `
+                    <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                    <head><meta charset='utf-8'><title>${title}</title>
+                    <style>body{font-family:Calibri,sans-serif;font-size:12pt;line-height:1.6;margin:40px;} h2{color:#333;margin-top:30px;} h3{color:#555;} ul{margin-left:20px;} li{margin-bottom:5px;}</style>
+                    </head><body><h1>${title}</h1>${htmlBody}</body></html>`;
+
+                const blob = new Blob(['\ufeff', fullHtml], { type: 'application/msword' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = (title || 'Ebook') + '.doc';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                console.error(err);
+                alert('Gagal mengekspor Word: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }, 100);
+    });
+
+    // --- EXPORT PNG ---
+    document.getElementById('btnExportPNG').addEventListener('click', () => {
+        if (!canvas) return alert('Canvas belum siap.');
+        const btn = document.getElementById('btnExportPNG');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Exporting...';
+        btn.disabled = true;
+
+        setTimeout(() => {
+            try {
+                canvas.discardActiveObject();
+                saveCurrentPage();
+
+                const downloadPage = (jsonStr, pageNum) => {
+                    return new Promise(resolve => {
+                        canvas.loadFromJSON(jsonStr, () => {
+                            canvas.renderAll();
+                            const dataURL = canvas.toDataURL({ format: 'png', multiplier: 2 });
+                            const a = document.createElement('a');
+                            a.href = dataURL;
+                            a.download = `${window.currentNiche || 'Ebook'}_halaman_${pageNum}.png`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            resolve();
+                        });
+                    });
+                };
+
+                const exportAllPages = async () => {
+                    for (let i = 0; i < canvasPages.length; i++) {
+                        await downloadPage(canvasPages[i], i + 1);
+                    }
+                    // Restore current page
+                    loadPage(currentCanvasPage);
+                };
+
+                exportAllPages().then(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }).catch(err => {
+                    console.error(err);
+                    alert('Gagal mengekspor PNG: ' + err.message);
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                });
+            } catch (err) {
+                console.error(err);
+                alert('Gagal mengekspor PNG: ' + err.message);
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }, 100);
+    });
+
     // --- SAVE PROJECT LOGIC ---
     const btnSaveProject = document.getElementById('btnSaveProject');
     if(btnSaveProject) {
@@ -1886,7 +2035,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         currentPage: currentCanvasPage,
                         thumbnail: thumbnailBase64,
                         authorProfile: window.currentAuthorProfile || '',
-                        cta: window.currentCTA || ''
+                        cta: window.currentCTA || '',
+                        audience: window.currentAudience || '',
+                        ebookType: window.currentEbookType || 'praktis'
                     },
                     token: window.currentUser.token // Send token for RLS bypass
                 };

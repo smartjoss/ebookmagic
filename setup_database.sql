@@ -27,6 +27,10 @@ CREATE POLICY "Users can insert their own ebooks" ON ebooks
 CREATE POLICY "Users can update their own ebooks" ON ebooks
   FOR UPDATE USING (auth.uid() = user_id);
 
+-- Allow users to delete their own ebooks
+CREATE POLICY "Users can delete their own ebooks" ON ebooks
+  FOR DELETE USING (auth.uid() = user_id);
+
 -- ==========================================================
 -- AGENCY SYSTEM TABLES & FUNCTIONS
 -- ==========================================================
@@ -34,6 +38,7 @@ CREATE POLICY "Users can update their own ebooks" ON ebooks
 -- 1. Table user_profiles
 CREATE TABLE IF NOT EXISTS user_profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT,
   role TEXT NOT NULL DEFAULT 'free', -- 'owner', 'super_agency', 'agency', 'personal', 'free'
   parent_id UUID REFERENCES user_profiles(id) ON DELETE SET NULL,
   quota_agency INT DEFAULT 0,
