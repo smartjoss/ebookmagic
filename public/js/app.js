@@ -1700,6 +1700,56 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             canvas.on('selection:created', updateUIFromSelection);
             canvas.on('selection:updated', updateUIFromSelection);
+
+            // --- UNDO/REDO HISTORY SYSTEM ---
+            window._canvasHistory = [];
+            window._canvasHistoryIndex = -1;
+            window._canvasHistoryLocked = false;
+            const MAX_HISTORY = 30;
+
+            function saveCanvasState() {
+                if (window._canvasHistoryLocked) return;
+                // Remove any future states if we're in the middle of history
+                if (window._canvasHistoryIndex < window._canvasHistory.length - 1) {
+                    window._canvasHistory = window._canvasHistory.slice(0, window._canvasHistoryIndex + 1);
+                }
+                const state = JSON.stringify(canvas.toJSON());
+                window._canvasHistory.push(state);
+                // Limit history size
+                if (window._canvasHistory.length > MAX_HISTORY) {
+                    window._canvasHistory.shift();
+                }
+                window._canvasHistoryIndex = window._canvasHistory.length - 1;
+            }
+
+            window.canvasUndo = function() {
+                if (window._canvasHistoryIndex <= 0) return;
+                window._canvasHistoryLocked = true;
+                window._canvasHistoryIndex--;
+                canvas.loadFromJSON(window._canvasHistory[window._canvasHistoryIndex], function() {
+                    canvas.renderAll();
+                    window._canvasHistoryLocked = false;
+                });
+            };
+
+            window.canvasRedo = function() {
+                if (window._canvasHistoryIndex >= window._canvasHistory.length - 1) return;
+                window._canvasHistoryLocked = true;
+                window._canvasHistoryIndex++;
+                canvas.loadFromJSON(window._canvasHistory[window._canvasHistoryIndex], function() {
+                    canvas.renderAll();
+                    window._canvasHistoryLocked = false;
+                });
+            };
+
+            // Save state after every modification
+            canvas.on('object:modified', saveCanvasState);
+            canvas.on('object:added', saveCanvasState);
+            canvas.on('object:removed', saveCanvasState);
+
+            // Save initial state
+            setTimeout(saveCanvasState, 500);
+
         } // End of if (!canvas)
 
         if (canvasPages.length === 0) {
@@ -2001,6 +2051,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Undo/Redo Button Handlers
+    document.getElementById('btnUndo').addEventListener('click', () => {
+        if (typeof window.canvasUndo === 'function') window.canvasUndo();
+    });
+    document.getElementById('btnRedo').addEventListener('click', () => {
+        if (typeof window.canvasRedo === 'function') window.canvasRedo();
+    });
+
     // Update color of active object
     document.getElementById('colorPicker').addEventListener('input', (e) => {
         if (!canvas) return;
@@ -2044,11 +2102,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Keyboard controls for moving objects
+    // Keyboard controls for moving objects + Undo/Redo shortcuts
     window.addEventListener('keydown', (e) => {
         // Don't interfere if user is typing in an input or quill editor
         if(e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'textarea' || e.target.closest('.ql-editor') || e.target.tagName.toLowerCase() === 'select') return;
         
+        // Undo: Ctrl+Z
+        if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+            e.preventDefault();
+            if (typeof window.canvasUndo === 'function') window.canvasUndo();
+            return;
+        }
+        // Redo: Ctrl+Y or Ctrl+Shift+Z
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+            e.preventDefault();
+            if (typeof window.canvasRedo === 'function') window.canvasRedo();
+            return;
+        }
+
         const obj = canvas?.getActiveObject();
         if (!obj) return;
         
