@@ -23,6 +23,13 @@ if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY && process.env.SUP
     console.warn('⚠️ SUPABASE_URL or KEY is missing. Database features are disabled.');
 }
 
+// Initialize Admin Supabase Client (for privileged operations like deleting users)
+let adminSupabase = null;
+if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    adminSupabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    console.log('✅ Admin Supabase client initialized (Service Role)');
+}
+
 // Initialize OpenAI only if API key is provided
 let openai = null;
 if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'YOUR_OPENAI_API_KEY_HERE') {
@@ -121,10 +128,78 @@ app.post('/api/auth/reset-password', async (req, res) => {
     if (!supabase) return res.status(500).json({ error: 'Supabase Database is not connected yet.' });
 
     try {
-        const { error } = await supabase.auth.resetPasswordForEmail(email);
+        // Build the redirect URL dynamically based on the incoming request
+        const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+        const host = req.headers['x-forwarded-host'] || req.headers.host;
+        const redirectTo = `${protocol}://${host}/reset-password`;
+        
+        console.log('🔑 Reset password redirectTo:', redirectTo);
+
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: redirectTo
+        });
         if (error) throw error;
-        res.json({ success: true, message: 'Tautan reset password telah dikirim ke email Anda!' });
+        res.json({ success: true, message: 'Tautan reset password telah dikirim ke email Anda! Silakan cek inbox (atau folder Spam).' });
     } catch (error) {
+        res.status(400).json({ success: false, error: error.message });
+    }
+});
+
+// 3b. Update Password (after clicking reset link from email)
+app.post('/api/auth/update-password', async (req, res) => {
+    const { access_token, new_password } = req.body;
+    if (!supabase) return res.status(500).json({ error: 'Supabase Database is not connected yet.' });
+
+    if (!access_token || !new_password) {
+        return res.status(400).json({ error: 'Token dan password baru wajib diisi.' });
+    }
+
+    if (new_password.length < 6) {
+        return res.status(400).json({ error: 'Password baru minimal 6 karakter.' });
+    }
+
+    try {
+        // Create a Supabase client authenticated with the user's recovery token
+        const userSupabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+            global: { headers: { Authorization: `Bearer ${access_token}` } }
+        });
+
+        const { data, error } = await userSupabase.auth.updateUser({
+            password: new_password
+        });
+
+        if (error) throw error;
+
+        res.json({ success: true, message: 'Password berhasil diperbarui! Silakan login dengan password baru Anda.' });
+    } catch (error) {
+        console.error('Update password error:', error.message);
+        res.status(400).json({ success: false, error: error.message });
+    }
+});
+
+// 3c. Verify OTP / Token Hash (for PKCE flow recovery)
+app.post('/api/auth/verify-otp', async (req, res) => {
+    const { token_hash, type } = req.body;
+    if (!supabase) return res.status(500).json({ error: 'Supabase Database is not connected yet.' });
+
+    try {
+        const { data, error } = await supabase.auth.verifyOtp({
+            token_hash: token_hash,
+            type: type || 'recovery'
+        });
+
+        if (error) throw error;
+
+        if (data.session && data.session.access_token) {
+            res.json({ 
+                success: true, 
+                access_token: data.session.access_token 
+            });
+        } else {
+            throw new Error('Tidak dapat memverifikasi token. Tautan mungkin sudah kedaluwarsa.');
+        }
+    } catch (error) {
+        console.error('Verify OTP error:', error.message);
         res.status(400).json({ success: false, error: error.message });
     }
 });
@@ -361,12 +436,13 @@ app.delete('/api/agency/users/:id', async (req, res) => {
             if (authDeleteError) console.error("Warning: Failed to delete from auth:", authDeleteError);
         }
 
-        // Delete from user_profiles
-        const { error: deleteProfileError } = await userSupabase.from('user_profiles').delete().eq('id', targetUserId);
+        // Delete from user_profiles (use admin client to bypass RLS)
+        const deleteClient = adminSupabase || userSupabase;
+        const { error: deleteProfileError } = await deleteClient.from('user_profiles').delete().eq('id', targetUserId);
         if (deleteProfileError) throw deleteProfileError;
         
         // Also delete their ebooks
-        await userSupabase.from('ebooks').delete().eq('user_id', targetUserId);
+        await deleteClient.from('ebooks').delete().eq('user_id', targetUserId);
 
         res.json({ success: true, message: `Klien berhasil dihapus.` });
     } catch (error) {
@@ -377,7 +453,8 @@ app.delete('/api/agency/users/:id', async (req, res) => {
 // --- AI GENERATION ENDPOINTS ---
 
 app.post('/api/generate-titles', async (req, res) => {
-    const { niche, audience, apiKey } = req.body;
+    const { niche, audience } = req.body;
+    const apiKey = (req.body.apiKey || '').trim();
     const isGemini = apiKey && apiKey.startsWith('AIza');
 
     // Fallback Mock
@@ -437,8 +514,8 @@ app.post('/api/generate-titles', async (req, res) => {
 });
 
 app.post('/api/generate-outline', async (req, res) => {
-    const { niche, audience, type, apiKey, selectedTitle, selectedSubtitle, authorProfile, cta } = req.body;
-
+    const { niche, audience, type, selectedTitle, selectedSubtitle, authorProfile, cta } = req.body;
+    const apiKey = (req.body.apiKey || '').trim();
     const isGemini = apiKey && apiKey.startsWith('AIza');
 
     let babCountText = "4-6 Bab";
@@ -532,8 +609,8 @@ app.post('/api/generate-outline', async (req, res) => {
 
 // API Endpoint for generating chapter content
 app.post('/api/generate-chapter', async (req, res) => {
-    const { chapterTitle, niche, audience, type, tone, apiKey, authorProfile, cta } = req.body;
-
+    const { chapterTitle, niche, audience, type, tone, authorProfile, cta } = req.body;
+    const apiKey = (req.body.apiKey || '').trim();
     const isGemini = apiKey && apiKey.startsWith('AIza');
 
     if (!apiKey && !openai) {
@@ -608,8 +685,8 @@ app.post('/api/generate-chapter', async (req, res) => {
 
 // API Endpoint for generating image prompt
 app.post('/api/generate-image-prompt', async (req, res) => {
-    const { chapterTitle, niche, apiKey } = req.body;
-
+    const { chapterTitle, niche } = req.body;
+    const apiKey = (req.body.apiKey || '').trim();
     const isGemini = apiKey && apiKey.startsWith('AIza');
 
     if (!apiKey && !openai) {
@@ -743,10 +820,15 @@ app.delete('/api/ebooks/:id', async (req, res) => {
             global: { headers: { Authorization: `Bearer ${token}` } }
         });
 
+        // Verify ownership via token
+        const { data: { user }, error: userError } = await userSupabase.auth.getUser();
+        if (userError) throw userError;
+
         const { error } = await userSupabase
             .from('ebooks')
             .delete()
-            .eq('id', id);
+            .eq('id', id)
+            .eq('user_id', user.id);
 
         if (error) throw error;
         res.json({ success: true });
@@ -758,6 +840,15 @@ app.delete('/api/ebooks/:id', async (req, res) => {
 
 app.get('/app', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/app.html'));
+});
+
+app.get('/reset-password', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/reset-password.html'));
+});
+
+// API 404 handler - prevents catch-all from returning HTML for invalid API routes
+app.all('/api/*', (req, res) => {
+    res.status(404).json({ error: 'API endpoint not found.' });
 });
 
 app.get('*', (req, res) => {

@@ -1,6 +1,30 @@
 document.addEventListener('DOMContentLoaded', () => {
     let canvasPages = [];
     let currentCanvasPage = 0;
+
+    // --- UTILITY FUNCTIONS ---
+    function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function rgbToHex(color) {
+        if (!color) return '#000000';
+        if (color.startsWith('#') && (color.length === 7 || color.length === 4)) return color;
+        const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+        if (match) {
+            return '#' + [match[1], match[2], match[3]].map(x => {
+                const hex = parseInt(x).toString(16);
+                return hex.length === 1 ? '0' + hex : hex;
+            }).join('');
+        }
+        return '#000000';
+    }
+
+    // Dirty flag for unsaved changes
+    window._isDirty = false;
     
     // --- AUTHENTICATION LOGIC ---
     const authView = document.getElementById('authView');
@@ -91,14 +115,14 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         loginForm.classList.add('hidden');
         registerForm.classList.remove('hidden');
-        authTitle.innerText = 'Create Account';
-        authSubtitle.innerText = 'Start your journey with us';
+        authTitle.innerText = 'Buat Akun';
+        authSubtitle.innerText = 'Mulai perjalanan Anda bersama kami';
         authMessage.classList.add('hidden');
     });
 
-    // Warn user before closing/refreshing
+    // Warn user before closing/refreshing (only if there are unsaved changes)
     window.addEventListener('beforeunload', (e) => {
-        if (window.currentOutlineData || window.currentProjectId) {
+        if (window._isDirty) {
             e.preventDefault();
             e.returnValue = 'Anda memiliki proyek yang mungkin belum tersimpan. Yakin ingin keluar?';
             return e.returnValue;
@@ -109,8 +133,8 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         registerForm.classList.add('hidden');
         loginForm.classList.remove('hidden');
-        authTitle.innerText = 'Welcome Back';
-        authSubtitle.innerText = 'Log in to your account';
+        authTitle.innerText = 'Selamat Datang';
+        authSubtitle.innerText = 'Masuk ke akun Anda';
         authMessage.classList.add('hidden');
     });
 
@@ -118,8 +142,8 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         loginForm.classList.add('hidden');
         forgotForm.classList.remove('hidden');
-        authTitle.innerText = 'Reset Password';
-        authSubtitle.innerText = 'We will send you a reset link';
+        authTitle.innerText = 'Reset Kata Sandi';
+        authSubtitle.innerText = 'Kami akan mengirim tautan pemulihan';
         authMessage.classList.add('hidden');
     });
 
@@ -129,15 +153,22 @@ document.addEventListener('DOMContentLoaded', () => {
     if (inputApiKey && apiKeyStatus) {
         const savedApiKey = localStorage.getItem('ebookMagicApiKey');
         if (savedApiKey) {
-            window.userApiKey = savedApiKey;
-            inputApiKey.value = savedApiKey;
+            const cleanKey = savedApiKey.trim();
+            window.userApiKey = cleanKey;
+            inputApiKey.value = cleanKey;
             inputApiKey.type = 'password';
+            // Re-save cleaned key
+            if (cleanKey !== savedApiKey) {
+                localStorage.setItem('ebookMagicApiKey', cleanKey);
+            }
         }
 
         // Simpan otomatis saat diketik atau dipaste
         inputApiKey.addEventListener('input', (e) => {
             const val = inputApiKey.value.trim();
             if (val.length > 5) {
+                // Auto-trim: update the input field with trimmed value
+                inputApiKey.value = val;
                 window.userApiKey = val;
                 localStorage.setItem('ebookMagicApiKey', val);
                 apiKeyStatus.style.display = 'inline-block';
@@ -147,6 +178,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     inputApiKey.style.borderColor = '#ddd';
                 }, 1500);
             }
+        });
+
+        // Also trim on paste event for immediate cleanup
+        inputApiKey.addEventListener('paste', (e) => {
+            setTimeout(() => {
+                const val = inputApiKey.value.trim();
+                inputApiKey.value = val;
+                if (val.length > 5) {
+                    window.userApiKey = val;
+                    localStorage.setItem('ebookMagicApiKey', val);
+                    apiKeyStatus.style.display = 'inline-block';
+                    inputApiKey.style.borderColor = '#10B981';
+                    setTimeout(() => {
+                        apiKeyStatus.style.display = 'none';
+                        inputApiKey.style.borderColor = '#ddd';
+                    }, 1500);
+                }
+            }, 50);
         });
 
         // Toggle visibility
@@ -168,8 +217,8 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         forgotForm.classList.add('hidden');
         loginForm.classList.remove('hidden');
-        authTitle.innerText = 'Welcome Back';
-        authSubtitle.innerText = 'Log in to your account';
+        authTitle.innerText = 'Selamat Datang';
+        authSubtitle.innerText = 'Masuk ke akun Anda';
         authMessage.classList.add('hidden');
     });
 
@@ -180,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = document.getElementById('loginPassword').value;
         const btn = document.getElementById('btnLoginSubmit');
         
-        btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Loading...';
+        btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Memuat...';
         btn.disabled = true;
 
         try {
@@ -207,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             showMessage(err.message, true);
         } finally {
-            btn.innerHTML = 'Sign In';
+            btn.innerHTML = 'Masuk';
             btn.disabled = false;
         }
     });
@@ -219,14 +268,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = document.getElementById('registerPassword').value;
         const btn = document.getElementById('btnRegisterSubmit');
         
-        btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Creating...';
+        btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Mendaftar...';
         btn.disabled = true;
 
         try {
+            // Capture ref parameter from URL for affiliate tracking
+            const urlRef = new URLSearchParams(window.location.search).get('ref');
             const res = await fetch('/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({ email, password, ref: urlRef || null })
             });
             const data = await res.json();
 
@@ -243,7 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             showMessage(err.message, true);
         } finally {
-            btn.innerHTML = 'Create Account';
+            btn.innerHTML = 'Buat Akun Baru';
             btn.disabled = false;
         }
     });
@@ -254,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const email = document.getElementById('forgotEmail').value;
         const btn = document.getElementById('btnForgotSubmit');
         
-        btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Sending...';
+        btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Mengirim...';
         btn.disabled = true;
 
         try {
@@ -267,14 +318,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (data.success) {
                 showMessage(data.message);
-                setTimeout(() => linkBackToLogin.click(), 3000);
+                setTimeout(() => linkBackToLogin.click(), 5000);
             } else {
                 throw new Error(data.error);
             }
         } catch (err) {
             showMessage(err.message, true);
         } finally {
-            btn.innerHTML = 'Send Reset Link';
+            btn.innerHTML = 'Kirim Tautan Pemulihan';
             btn.disabled = false;
         }
     });
@@ -337,7 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 card.innerHTML = `
                     ${coverHtml}
                     <div class="project-info">
-                        <h4>${ebook.title || 'Untitled Ebook'}</h4>
+                        <h4>${escapeHtml(ebook.title || 'Untitled Ebook')}</h4>
                         <span>Updated ${date}</span>
                         <div style="display: flex; gap: 8px; margin-top: 10px;">
                             <button class="btn-primary edit-btn" style="flex: 1; padding: 6px 10px; font-size: 12px; border-radius: 4px;"><i class="ph ph-pencil-simple"></i> Edit</button>
@@ -774,11 +825,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Title Generation Logic
     if (btnGenerateTitles) {
         btnGenerateTitles.addEventListener('click', async () => {
-            const apiKey = document.getElementById('inputApiKey').value;
+            const apiKey = document.getElementById('inputApiKey').value.trim();
             const niche = document.getElementById('inputNiche').value;
             const audience = document.getElementById('inputAudience').value;
 
-            if(!apiKey) return alert('Silakan masukkan OpenAI API Key Anda terlebih dahulu.');
+            if(!apiKey) return alert('Silakan masukkan API Key (Gemini atau OpenAI) terlebih dahulu.');
             if(!niche || !audience) return alert('Masukkan niche dan audiens.');
 
             btnGenerateTitles.disabled = true;
@@ -905,12 +956,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // AI Generation Logic (Outline)
     btnGenerateOutline.addEventListener('click', async () => {
-        const apiKey = document.getElementById('inputApiKey').value;
+        const apiKey = document.getElementById('inputApiKey').value.trim();
         const niche = document.getElementById('inputNiche').value;
         const audience = document.getElementById('inputAudience').value;
 
         if(!apiKey) {
-            alert('Silakan masukkan OpenAI API Key Anda terlebih dahulu.');
+            alert('Silakan masukkan API Key (Gemini atau OpenAI) terlebih dahulu.');
             return;
         }
 
@@ -980,6 +1031,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Store globally for chapter writer
+            window._isDirty = true;
             window.currentOutlineData = data;
             window.currentNiche = niche;
             window.currentEbookType = type;
@@ -1059,6 +1111,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const result = await response.json();
                 if(result.error) throw new Error(result.error);
                 if (result.projectId) window.currentProjectId = result.projectId;
+                window._isDirty = false;
 
                 alert('✅ Konsep eBook berhasil disimpan! Anda bisa melihatnya nanti di menu "eBook Saya".');
             } catch(error) {
@@ -1091,8 +1144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         generatorView.classList.add('hidden');
         chapterWriterView.classList.remove('hidden');
-        editorView.classList.remove('hidden'); // Show Canvas Editor below the Writer
-        if (typeof initCanvas === 'function') initCanvas();
+        // Editor will be shown when user clicks "Lanjut ke Editor Desain"
 
         // Initialize Quill if not done yet
         if (!quill) {
@@ -1151,6 +1203,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     btnBackToOutline.addEventListener('click', () => {
+        // Save current quill content before leaving
+        if (activeChapterElement && quill) {
+            window.chaptersContent[activeChapterElement.innerText] = quill.root.innerHTML;
+        }
         chapterWriterView.classList.add('hidden');
         if (typeof editorView !== 'undefined' && editorView) editorView.classList.add('hidden');
         
@@ -1169,8 +1225,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const chapterTitle = activeChapterElement.innerText;
         
         btnGenerateChapterContent.disabled = true;
-        btnGenerateChapterContent.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Writing...';
-        quill.setText('AI is writing your chapter. This might take a few seconds...\n');
+        btnGenerateChapterContent.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Menulis...';
+        quill.setText('AI sedang menulis bab Anda. Mohon tunggu beberapa saat...\n');
 
         try {
             const toneSelector = document.getElementById('chapterToneSelector');
@@ -1197,6 +1253,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Insert HTML into Quill
             quill.clipboard.dangerouslyPasteHTML(data.content);
             window.chaptersContent[chapterTitle] = data.content; // Save to memory
+            window._isDirty = true;
             
             // Show the "Proceed to Editor" button once content is generated
             if (btnProceedToEditor) btnProceedToEditor.classList.remove('hidden');
@@ -1205,7 +1262,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Gagal: ' + error.message);
         } finally {
             btnGenerateChapterContent.disabled = false;
-            btnGenerateChapterContent.innerHTML = '<i class="ph ph-sparkle"></i> Generate Content';
+            btnGenerateChapterContent.innerHTML = '<i class="ph ph-sparkle"></i> Tulis Konten (AI)';
         }
     });
 
@@ -1389,10 +1446,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         else styleSelector.value = 'normal';
                     }
                     
-                    // Sync color
+                    // Sync color (convert to hex for input[type=color])
                     const colorPicker = document.getElementById('colorPicker');
                     if (colorPicker && activeObject.fill) {
-                        colorPicker.value = activeObject.fill;
+                        colorPicker.value = rgbToHex(activeObject.fill);
                     }
                 }
             }
@@ -2001,12 +2058,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnSaveProject = document.getElementById('btnSaveProject');
     if(btnSaveProject) {
         btnSaveProject.addEventListener('click', async () => {
-            if(!window.currentUser) return alert('You must be logged in to save.');
-            if(!window.currentOutlineData) return alert('No project data to save.');
+            if(!window.currentUser) return alert('Anda harus login untuk menyimpan.');
+            if(!window.currentOutlineData) return alert('Tidak ada data proyek untuk disimpan.');
 
             btnSaveProject.disabled = true;
             const originalText = btnSaveProject.innerHTML;
-            btnSaveProject.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Saving...';
+            btnSaveProject.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Menyimpan...';
 
             if (typeof activeChapterElement !== 'undefined' && activeChapterElement && typeof quill !== 'undefined') {
                 window.chaptersContent[activeChapterElement.innerText] = quill.root.innerHTML;
@@ -2055,10 +2112,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.currentProjectId = result.projectId;
                 }
 
+                window._isDirty = false;
                 alert('✅ ' + result.message);
             } catch(error) {
                 console.error(error);
-                alert('❌ Failed to save project: ' + error.message);
+                alert('❌ Gagal menyimpan proyek: ' + error.message);
             } finally {
                 btnSaveProject.disabled = false;
                 btnSaveProject.innerHTML = originalText;

@@ -58,12 +58,28 @@ CREATE POLICY "Users can view children profiles" ON user_profiles
 CREATE POLICY "Owner can view all profiles" ON user_profiles
   FOR SELECT USING ( (SELECT role FROM user_profiles WHERE id = auth.uid()) = 'owner' );
 
+-- INSERT policy: allow new profile creation (needed for trigger and registration)
+CREATE POLICY "Allow insert own profile" ON user_profiles
+  FOR INSERT WITH CHECK (auth.uid() = id);
+
+-- UPDATE policy: users can update own profile
+CREATE POLICY "Users can update their own profile" ON user_profiles
+  FOR UPDATE USING (auth.uid() = id);
+
+-- UPDATE policy: owner can update any profile
+CREATE POLICY "Owner can update all profiles" ON user_profiles
+  FOR UPDATE USING ( (SELECT role FROM user_profiles WHERE id = auth.uid()) = 'owner' );
+
+-- DELETE policy: owner can delete any profile
+CREATE POLICY "Owner can delete profiles" ON user_profiles
+  FOR DELETE USING ( (SELECT role FROM user_profiles WHERE id = auth.uid()) = 'owner' );
+
 -- 2. Trigger to create user_profiles automatically on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user() 
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.user_profiles (id, role, quota_agency, quota_personal)
-  VALUES (new.id, 'free', 0, 0);
+  INSERT INTO public.user_profiles (id, email, role, quota_agency, quota_personal)
+  VALUES (new.id, new.email, 'free', 0, 0);
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
