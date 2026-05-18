@@ -159,12 +159,26 @@ app.post('/api/auth/update-password', async (req, res) => {
     }
 
     try {
-        // Create a Supabase client authenticated with the user's recovery token
-        const userSupabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
-            global: { headers: { Authorization: `Bearer ${access_token}` } }
+        // 1. Dapatkan data user dari access token
+        const { data: userData, error: userError } = await supabase.auth.getUser(access_token);
+        
+        if (userError || !userData?.user) {
+            console.error('Get user by token error:', userError?.message);
+            throw new Error('Sesi tidak valid atau kedaluwarsa. Silakan minta tautan reset baru.');
+        }
+
+        const userId = userData.user.id;
+
+        // 2. Buat instance admin supabase (Service Role Key) untuk mengupdate data user secara paksa
+        const adminSupabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+            auth: {
+                autoRefreshToken: false,
+                persistSession: false
+            }
         });
 
-        const { data, error } = await userSupabase.auth.updateUser({
+        // 3. Update password menggunakan Admin API
+        const { data, error } = await adminSupabase.auth.admin.updateUserById(userId, {
             password: new_password
         });
 
