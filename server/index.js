@@ -12,8 +12,16 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
-app.use(express.static(path.join(__dirname, '../public')));
-
+app.use(express.static(path.join(__dirname, '../public'), {
+    setHeaders: function (res, path) {
+        if (path.endsWith('.html')) {
+            // Force no caching for HTML files
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+        }
+    }
+}));
 // Initialize Supabase Client
 let supabase = null;
 if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY && process.env.SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
