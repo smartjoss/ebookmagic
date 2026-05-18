@@ -536,7 +536,7 @@ app.post('/api/generate-titles', async (req, res) => {
 });
 
 app.post('/api/generate-outline', async (req, res) => {
-    const { niche, audience, type, selectedTitle, selectedSubtitle, authorProfile, cta } = req.body;
+    const { niche, audience, type, selectedTitle, selectedSubtitle, authorProfile, cta, customOutline } = req.body;
     const apiKey = (req.body.apiKey || '').trim();
     const isGemini = apiKey && apiKey.startsWith('AIza');
 
@@ -548,6 +548,14 @@ app.post('/api/generate-outline', async (req, res) => {
     if (!apiKey && !openai) {
         console.warn('API Key is missing. Using fallback mock data.');
         return setTimeout(() => {
+            // If user provided custom outline, return it as-is for mock
+            if (customOutline && customOutline.length > 0) {
+                return res.json({
+                    title: selectedTitle || `Panduan Utama: ${niche || 'Sukses'}`,
+                    subtitle: selectedSubtitle || `Sistem terbukti untuk ${audience || 'semua orang'}`,
+                    outline: customOutline
+                });
+            }
             res.json({
                 title: selectedTitle || `Panduan Utama: ${niche || 'Sukses'}`,
                 subtitle: selectedSubtitle || `Sistem terbukti untuk ${audience || 'semua orang'}`,
@@ -565,9 +573,26 @@ app.post('/api/generate-outline', async (req, res) => {
         const titlePrompt = selectedTitle ? `Gunakan judul ini: "${selectedTitle}"` : `Buatlah "title" yang menarik dan viral (maks 6 kata)`;
         const subtitlePrompt = selectedSubtitle ? `Gunakan subjudul ini: "${selectedSubtitle}"` : `Buatlah "subtitle" deskriptif yang menjelaskan nilai tambah`;
 
+        // Check if user provided a custom outline to refine
+        let customOutlineInstruction = '';
+        if (customOutline && Array.isArray(customOutline) && customOutline.length > 0) {
+            customOutlineInstruction = `
+        PENTING: Pengguna sudah memiliki kerangka/daftar isi sendiri yang ingin diperbaiki. 
+        Berikut kerangka asli dari pengguna:
+        ${customOutline.map((item, i) => `${i + 1}. ${item}`).join('\n        ')}
+        
+        Tugas Anda: PERBAIKI dan KEMBANGKAN kerangka di atas agar lebih profesional, menarik, dan terstruktur.
+        - Pertahankan urutan dan ide utama dari kerangka pengguna
+        - Perbaiki penamaan bab agar lebih menarik dan profesional
+        - Tambahkan bab yang mungkin terlewat (misal: Kata Pengantar, Penutup) jika belum ada
+        - Sesuaikan jumlah bab dengan ketebalan ebook yang diminta (${babCountText})
+        - Jangan hapus bab yang sudah ada, cukup perbaiki atau gabungkan jika perlu
+        `;
+        }
+
         const prompt = `
         Anda adalah seorang ahli pembuat Ebook dan pemasar.
-        Buatlah kerangka (outline) ebook yang sangat menarik tentang "${niche}" yang ditargetkan untuk "${audience}".
+        ${customOutlineInstruction ? customOutlineInstruction : `Buatlah kerangka (outline) ebook yang sangat menarik tentang "${niche}" yang ditargetkan untuk "${audience}".`}
         Ketebalan Ebook: ${type} (Wajib berisi tepat antara ${babCountText}).
         
         ${authorProfile ? `Instruksi Tambahan (Profil Penulis): Tambahkan 1 bab khusus (misalnya "Tentang Penulis") di awal atau akhir ebook yang menceritakan: ${authorProfile}.` : ''}

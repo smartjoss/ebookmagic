@@ -391,6 +391,37 @@
                                 </label>
                                 <textarea id="inputCTA" rows="2" style="width: 100%; padding: 12px; border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; font-size: 14px; resize: vertical;" placeholder="contoh: Arahkan pembaca untuk join grup Telegram atau membeli produk X."></textarea>
                             </div>
+
+                            <!-- Custom Outline Input (Collapsible) -->
+                            <div class="form-group" style="margin-top: 8px;">
+                                <div id="toggleCustomOutline" style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 12px 16px; background: rgba(108, 99, 255, 0.08); border: 1px dashed rgba(108, 99, 255, 0.3); border-radius: 12px; transition: all 0.3s ease;" onmouseover="this.style.borderColor='var(--primary)';this.style.background='rgba(108,99,255,0.12)'" onmouseout="this.style.borderColor='rgba(108,99,255,0.3)';this.style.background='rgba(108,99,255,0.08)'">
+                                    <i class="ph ph-list-checks" style="font-size: 20px; color: var(--primary);"></i>
+                                    <div style="flex: 1;">
+                                        <span style="font-weight: 600; font-size: 14px; color: var(--text-primary);">Sudah Punya Kerangka/Daftar Isi Sendiri?</span>
+                                        <span style="font-size: 12px; color: var(--text-secondary); display: block; margin-top: 2px;">Klik untuk memasukkan daftar isi Anda. AI akan memperbaiki atau Anda bisa pakai langsung.</span>
+                                    </div>
+                                    <i class="ph ph-caret-down" id="iconToggleOutline" style="font-size: 18px; color: var(--text-secondary); transition: transform 0.3s ease;"></i>
+                                </div>
+                                <div id="customOutlineSection" style="display: none; margin-top: 12px; animation: fadeIn 0.3s ease;">
+                                    <label style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                        <span style="font-weight: 500;">Kerangka / Daftar Isi eBook Anda</span>
+                                        <span style="font-size: 12px; color: var(--text-secondary);">Satu bab per baris</span>
+                                    </label>
+                                    <textarea id="inputCustomOutline" rows="6" style="width: 100%; padding: 12px; border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; font-size: 14px; resize: vertical; line-height: 1.8;" placeholder="Contoh:
+Kata Pengantar
+Bab 1: Mengenal Dasar-dasar Affiliate Marketing
+Bab 2: Memilih Produk yang Tepat
+Bab 3: Strategi Promosi Tanpa Modal
+Bab 4: Optimasi dan Scaling
+Penutup"></textarea>
+                                    <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
+                                        <span style="font-size: 11px; padding: 4px 10px; background: rgba(108,99,255,0.1); border-radius: 20px; color: var(--primary);">
+                                            <i class="ph ph-info"></i> Tulis satu bab per baris. AI bisa memperbaiki format & menambah detail.
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
                             <button class="btn-primary w-full" id="btnGenerateTitles">
                                 <i class="ph ph-lightbulb"></i> Dapatkan Ide Judul Menarik (Hook)
                             </button>
@@ -582,6 +613,6 @@
         </main>
     </div>
     
-    <script src="/js/app.js?v=5.5"></script>
+    <script src="/js/app.js?v=5.6"></script>
 </body>
 </html>

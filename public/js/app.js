@@ -803,6 +803,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if(inputAuthorProfile) inputAuthorProfile.value = '';
         const inputCTA = document.getElementById('inputCTA');
         if(inputCTA) inputCTA.value = '';
+        const inputCustomOutline = document.getElementById('inputCustomOutline');
+        if(inputCustomOutline) inputCustomOutline.value = '';
+        const customOutlineSection = document.getElementById('customOutlineSection');
+        if(customOutlineSection) customOutlineSection.style.display = 'none';
+        const iconToggle = document.getElementById('iconToggleOutline');
+        if(iconToggle) iconToggle.style.transform = 'rotate(0deg)';
+        // Hide custom outline buttons if any
+        const btnUseCustom = document.getElementById('btnUseCustomOutline');
+        if(btnUseCustom) btnUseCustom.classList.add('hidden');
+        const btnRefineCustom = document.getElementById('btnRefineCustomOutline');
+        if(btnRefineCustom) btnRefineCustom.classList.add('hidden');
         
         window.selectedEbookTitle = null;
         window.selectedEbookSubtitle = null;
@@ -821,6 +832,55 @@ document.addEventListener('DOMContentLoaded', () => {
     const coverPromptText = document.getElementById('coverPromptText');
     const btnCopyCoverPrompt = document.getElementById('btnCopyCoverPrompt');
     const step1Form = document.getElementById('step1Form');
+
+    // --- CUSTOM OUTLINE TOGGLE ---
+    const toggleCustomOutline = document.getElementById('toggleCustomOutline');
+    if (toggleCustomOutline) {
+        toggleCustomOutline.addEventListener('click', () => {
+            const section = document.getElementById('customOutlineSection');
+            const icon = document.getElementById('iconToggleOutline');
+            if (section.style.display === 'none') {
+                section.style.display = 'block';
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                section.style.display = 'none';
+                icon.style.transform = 'rotate(0deg)';
+            }
+        });
+    }
+
+    // Helper: check if user has entered a custom outline
+    function getCustomOutlineLines() {
+        const input = document.getElementById('inputCustomOutline');
+        if (!input || !input.value.trim()) return [];
+        return input.value.trim().split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    }
+
+    // Helper: show/hide custom outline action buttons after title selection
+    function updateOutlineButtons() {
+        const customLines = getCustomOutlineLines();
+        const btnUseCustom = document.getElementById('btnUseCustomOutline');
+        const btnRefineCustom = document.getElementById('btnRefineCustomOutline');
+
+        if (customLines.length >= 2) {
+            // User has a custom outline — show both options
+            if (btnUseCustom) {
+                btnUseCustom.classList.remove('hidden');
+            }
+            if (btnRefineCustom) {
+                btnRefineCustom.classList.remove('hidden');
+            }
+            // Also show the normal AI outline button but change its label
+            btnGenerateOutline.disabled = false;
+            btnGenerateOutline.classList.add('hidden'); // Hide default, replaced by custom buttons
+        } else {
+            // No custom outline — show only the AI generate button
+            if (btnUseCustom) btnUseCustom.classList.add('hidden');
+            if (btnRefineCustom) btnRefineCustom.classList.add('hidden');
+            btnGenerateOutline.disabled = false;
+            btnGenerateOutline.classList.remove('hidden');
+        }
+    }
 
     // Title Generation Logic
     if (btnGenerateTitles) {
@@ -886,9 +946,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         coverPromptText.innerText = item.cover_prompt;
                         coverPromptBox.classList.remove('hidden');
 
-                        // Enable outline generation
-                        btnGenerateOutline.disabled = false;
-                        btnGenerateOutline.classList.remove('hidden');
+                        // Enable outline generation (with custom outline awareness)
+                        updateOutlineButtons();
                     });
                     titleOptionsGrid.appendChild(card);
                 });
@@ -928,13 +987,106 @@ document.addEventListener('DOMContentLoaded', () => {
                     coverPromptText.innerText = `A high quality, professional, 8k resolution, modern minimalist ebook cover illustration about ${niche}. No text, clear background.`;
                     coverPromptBox.classList.remove('hidden');
 
-                    btnGenerateOutline.disabled = false;
-                    btnGenerateOutline.classList.remove('hidden');
+                    updateOutlineButtons();
                 });
                 titleOptionsGrid.appendChild(originalCard);
 
                 titleResults.classList.remove('hidden');
                 step1Form.classList.add('hidden'); // Hide form
+
+                // Inject custom outline action buttons if not already there
+                if (!document.getElementById('btnUseCustomOutline')) {
+                    const customBtnsContainer = document.createElement('div');
+                    customBtnsContainer.id = 'customOutlineBtns';
+                    customBtnsContainer.style.cssText = 'display: flex; gap: 10px; flex-direction: column;';
+                    customBtnsContainer.innerHTML = `
+                        <button class="btn-primary w-full hidden" id="btnUseCustomOutline" style="background: #10b981;">
+                            <i class="ph ph-check-circle"></i> Gunakan Kerangka Saya Langsung
+                        </button>
+                        <button class="btn-primary w-full hidden" id="btnRefineCustomOutline" style="background: #f59e0b;">
+                            <i class="ph ph-sparkle"></i> Perbaiki & Kembangkan Kerangka Saya (AI)
+                        </button>
+                    `;
+                    // Insert after the generate outline button
+                    btnGenerateOutline.parentNode.insertBefore(customBtnsContainer, btnGenerateOutline.nextSibling);
+
+                    // --- USE CUSTOM OUTLINE DIRECTLY ---
+                    document.getElementById('btnUseCustomOutline').addEventListener('click', () => {
+                        const customLines = getCustomOutlineLines();
+                        if (customLines.length < 2) return alert('Daftar isi Anda terlalu pendek. Minimal 2 bab.');
+
+                        const niche = document.getElementById('inputNiche').value;
+                        const audience = document.getElementById('inputAudience').value;
+                        const type = document.getElementById('inputType') ? document.getElementById('inputType').value : 'praktis';
+                        const authorProfile = document.getElementById('inputAuthorProfile') ? document.getElementById('inputAuthorProfile').value : '';
+                        const cta = document.getElementById('inputCTA') ? document.getElementById('inputCTA').value : '';
+
+                        const title = window.selectedEbookTitle || niche || 'Untitled Ebook';
+                        const subtitle = window.selectedEbookSubtitle || `Panduan untuk ${audience}`;
+
+                        // Build data as if API returned it
+                        const data = {
+                            title: title,
+                            subtitle: subtitle,
+                            outline: customLines
+                        };
+
+                        // RESET EDITOR & CANVAS STATE FOR NEW EBOOK
+                        window.chaptersContent = {};
+                        if (typeof canvasPages !== 'undefined') {
+                            canvasPages.length = 0;
+                            currentCanvasPage = 0;
+                            if (typeof canvas !== 'undefined' && canvas) {
+                                canvas.clear();
+                            }
+                        }
+
+                        window._isDirty = true;
+                        window.currentOutlineData = data;
+                        window.currentNiche = niche;
+                        window.currentEbookType = type;
+                        window.currentAudience = audience;
+                        window.currentAuthorProfile = authorProfile;
+                        window.currentCTA = cta;
+
+                        // Render outline results
+                        outlineResults.classList.remove('hidden');
+                        btnGenerateOutline.classList.add('hidden');
+                        document.getElementById('btnUseCustomOutline').classList.add('hidden');
+                        document.getElementById('btnRefineCustomOutline').classList.add('hidden');
+
+                        // Update Stepper
+                        document.querySelectorAll('.wizard-steps .step').forEach((el, index) => {
+                            if (index === 0) el.classList.remove('active');
+                            if (index === 1) el.classList.add('active');
+                        });
+
+                        let html = `
+                            <div style="margin-bottom: 16px;">
+                                <h4 style="color: var(--primary); margin-bottom: 4px;">${escapeHtml(data.title)}</h4>
+                                <p style="color: var(--text-secondary); font-size: 14px;">${escapeHtml(data.subtitle)}</p>
+                                <span style="font-size: 11px; padding: 3px 10px; background: rgba(16, 185, 129, 0.15); border-radius: 20px; color: #10b981;"><i class="ph ph-user"></i> Kerangka milik Anda sendiri</span>
+                            </div>
+                            <ul class="outline-list">
+                        `;
+                        data.outline.forEach(chapter => {
+                            html += `<li class="outline-item"><i class="ph ph-check-circle"></i><span>${escapeHtml(chapter)}</span></li>`;
+                        });
+                        html += '</ul>';
+                        outlineContent.innerHTML = html;
+                    });
+
+                    // --- REFINE CUSTOM OUTLINE WITH AI ---
+                    document.getElementById('btnRefineCustomOutline').addEventListener('click', () => {
+                        // Store the custom outline for the API to use
+                        window._customOutlineForRefine = getCustomOutlineLines();
+                        // Trigger the normal outline generation (which will pass the custom outline)
+                        btnGenerateOutline.click();
+                    });
+                }
+
+                // Now update which buttons to show
+                updateOutlineButtons();
             } catch (error) {
                 alert(error.message);
             } finally {
@@ -974,6 +1126,11 @@ document.addEventListener('DOMContentLoaded', () => {
         outlineResults.classList.remove('hidden');
         // Do NOT hide titleResults so user can still see their selected prompt
         btnGenerateOutline.classList.add('hidden'); // Just hide the generate button to avoid double clicks
+        // Also hide custom outline buttons during generation
+        const _btnUseCustom = document.getElementById('btnUseCustomOutline');
+        if (_btnUseCustom) _btnUseCustom.classList.add('hidden');
+        const _btnRefineCustom = document.getElementById('btnRefineCustomOutline');
+        if (_btnRefineCustom) _btnRefineCustom.classList.add('hidden');
         
         outlineContent.innerHTML = '';
         loadingSkeleton.classList.remove('hidden');
@@ -997,6 +1154,10 @@ document.addEventListener('DOMContentLoaded', () => {
             window.currentAuthorProfile = authorProfile;
             window.currentCTA = cta;
 
+            // Check if there's a custom outline to refine
+            const customOutline = window._customOutlineForRefine || null;
+            window._customOutlineForRefine = null; // Clear after use
+
             const response = await fetch('/api/generate-outline', {
                 method: 'POST',
                 headers: {
@@ -1010,7 +1171,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     selectedTitle: window.selectedEbookTitle,
                     selectedSubtitle: window.selectedEbookSubtitle,
                     authorProfile,
-                    cta
+                    cta,
+                    customOutline
                 })
             });
 
