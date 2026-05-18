@@ -1200,6 +1200,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             writerOutlineList.appendChild(li);
         });
+
+        // Show "Lanjut ke Editor Desain" button if project already has chapter content
+        const hasExistingContent = window.chaptersContent && Object.keys(window.chaptersContent).some(k => window.chaptersContent[k] && window.chaptersContent[k].trim() !== '');
+        if (hasExistingContent && btnProceedToEditor) {
+            btnProceedToEditor.classList.remove('hidden');
+        }
+
+        // If project has canvas data, auto-show the editor below
+        if (canvasPages.length > 0) {
+            editorView.classList.remove('hidden');
+            initCanvas();
+        }
     });
 
     btnBackToOutline.addEventListener('click', () => {
@@ -1207,6 +1219,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activeChapterElement && quill) {
             window.chaptersContent[activeChapterElement.innerText] = quill.root.innerHTML;
         }
+        // Hide both chapter writer and editor views
         chapterWriterView.classList.add('hidden');
         if (typeof editorView !== 'undefined' && editorView) editorView.classList.add('hidden');
         
@@ -1331,9 +1344,14 @@ document.addEventListener('DOMContentLoaded', () => {
             window.chaptersContent[activeChapterElement.innerText] = quill.root.innerHTML;
         }
 
-        chapterWriterView.classList.add('hidden');
+        // Show editor BELOW chapter writer (don't hide chapter writer)
         editorView.classList.remove('hidden');
         initCanvas(); // Initialize Fabric.js Canvas
+        
+        // Scroll to the canvas editor smoothly
+        setTimeout(() => {
+            editorView.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 200);
     });
 
     // --- EDITOR LOGIC (Fabric.js) ---
@@ -1534,8 +1552,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Back from Editor
     btnBackToDashboard.addEventListener('click', () => {
-        editorView.classList.add('hidden');
+        hideAllViews();
         dashboardView.classList.remove('hidden');
+        setActiveNav(navDashboard);
+        loadProjects();
     });
 
     // Editor Tools
