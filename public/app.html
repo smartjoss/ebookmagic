@@ -533,11 +533,39 @@
                         <div style="width: 1px; height: 24px; background: var(--border); margin: 0 2px;"></div>
                         <button class="btn-icon" id="btnFullWidth" title="Atur Layar Penuh" style="width: auto; height: 34px; padding: 0 10px; border-radius: 8px; font-size: 11px; color: var(--primary);"><i class="ph ph-arrows-out-line-horizontal"></i> Layar</button>
                         <input type="color" id="colorPicker" value="#000000" title="Ubah Warna" style="width: 34px; height: 34px; border: none; border-radius: 6px; cursor: pointer; background: transparent;">
+                        <div style="width: 1px; height: 24px; background: var(--border); margin: 0 2px;"></div>
+                        <button class="btn-icon btn-margin-guide" id="btnToggleMarginGuide" title="Tampilkan Garis Margin" style="width: auto; height: 34px; padding: 0 10px; border-radius: 8px; font-size: 11px;"><i class="ph ph-ruler"></i> Margin</button>
+                        <button class="btn-icon btn-margin-guide" id="btnToggleRuler" title="Tampilkan Penggaris" style="width: auto; height: 34px; padding: 0 10px; border-radius: 8px; font-size: 11px;"><i class="ph ph-columns"></i> Ruler</button>
                     </div>
                 </div>
                 
                 <div class="editor-workspace glass">
                     <div class="canvas-container-wrapper" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+                        <!-- Page size label -->
+                        <div class="canvas-page-label"><i class="ph ph-file"></i> A4 Portrait — 800 × 1131 px</div>
+                        
+                        <!-- Corner crop marks (bottom) -->
+                        <div class="canvas-corner-marks"></div>
+                        
+                        <!-- Margin guide overlay -->
+                        <div class="canvas-margin-guides" id="canvasMarginGuides">
+                            <!-- Top margin -->
+                            <div class="guide-line horizontal" style="top: 60px;"></div>
+                            <!-- Bottom margin -->
+                            <div class="guide-line horizontal" style="bottom: 60px;"></div>
+                            <!-- Left margin -->
+                            <div class="guide-line vertical" style="left: 50px;"></div>
+                            <!-- Right margin -->
+                            <div class="guide-line vertical" style="right: 50px;"></div>
+                            <!-- Center vertical -->
+                            <div class="guide-line vertical" style="left: 50%; background: repeating-linear-gradient(0deg, rgba(108,99,255,0.25) 0px, rgba(108,99,255,0.25) 4px, transparent 4px, transparent 8px);"></div>
+                        </div>
+                        
+                        <!-- Horizontal ruler -->
+                        <canvas class="canvas-ruler canvas-ruler-horizontal" id="canvasRulerH" width="800" height="20"></canvas>
+                        <!-- Vertical ruler -->
+                        <canvas class="canvas-ruler canvas-ruler-vertical" id="canvasRulerV" width="20" height="1131"></canvas>
+                        
                         <canvas id="ebookCanvas" width="800" height="1131"></canvas>
                         
                         <!-- Multi-page controls -->
@@ -554,6 +582,6 @@
         </main>
     </div>
     
-    <script src="/js/app.js?v=5.4"></script>
+    <script src="/js/app.js?v=5.5"></script>
 </body>
 </html>

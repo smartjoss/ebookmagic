@@ -2073,6 +2073,110 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // --- CANVAS BOUNDARY GUIDES ---
+
+    // Margin Guide Toggle
+    const btnToggleMarginGuide = document.getElementById('btnToggleMarginGuide');
+    if (btnToggleMarginGuide) {
+        btnToggleMarginGuide.addEventListener('click', () => {
+            const guides = document.getElementById('canvasMarginGuides');
+            if (!guides) return;
+            const isVisible = guides.classList.toggle('visible');
+            btnToggleMarginGuide.classList.toggle('active', isVisible);
+        });
+    }
+
+    // Ruler Toggle & Drawing
+    const btnToggleRuler = document.getElementById('btnToggleRuler');
+    if (btnToggleRuler) {
+        let rulersDrawn = false;
+
+        function drawRulers() {
+            if (rulersDrawn) return;
+            rulersDrawn = true;
+
+            const CANVAS_W = 800;
+            const CANVAS_H = 1131;
+
+            // Horizontal ruler
+            const rulerH = document.getElementById('canvasRulerH');
+            if (rulerH) {
+                const ctxH = rulerH.getContext('2d');
+                ctxH.clearRect(0, 0, CANVAS_W, 20);
+                ctxH.fillStyle = 'rgba(15, 23, 42, 0.9)';
+                ctxH.fillRect(0, 0, CANVAS_W, 20);
+
+                // Draw tick marks every 50px
+                for (let x = 0; x <= CANVAS_W; x += 10) {
+                    const isMajor = x % 100 === 0;
+                    const isMid = x % 50 === 0;
+                    const tickH = isMajor ? 12 : isMid ? 8 : 4;
+
+                    ctxH.beginPath();
+                    ctxH.moveTo(x, 20);
+                    ctxH.lineTo(x, 20 - tickH);
+                    ctxH.strokeStyle = isMajor ? 'rgba(108, 99, 255, 0.8)' : 'rgba(148, 163, 184, 0.4)';
+                    ctxH.lineWidth = isMajor ? 1.5 : 0.5;
+                    ctxH.stroke();
+
+                    // Labels
+                    if (isMajor && x > 0) {
+                        ctxH.fillStyle = 'rgba(148, 163, 184, 0.9)';
+                        ctxH.font = '8px Outfit, sans-serif';
+                        ctxH.textAlign = 'center';
+                        ctxH.fillText(x.toString(), x, 8);
+                    }
+                }
+            }
+
+            // Vertical ruler
+            const rulerV = document.getElementById('canvasRulerV');
+            if (rulerV) {
+                const ctxV = rulerV.getContext('2d');
+                ctxV.clearRect(0, 0, 20, CANVAS_H);
+                ctxV.fillStyle = 'rgba(15, 23, 42, 0.9)';
+                ctxV.fillRect(0, 0, 20, CANVAS_H);
+
+                for (let y = 0; y <= CANVAS_H; y += 10) {
+                    const isMajor = y % 100 === 0;
+                    const isMid = y % 50 === 0;
+                    const tickW = isMajor ? 12 : isMid ? 8 : 4;
+
+                    ctxV.beginPath();
+                    ctxV.moveTo(20, y);
+                    ctxV.lineTo(20 - tickW, y);
+                    ctxV.strokeStyle = isMajor ? 'rgba(108, 99, 255, 0.8)' : 'rgba(148, 163, 184, 0.4)';
+                    ctxV.lineWidth = isMajor ? 1.5 : 0.5;
+                    ctxV.stroke();
+
+                    // Labels
+                    if (isMajor && y > 0) {
+                        ctxV.save();
+                        ctxV.fillStyle = 'rgba(148, 163, 184, 0.9)';
+                        ctxV.font = '8px Outfit, sans-serif';
+                        ctxV.textAlign = 'center';
+                        ctxV.translate(8, y);
+                        ctxV.rotate(-Math.PI / 2);
+                        ctxV.fillText(y.toString(), 0, 0);
+                        ctxV.restore();
+                    }
+                }
+            }
+        }
+
+        btnToggleRuler.addEventListener('click', () => {
+            const rulerH = document.getElementById('canvasRulerH');
+            const rulerV = document.getElementById('canvasRulerV');
+            if (!rulerH || !rulerV) return;
+
+            drawRulers();
+
+            const isVisible = rulerH.classList.toggle('visible');
+            rulerV.classList.toggle('visible', isVisible);
+            btnToggleRuler.classList.toggle('active', isVisible);
+        });
+    }
+
     // Font Style / Heading Selector
     document.getElementById('textStyleSelector').addEventListener('change', (e) => {
         const activeObject = canvas.getActiveObject();

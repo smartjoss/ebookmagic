@@ -478,15 +478,211 @@ body {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    padding: 40px;
+    padding: 60px 40px;
     min-height: calc(100vh - 200px);
     overflow: auto;
-    background: rgba(0,0,0,0.2);
+    /* Checkerboard transparency pattern to clearly separate canvas from background */
+    background-color: #1a1f2e;
+    background-image:
+        linear-gradient(45deg, rgba(255,255,255,0.03) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(255,255,255,0.03) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.03) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.03) 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0;
 }
 
 .canvas-container-wrapper {
-    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-    background: white; /* Ebook pages are usually white */
+    position: relative;
+    background: white;
+    /* Prominent layered shadow for "floating paper" effect */
+    box-shadow:
+        0 0 0 1px rgba(108, 99, 255, 0.15),
+        0 4px 12px rgba(0, 0, 0, 0.25),
+        0 12px 40px rgba(0, 0, 0, 0.4),
+        0 30px 80px rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
+    transition: box-shadow 0.3s ease;
+}
+
+.canvas-container-wrapper:hover {
+    box-shadow:
+        0 0 0 1px rgba(108, 99, 255, 0.25),
+        0 4px 12px rgba(0, 0, 0, 0.3),
+        0 12px 40px rgba(0, 0, 0, 0.45),
+        0 30px 80px rgba(0, 0, 0, 0.25);
+}
+
+/* Corner crop marks for print-style paper boundary */
+.canvas-container-wrapper::before,
+.canvas-container-wrapper::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.canvas-container-wrapper::before {
+    top: -8px;
+    left: -8px;
+    border-top: 2px solid rgba(108, 99, 255, 0.5);
+    border-left: 2px solid rgba(108, 99, 255, 0.5);
+}
+
+.canvas-container-wrapper::after {
+    top: -8px;
+    right: -8px;
+    border-top: 2px solid rgba(108, 99, 255, 0.5);
+    border-right: 2px solid rgba(108, 99, 255, 0.5);
+}
+
+/* Bottom corner marks via inner elements */
+.canvas-corner-marks {
+    position: absolute;
+    bottom: -8px;
+    left: -8px;
+    right: -8px;
+    height: 20px;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.canvas-corner-marks::before,
+.canvas-corner-marks::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+}
+
+.canvas-corner-marks::before {
+    bottom: 0;
+    left: 0;
+    border-bottom: 2px solid rgba(108, 99, 255, 0.5);
+    border-left: 2px solid rgba(108, 99, 255, 0.5);
+}
+
+.canvas-corner-marks::after {
+    bottom: 0;
+    right: 0;
+    border-bottom: 2px solid rgba(108, 99, 255, 0.5);
+    border-right: 2px solid rgba(108, 99, 255, 0.5);
+}
+
+/* Page size label */
+.canvas-page-label {
+    position: absolute;
+    top: -28px;
+    right: 0;
+    font-size: 11px;
+    color: rgba(108, 99, 255, 0.7);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    font-family: 'Outfit', sans-serif;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.canvas-page-label i {
+    font-size: 13px;
+}
+
+/* Margin guide toggle button */
+.btn-margin-guide {
+    position: relative;
+}
+
+.btn-margin-guide.active {
+    background: rgba(108, 99, 255, 0.2) !important;
+    color: var(--primary) !important;
+    border-color: var(--primary) !important;
+}
+
+/* Margin guide overlay lines */
+.canvas-margin-guides {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.canvas-margin-guides.visible {
+    opacity: 1;
+}
+
+.canvas-margin-guides .guide-line {
+    position: absolute;
+    background: rgba(255, 107, 107, 0.3);
+}
+
+.canvas-margin-guides .guide-line.horizontal {
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: repeating-linear-gradient(
+        90deg,
+        rgba(255, 107, 107, 0.4) 0px,
+        rgba(255, 107, 107, 0.4) 4px,
+        transparent 4px,
+        transparent 8px
+    );
+}
+
+.canvas-margin-guides .guide-line.vertical {
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(255, 107, 107, 0.4) 0px,
+        rgba(255, 107, 107, 0.4) 4px,
+        transparent 4px,
+        transparent 8px
+    );
+}
+
+/* Ruler bars */
+.canvas-ruler {
+    position: absolute;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(4px);
+    z-index: 8;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.canvas-ruler.visible {
+    opacity: 1;
+}
+
+.canvas-ruler-horizontal {
+    top: -22px;
+    left: 0;
+    right: 0;
+    height: 20px;
+    border-radius: 3px 3px 0 0;
+    border: 1px solid rgba(108, 99, 255, 0.2);
+    border-bottom: none;
+}
+
+.canvas-ruler-vertical {
+    top: 0;
+    left: -22px;
+    bottom: 0;
+    width: 20px;
+    border-radius: 3px 0 0 3px;
+    border: 1px solid rgba(108, 99, 255, 0.2);
+    border-right: none;
 }
 
 /* Auth View Styles */
@@ -724,6 +920,16 @@ body {
     .canvas-container-wrapper {
         transform: scale(0.45);
         transform-origin: top center;
+    }
+    .canvas-page-label,
+    .canvas-corner-marks,
+    .canvas-margin-guides,
+    .canvas-ruler {
+        display: none !important;
+    }
+    .canvas-container-wrapper::before,
+    .canvas-container-wrapper::after {
+        display: none;
     }
     .writer-layout {
         flex-direction: column;
