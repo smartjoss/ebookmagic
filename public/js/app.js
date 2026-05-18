@@ -1201,10 +1201,12 @@ document.addEventListener('DOMContentLoaded', () => {
             writerOutlineList.appendChild(li);
         });
 
-        // Show "Lanjut ke Editor Desain" button if project already has chapter content
+        // Show editor buttons if project already has chapter content
         const hasExistingContent = window.chaptersContent && Object.keys(window.chaptersContent).some(k => window.chaptersContent[k] && window.chaptersContent[k].trim() !== '');
-        if (hasExistingContent && btnProceedToEditor) {
-            btnProceedToEditor.classList.remove('hidden');
+        if (hasExistingContent) {
+            if (btnProceedToEditor) btnProceedToEditor.classList.remove('hidden');
+            const btnCopy = document.getElementById('btnCopyAllToCanvas');
+            if (btnCopy) btnCopy.classList.remove('hidden');
         }
 
         // If project has canvas data, auto-show the editor below
@@ -1268,8 +1270,10 @@ document.addEventListener('DOMContentLoaded', () => {
             window.chaptersContent[chapterTitle] = data.content; // Save to memory
             window._isDirty = true;
             
-            // Show the "Proceed to Editor" button once content is generated
+            // Show the editor buttons once content is generated
             if (btnProceedToEditor) btnProceedToEditor.classList.remove('hidden');
+            const btnCopy = document.getElementById('btnCopyAllToCanvas');
+            if (btnCopy) btnCopy.classList.remove('hidden');
         } catch(error) {
             console.error(error);
             alert('Gagal: ' + error.message);
@@ -1353,6 +1357,229 @@ document.addEventListener('DOMContentLoaded', () => {
             editorView.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 200);
     });
+
+    // --- SMART COPY ALL CHAPTERS TO CANVAS ---
+    const btnCopyAllToCanvas = document.getElementById('btnCopyAllToCanvas');
+    if (btnCopyAllToCanvas) {
+        btnCopyAllToCanvas.addEventListener('click', () => {
+            // Save current quill content first
+            if(activeChapterElement && quill) {
+                window.chaptersContent[activeChapterElement.innerText] = quill.root.innerHTML;
+            }
+
+            if (!window.currentOutlineData || !window.currentOutlineData.outline) {
+                return alert('Tidak ada data bab untuk disalin.');
+            }
+
+            // Show editor if not visible
+            editorView.classList.remove('hidden');
+            initCanvas();
+
+            const outline = window.currentOutlineData.outline;
+            const chaptersWithContent = outline.filter(ch => window.chaptersContent[ch] && window.chaptersContent[ch].trim() !== '');
+
+            if (chaptersWithContent.length === 0) {
+                return alert('Belum ada bab yang ditulis. Silakan generate konten AI dulu untuk minimal 1 bab.');
+            }
+
+            if (!confirm(`Akan menyalin ${chaptersWithContent.length} bab ke halaman Canvas dengan format rapi.\n\nHalaman cover yang sudah ada akan dipertahankan.\nLanjutkan?`)) return;
+
+            btnCopyAllToCanvas.disabled = true;
+            btnCopyAllToCanvas.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Menyalin...';
+
+            // Save current canvas page first
+            if (typeof saveCurrentPage === 'function') saveCurrentPage();
+
+            // --- HTML Parser to Fabric.js elements ---
+            function parseHtmlToElements(html) {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                const elements = [];
+
+                function processNode(node) {
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        const text = node.textContent.trim();
+                        if (text) {
+                            elements.push({ type: 'paragraph', text: text });
+                        }
+                        return;
+                    }
+
+                    if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+                    const tag = node.tagName.toLowerCase();
+
+                    if (['h1', 'h2', 'h3', 'h4'].includes(tag)) {
+                        const text = node.textContent.trim();
+                        if (text) elements.push({ type: tag, text: text });
+                    } else if (tag === 'ul' || tag === 'ol') {
+                        const items = [];
+                        node.querySelectorAll('li').forEach(li => {
+                            const t = li.textContent.trim();
+                            if (t) items.push(t);
+                        });
+                        if (items.length > 0) {
+                            const prefix = tag === 'ol' ? 'num' : 'bullet';
+                            const bulletText = items.map((item, i) => {
+                                return prefix === 'num' ? `${i + 1}. ${item}` : `• ${item}`;
+                            }).join('\n');
+                            elements.push({ type: 'list', text: bulletText });
+                        }
+                    } else if (tag === 'p') {
+                        const text = node.textContent.trim();
+                        if (text) {
+                            // Check if has bold/strong children
+                            const isBold = node.querySelector('strong, b') && node.textContent === (node.querySelector('strong, b')?.textContent || '');
+                            elements.push({ type: 'paragraph', text: text, bold: isBold });
+                        }
+                    } else if (tag === 'table') {
+                        // Convert table to formatted text
+                        let tableText = '';
+                        node.querySelectorAll('tr').forEach(tr => {
+                            const cells = [];
+                            tr.querySelectorAll('td, th').forEach(cell => {
+                                cells.push(cell.textContent.trim());
+                            });
+                            tableText += cells.join('  |  ') + '\n';
+                        });
+                        if (tableText.trim()) {
+                            elements.push({ type: 'table', text: tableText.trim() });
+                        }
+                    } else {
+                        // Recursively process children for divs, spans, etc.
+                        node.childNodes.forEach(child => processNode(child));
+                    }
+                }
+
+                tempDiv.childNodes.forEach(child => processNode(child));
+                return elements;
+            }
+
+            // --- Create canvas pages from parsed elements ---
+            const CANVAS_W = 800;
+            const CANVAS_H = 1131;
+            const MARGIN_X = 60;
+            const MARGIN_TOP = 70;
+            const MARGIN_BOTTOM = 80;
+            const CONTENT_W = CANVAS_W - (MARGIN_X * 2);
+            const MAX_Y = CANVAS_H - MARGIN_BOTTOM;
+
+            function createNewPage() {
+                const pageCanvas = new fabric.StaticCanvas(null, { width: CANVAS_W, height: CANVAS_H });
+                pageCanvas.backgroundColor = '#ffffff';
+                return pageCanvas;
+            }
+
+            function getTextHeight(text, fontSize, fontWeight, width) {
+                // Approximate height calculation
+                const charsPerLine = Math.floor(width / (fontSize * 0.55));
+                const lines = text.split('\n').reduce((total, line) => {
+                    return total + Math.max(1, Math.ceil(line.length / charsPerLine));
+                }, 0);
+                return lines * (fontSize * 1.5) + 10;
+            }
+
+            const allPages = [];
+            // Keep existing cover page(s) if they exist
+            if (canvasPages.length > 0) {
+                canvasPages.forEach(p => allPages.push(p));
+            }
+
+            chaptersWithContent.forEach(chapterTitle => {
+                const html = window.chaptersContent[chapterTitle];
+                const elements = parseHtmlToElements(html);
+
+                let currentPageObjs = [];
+                let yPos = MARGIN_TOP;
+
+                function flushPage() {
+                    if (currentPageObjs.length === 0) return;
+                    const pg = createNewPage();
+                    currentPageObjs.forEach(obj => pg.add(obj));
+                    allPages.push(JSON.stringify(pg.toJSON()));
+                    currentPageObjs = [];
+                    yPos = MARGIN_TOP;
+                }
+
+                // Add chapter title
+                const titleHeight = getTextHeight(chapterTitle, 28, 800, CONTENT_W);
+                const titleObj = new fabric.Textbox(chapterTitle, {
+                    left: MARGIN_X, top: yPos, width: CONTENT_W,
+                    fontSize: 28, fontFamily: 'Outfit', fontWeight: 800,
+                    fill: '#6C63FF', lineHeight: 1.3, splitByGrapheme: false
+                });
+                titleObj.setControlsVisibility({ mt: false, mb: false });
+                currentPageObjs.push(titleObj);
+                yPos += titleHeight + 20;
+
+                // Add decorative line under chapter title
+                const decorLine = new fabric.Rect({
+                    left: MARGIN_X, top: yPos - 10,
+                    width: 80, height: 4,
+                    fill: '#6C63FF', rx: 2, ry: 2
+                });
+                currentPageObjs.push(decorLine);
+                yPos += 15;
+
+                // Process each element
+                elements.forEach(el => {
+                    let fontSize = 14;
+                    let fontWeight = 'normal';
+                    let fill = '#333333';
+                    let spacing = 12;
+
+                    if (el.type === 'h1') { fontSize = 24; fontWeight = 800; fill = '#1a1a2e'; spacing = 20; }
+                    else if (el.type === 'h2') { fontSize = 20; fontWeight = 700; fill = '#1a1a2e'; spacing = 18; }
+                    else if (el.type === 'h3') { fontSize = 17; fontWeight = 700; fill = '#333333'; spacing = 15; }
+                    else if (el.type === 'h4') { fontSize = 15; fontWeight = 700; fill = '#444444'; spacing = 12; }
+                    else if (el.type === 'list') { fontSize = 13; fill = '#444444'; spacing = 10; }
+                    else if (el.type === 'table') { fontSize = 12; fill = '#555555'; spacing = 10; }
+                    else if (el.bold) { fontWeight = 'bold'; }
+
+                    const elHeight = getTextHeight(el.text, fontSize, fontWeight, CONTENT_W);
+
+                    // Check if we need a new page
+                    if (yPos + elHeight > MAX_Y) {
+                        flushPage();
+                    }
+
+                    const textObj = new fabric.Textbox(el.text, {
+                        left: el.type === 'list' ? MARGIN_X + 15 : MARGIN_X,
+                        top: yPos,
+                        width: el.type === 'list' ? CONTENT_W - 15 : CONTENT_W,
+                        fontSize: fontSize,
+                        fontFamily: 'Outfit',
+                        fontWeight: fontWeight,
+                        fill: fill,
+                        lineHeight: 1.6,
+                        splitByGrapheme: false
+                    });
+                    textObj.setControlsVisibility({ mt: false, mb: false });
+                    currentPageObjs.push(textObj);
+                    yPos += elHeight + spacing;
+                });
+
+                // Flush remaining content
+                flushPage();
+            });
+
+            // Apply to canvas
+            canvasPages.length = 0;
+            allPages.forEach(p => canvasPages.push(p));
+            currentCanvasPage = 0;
+            loadPage(0);
+
+            btnCopyAllToCanvas.disabled = false;
+            btnCopyAllToCanvas.innerHTML = '<i class="ph ph-clipboard-text"></i> Salin Semua Bab ke Canvas';
+            
+            alert(`✅ Berhasil menyalin ${chaptersWithContent.length} bab ke ${canvasPages.length} halaman Canvas!\n\nGunakan navigasi halaman di bawah canvas untuk melihat semua halaman.`);
+
+            // Scroll to editor
+            setTimeout(() => {
+                editorView.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 300);
+        });
+    }
 
     // --- EDITOR LOGIC (Fabric.js) ---
     const btnBackToDashboard = document.getElementById('btnBackToDashboard');
