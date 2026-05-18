@@ -2109,64 +2109,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     pdf.addImage(dataURL, 'PNG', 0, 0, 800, 1131);
                 }
 
-                // Helper to strip HTML but preserve structure
-                function stripHtml(html) {
-                    let formattedHtml = html
-                        .replace(/<p[^>]*>/gi, '\n')
-                        .replace(/<\/p>/gi, '\n')
-                        .replace(/<br\s*[\/]?>/gi, '\n')
-                        .replace(/<h[1-6][^>]*>/gi, '\n\n')
-                        .replace(/<\/h[1-6]>/gi, '\n')
-                        .replace(/<li[^>]*>/gi, '\n• ')
-                        .replace(/<\/li>/gi, '')
-                        .replace(/<ul[^>]*>/gi, '\n')
-                        .replace(/<\/ul>/gi, '\n');
-                        
-                    let tmp = document.createElement("DIV");
-                    tmp.innerHTML = formattedHtml;
-                    let text = tmp.textContent || tmp.innerText || "";
-                    // Clean up excessive newlines
-                    return text.replace(/\n\s*\n\s*\n/g, '\n\n').trim();
-                }
-
-                // 2. Add Chapter Pages
-                if (window.currentOutlineData && window.currentOutlineData.outline) {
-                    // Make sure the last edited chapter is saved
-                    if (typeof activeChapterElement !== 'undefined' && activeChapterElement && typeof quill !== 'undefined') {
-                        window.chaptersContent[activeChapterElement.innerText] = quill.root.innerHTML;
+                // Tip: If chapters are not on canvas yet, remind user
+                if (canvasPages.length <= 1 && window.currentOutlineData && window.currentOutlineData.outline) {
+                    const hasChapters = window.currentOutlineData.outline.some(ch => window.chaptersContent[ch] && window.chaptersContent[ch].trim() !== '');
+                    if (hasChapters) {
+                        alert('💡 Tip: Anda memiliki konten bab yang belum disalin ke Canvas.\n\nGunakan tombol hijau "Salin Semua Bab ke Canvas" di halaman AI Penulis Bab agar konten tampil rapi di PDF.');
                     }
-
-                    window.currentOutlineData.outline.forEach((chapterTitle) => {
-                        const htmlContent = window.chaptersContent[chapterTitle];
-                        if (htmlContent) {
-                            pdf.addPage();
-                            let yOffset = 60; // Better top margin
-                            
-                            // Draw Title
-                            pdf.setFont("helvetica", "bold");
-                            pdf.setFontSize(22);
-                            const splitTitle = pdf.splitTextToSize(chapterTitle, 495);
-                            pdf.text(splitTitle, 50, yOffset);
-                            yOffset += (splitTitle.length * 28) + 30; // Spacing below title
-
-                            // Draw Content
-                            pdf.setFont("helvetica", "normal");
-                            pdf.setFontSize(12);
-                            
-                            const plainText = stripHtml(htmlContent);
-                            const splitContent = pdf.splitTextToSize(plainText, 495);
-                            
-                            // Handle page breaks with professional line height
-                            for(let i = 0; i < splitContent.length; i++) {
-                                if(yOffset > 780) { // Bottom margin safety
-                                    pdf.addPage();
-                                    yOffset = 60;
-                                }
-                                pdf.text(splitContent[i], 50, yOffset);
-                                yOffset += 18; // 1.5x Line height for readability
-                            }
-                        }
-                    });
                 }
 
                 // Save PDF
