@@ -506,7 +506,7 @@ app.post('/api/generate-titles', async (req, res) => {
         let data;
         if (isGemini) {
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
             const result = await model.generateContent(prompt);
             let text = result.response.text().replace(/```json/gi, '').replace(/```/g, '').trim();
             data = JSON.parse(text);
@@ -584,7 +584,7 @@ app.post('/api/generate-outline', async (req, res) => {
         let data;
         if (isGemini) {
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
             const result = await model.generateContent(prompt);
             let text = result.response.text();
             text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
@@ -677,7 +677,7 @@ app.post('/api/generate-chapter', async (req, res) => {
         let htmlContent;
         if (isGemini) {
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
             const result = await model.generateContent(prompt);
             htmlContent = result.response.text().replace(/```html/g, '').replace(/```/g, '').trim();
         } else {
@@ -723,7 +723,7 @@ app.post('/api/generate-image-prompt', async (req, res) => {
         let resultPrompt;
         if (isGemini) {
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
             const result = await model.generateContent(promptText);
             resultPrompt = result.response.text().trim();
         } else {
