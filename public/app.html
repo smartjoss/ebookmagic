@@ -563,7 +563,19 @@ Penutup"></textarea>
                         <button class="btn-icon" id="btnAlignRight" title="Rata Kanan" style="width: 34px; height: 34px;"><i class="ph ph-text-align-right"></i></button>
                         <div style="width: 1px; height: 24px; background: var(--border); margin: 0 2px;"></div>
                         <button class="btn-icon" id="btnFullWidth" title="Atur Layar Penuh" style="width: auto; height: 34px; padding: 0 10px; border-radius: 8px; font-size: 11px; color: var(--primary);"><i class="ph ph-arrows-out-line-horizontal"></i> Layar</button>
-                        <input type="color" id="colorPicker" value="#000000" title="Ubah Warna" style="width: 34px; height: 34px; border: none; border-radius: 6px; cursor: pointer; background: transparent;">
+                        <div style="width: 1px; height: 24px; background: var(--border); margin: 0 2px;"></div>
+                        <!-- Text Color Picker -->
+                        <div style="display: flex; align-items: center; gap: 4px; position: relative;" title="Warna Teks">
+                            <i class="ph ph-text-aa" style="font-size: 14px; color: var(--text-secondary);"></i>
+                            <input type="color" id="colorPicker" value="#000000" title="Ubah Warna Teks" style="width: 28px; height: 28px; border: 2px solid var(--border); border-radius: 6px; cursor: pointer; padding: 0;">
+                            <span style="font-size: 10px; color: var(--text-secondary); white-space: nowrap;">Teks</span>
+                        </div>
+                        <!-- Canvas Background Color Picker -->
+                        <div style="display: flex; align-items: center; gap: 4px; position: relative;" title="Warna Background Halaman">
+                            <i class="ph ph-paint-bucket" style="font-size: 14px; color: var(--text-secondary);"></i>
+                            <input type="color" id="bgColorPicker" value="#ffffff" title="Ubah Warna Background Halaman" style="width: 28px; height: 28px; border: 2px solid var(--border); border-radius: 6px; cursor: pointer; padding: 0;">
+                            <span style="font-size: 10px; color: var(--text-secondary); white-space: nowrap;">Latar</span>
+                        </div>
                         <div style="width: 1px; height: 24px; background: var(--border); margin: 0 2px;"></div>
                         <button class="btn-icon btn-margin-guide" id="btnToggleMarginGuide" title="Tampilkan Garis Margin" style="width: auto; height: 34px; padding: 0 10px; border-radius: 8px; font-size: 11px;"><i class="ph ph-ruler"></i> Margin</button>
                         <button class="btn-icon btn-margin-guide" id="btnToggleRuler" title="Tampilkan Penggaris" style="width: auto; height: 34px; padding: 0 10px; border-radius: 8px; font-size: 11px;"><i class="ph ph-columns"></i> Ruler</button>
@@ -613,6 +625,6 @@ Penutup"></textarea>
         </main>
     </div>
     
-    <script src="/js/app.js?v=5.7"></script>
+    <script src="/js/app.js?v=5.8"></script>
 </body>
 </html>

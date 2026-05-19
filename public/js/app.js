@@ -1775,6 +1775,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 canvas.renderAll();
                 updatePageIndicator();
+                // Sync background color picker with current canvas background
+                const bgPicker = document.getElementById('bgColorPicker');
+                if (bgPicker && canvas.backgroundColor) {
+                    bgPicker.value = canvas.backgroundColor;
+                }
             });
         }
     }
@@ -2238,6 +2243,16 @@ document.addEventListener('DOMContentLoaded', () => {
             canvas.renderAll();
         }
     });
+
+    // Update canvas background color
+    const bgColorPicker = document.getElementById('bgColorPicker');
+    if (bgColorPicker) {
+        bgColorPicker.addEventListener('input', (e) => {
+            if (!canvas) return;
+            canvas.backgroundColor = e.target.value;
+            canvas.renderAll();
+        });
+    }
 
     // --- CANVAS BOUNDARY GUIDES ---
 
