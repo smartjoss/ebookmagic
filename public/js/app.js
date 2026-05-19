@@ -2085,10 +2085,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const btn = document.getElementById(`btnAlign${align}`);
         if(btn) {
             btn.addEventListener('click', () => {
-                let objects = canvas.getActiveObjects();
-                if (objects.length === 0) {
-                    objects = canvas.getObjects('textbox');
-                }
+                const objects = canvas.getActiveObjects();
+                if (objects.length === 0) return; // Don't fallback to all textboxes
                 
                 objects.forEach(obj => {
                     if (obj.type === 'textbox') {
@@ -2104,10 +2102,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnFullWidth = document.getElementById('btnFullWidth');
     if(btnFullWidth) {
         btnFullWidth.addEventListener('click', () => {
-            let objects = canvas.getActiveObjects();
-            if (objects.length === 0) {
-                objects = canvas.getObjects('textbox');
-            }
+            const objects = canvas.getActiveObjects();
+            if (objects.length === 0) return; // Don't fallback to all textboxes
             
             let applied = false;
             objects.forEach(obj => {
@@ -2221,13 +2217,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof window.canvasRedo === 'function') window.canvasRedo();
     });
 
-    // Update color of active object
+    // Update color of active object (supports partial text selection)
     document.getElementById('colorPicker').addEventListener('input', (e) => {
         if (!canvas) return;
         const activeObject = canvas.getActiveObject();
         if (activeObject) {
-            if (activeObject.type === 'textbox') {
-                activeObject.set('fill', e.target.value);
+            if (activeObject.type === 'textbox' && activeObject.isEditing) {
+                // Apply color only to selected text within the textbox
+                const start = activeObject.selectionStart;
+                const end = activeObject.selectionEnd;
+                if (start !== end) {
+                    activeObject.setSelectionStyles({ fill: e.target.value }, start, end);
+                } else {
+                    // No text selected while editing — change the whole textbox
+                    activeObject.set('fill', e.target.value);
+                }
             } else {
                 activeObject.set('fill', e.target.value);
             }
@@ -2339,30 +2343,57 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Font Style / Heading Selector
+    // Font Style / Heading Selector (supports partial text selection)
     document.getElementById('textStyleSelector').addEventListener('change', (e) => {
         const activeObject = canvas.getActiveObject();
         if (activeObject && activeObject.type === 'textbox') {
             const val = e.target.value;
+            let styles = {};
             if (val === 'h1') {
-                activeObject.set({ fontSize: 42, fontWeight: 800 });
+                styles = { fontSize: 42, fontWeight: '800' };
             } else if (val === 'h2') {
-                activeObject.set({ fontSize: 32, fontWeight: 700 });
+                styles = { fontSize: 32, fontWeight: '700' };
             } else if (val === 'h3') {
-                activeObject.set({ fontSize: 24, fontWeight: 600 });
+                styles = { fontSize: 24, fontWeight: '600' };
             } else {
-                activeObject.set({ fontSize: 18, fontWeight: 'normal' });
+                styles = { fontSize: 18, fontWeight: 'normal' };
+            }
+
+            if (activeObject.isEditing) {
+                const start = activeObject.selectionStart;
+                const end = activeObject.selectionEnd;
+                if (start !== end) {
+                    // Apply only to selected text
+                    activeObject.setSelectionStyles(styles, start, end);
+                } else {
+                    // No text selected while editing — change the whole textbox
+                    activeObject.set(styles);
+                }
+            } else {
+                // Not in editing mode — change the whole textbox
+                activeObject.set(styles);
             }
             if (typeof activeObject.initDimensions === 'function') activeObject.initDimensions();
             canvas.renderAll();
         }
     });
 
-    // Font Family Selector
+    // Font Family Selector (supports partial text selection)
     document.getElementById('fontFamilySelector').addEventListener('change', (e) => {
         const activeObject = canvas.getActiveObject();
         if (activeObject && activeObject.type === 'textbox') {
-            activeObject.set('fontFamily', e.target.value);
+            if (activeObject.isEditing) {
+                const start = activeObject.selectionStart;
+                const end = activeObject.selectionEnd;
+                if (start !== end) {
+                    // Apply only to selected text
+                    activeObject.setSelectionStyles({ fontFamily: e.target.value }, start, end);
+                } else {
+                    activeObject.set('fontFamily', e.target.value);
+                }
+            } else {
+                activeObject.set('fontFamily', e.target.value);
+            }
             if (typeof activeObject.initDimensions === 'function') activeObject.initDimensions();
             canvas.renderAll();
         }
