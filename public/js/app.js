@@ -2414,6 +2414,76 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // --- FONT SIZE CONTROL ---
+    const fontSizeInput = document.getElementById('fontSizeInput');
+    const btnFontSizeDown = document.getElementById('btnFontSizeDown');
+    const btnFontSizeUp = document.getElementById('btnFontSizeUp');
+
+    // Helper: apply font size to active textbox (selection-aware)
+    function applyFontSize(size) {
+        if (!canvas) return;
+        size = Math.max(8, Math.min(120, size));
+        fontSizeInput.value = size;
+
+        const activeObject = canvas.getActiveObject();
+        if (activeObject && activeObject.type === 'textbox') {
+            if (activeObject.isEditing) {
+                const start = activeObject.selectionStart;
+                const end = activeObject.selectionEnd;
+                if (start !== end) {
+                    activeObject.setSelectionStyles({ fontSize: size }, start, end);
+                } else {
+                    activeObject.set('fontSize', size);
+                }
+            } else {
+                activeObject.set('fontSize', size);
+            }
+            if (typeof activeObject.initDimensions === 'function') activeObject.initDimensions();
+            canvas.renderAll();
+        }
+    }
+
+    if (fontSizeInput) {
+        fontSizeInput.addEventListener('change', (e) => {
+            applyFontSize(parseInt(e.target.value) || 18);
+        });
+        // Also handle Enter key
+        fontSizeInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                applyFontSize(parseInt(fontSizeInput.value) || 18);
+                fontSizeInput.blur();
+            }
+        });
+    }
+
+    if (btnFontSizeDown) {
+        btnFontSizeDown.addEventListener('click', () => {
+            const current = parseInt(fontSizeInput.value) || 18;
+            applyFontSize(current - 2);
+        });
+    }
+
+    if (btnFontSizeUp) {
+        btnFontSizeUp.addEventListener('click', () => {
+            const current = parseInt(fontSizeInput.value) || 18;
+            applyFontSize(current + 2);
+        });
+    }
+
+    // Sync font size input when user selects an object on canvas
+    if (canvas) {
+        canvas.on('selection:created', syncFontSizeIndicator);
+        canvas.on('selection:updated', syncFontSizeIndicator);
+    }
+
+    function syncFontSizeIndicator() {
+        const activeObject = canvas.getActiveObject();
+        if (activeObject && activeObject.type === 'textbox' && fontSizeInput) {
+            fontSizeInput.value = Math.round(activeObject.fontSize * (activeObject.scaleX || 1));
+        }
+    }
+
     // Keyboard controls for moving objects + Undo/Redo shortcuts
     window.addEventListener('keydown', (e) => {
         // Don't interfere if user is typing in an input or quill editor

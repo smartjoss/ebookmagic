@@ -544,6 +544,12 @@ Penutup"></textarea>
                             <option value="sans-serif">Sans-Serif</option>
                             <option value="serif">Serif</option>
                         </select>
+                        <!-- Font Size Control -->
+                        <div style="display: flex; align-items: center; gap: 2px;" title="Ukuran Huruf">
+                            <button class="btn-icon" id="btnFontSizeDown" title="Kecilkan" style="width: 24px; height: 28px; font-size: 14px; padding: 0; border-radius: 4px 0 0 4px; border: 1px solid var(--border);"><i class="ph ph-minus"></i></button>
+                            <input type="number" id="fontSizeInput" value="18" min="8" max="120" step="1" style="width: 42px; height: 28px; text-align: center; border: 1px solid var(--border); border-left: none; border-right: none; background: var(--surface); color: var(--text-primary); font-size: 12px; font-weight: 600; -moz-appearance: textfield;" title="Ukuran Font (px)">
+                            <button class="btn-icon" id="btnFontSizeUp" title="Besarkan" style="width: 24px; height: 28px; font-size: 14px; padding: 0; border-radius: 0 4px 4px 0; border: 1px solid var(--border);"><i class="ph ph-plus"></i></button>
+                        </div>
                         <div style="width: 1px; height: 24px; background: var(--border); margin: 0 2px;"></div>
                         <button class="btn-icon" id="btnAddText" title="Tambah Teks" style="width: 34px; height: 34px;"><i class="ph ph-text-t"></i></button>
                         <button class="btn-icon" id="btnToggleBold" title="Tebalkan (Bold)" style="width: 34px; height: 34px;"><i class="ph ph-text-b"></i></button>
@@ -625,6 +631,6 @@ Penutup"></textarea>
         </main>
     </div>
     
-    <script src="/js/app.js?v=5.8"></script>
+    <script src="/js/app.js?v=5.9"></script>
 </body>
 </html>

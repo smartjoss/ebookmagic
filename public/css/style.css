@@ -685,6 +685,13 @@ body {
     border-right: none;
 }
 
+/* Hide number input spinners for font size control */
+#fontSizeInput::-webkit-outer-spin-button,
+#fontSizeInput::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
 /* Auth View Styles */
 .auth-view {
     position: fixed;
