@@ -627,12 +627,24 @@ Penutup"></textarea>
                             <span id="pageIndicator" style="color: white; font-weight: bold;">Halaman 1 / 1</span>
                             <button class="btn-icon" id="btnNextPage" style="background: var(--surface); color: white;"><i class="ph ph-caret-right"></i></button>
                             <div style="width: 2px; height: 20px; background: rgba(255,255,255,0.2);"></div>
+                            <button class="btn-ghost" id="btnDeletePage" style="color: #ff6b6b; border: 1px solid rgba(255,107,107,0.3); padding: 5px 15px;"><i class="ph ph-trash"></i> Hapus Halaman</button>
                             <button class="btn-ghost" id="btnAddPage" style="color: white; border: 1px solid rgba(255,255,255,0.3); padding: 5px 15px;"><i class="ph ph-plus"></i> Tambah Halaman</button>
                         </div>
                     </div>
                 </div>
             </div>
         </main>
+    </div>
+    <!-- Context Menu for Canvas Objects -->
+    <div id="canvasContextMenu" class="hidden" style="position: absolute; background: rgba(30, 30, 40, 0.95); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 1000; padding: 5px; min-width: 160px; backdrop-filter: blur(10px);">
+        <ul style="list-style: none; margin: 0; padding: 0;">
+            <li id="menuSplitText" style="padding: 8px 12px; cursor: pointer; border-radius: 4px; display: none; align-items: center; gap: 8px; font-size: 13px; color: white; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
+                <i class="ph ph-scissors"></i> Belah Teks
+            </li>
+            <li id="menuInLineWithText" style="padding: 8px 12px; cursor: pointer; border-radius: 4px; display: none; align-items: center; gap: 8px; font-size: 13px; color: white; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
+                <i class="ph ph-text-align-center"></i> In Line With Text
+            </li>
+        </ul>
     </div>
     
     <script src="/js/app.js?v=5.9"></script>

@@ -1805,11 +1805,26 @@ document.addEventListener('DOMContentLoaded', () => {
         currentCanvasPage = canvasPages.length - 1;
         updatePageIndicator();
     });
+    document.getElementById('btnDeletePage')?.addEventListener('click', () => {
+        if (canvasPages.length <= 1) {
+            alert('Tidak dapat menghapus halaman. Ebook minimal harus memiliki 1 halaman.');
+            return;
+        }
+        if (confirm('Apakah Anda yakin ingin menghapus halaman ini? Tindakan ini tidak dapat dibatalkan.')) {
+            canvasPages.splice(currentCanvasPage, 1);
+            if (currentCanvasPage >= canvasPages.length) {
+                currentCanvasPage = canvasPages.length - 1;
+            }
+            loadPage(currentCanvasPage);
+        }
+    });
 
     function initCanvas() {
         if (!canvas) {
             canvas = new fabric.Canvas('ebookCanvas', {
-                backgroundColor: '#ffffff'
+                backgroundColor: '#ffffff',
+                stopContextMenu: true,
+                fireRightClick: true
             });
 
             // Global listener to fix non-breaking spaces and recalculate bounds when typing/pasting
@@ -1916,6 +1931,54 @@ document.addEventListener('DOMContentLoaded', () => {
             canvas.on('object:modified', saveCanvasState);
             canvas.on('object:added', saveCanvasState);
             canvas.on('object:removed', saveCanvasState);
+
+            // Context Menu Logic
+            canvas.on('mouse:down', function(e) {
+                const contextMenu = document.getElementById('canvasContextMenu');
+                if (e.button === 3) { // Right click
+                    let target = e.target;
+                    if (target) {
+                        canvas.setActiveObject(target);
+                        canvas.renderAll();
+                        
+                        const menuSplitText = document.getElementById('menuSplitText');
+                        const menuInLineWithText = document.getElementById('menuInLineWithText');
+                        
+                        let showMenu = false;
+                        menuSplitText.style.display = 'none';
+                        menuInLineWithText.style.display = 'none';
+
+                        if (target.type === 'textbox') {
+                            menuSplitText.style.display = 'flex';
+                            showMenu = true;
+                        } else if (target.type === 'image') {
+                            menuInLineWithText.style.display = 'flex';
+                            showMenu = true;
+                        }
+                        
+                        if (showMenu) {
+                            contextMenu.style.left = e.e.clientX + 'px';
+                            contextMenu.style.top = e.e.clientY + 'px';
+                            contextMenu.classList.remove('hidden');
+                            window._currentContextMenuTarget = target;
+                        } else {
+                            contextMenu.classList.add('hidden');
+                        }
+                    } else {
+                        contextMenu.classList.add('hidden');
+                    }
+                } else {
+                    contextMenu.classList.add('hidden'); // Hide on left click
+                }
+            });
+
+            // Hide context menu on click elsewhere
+            document.addEventListener('click', function(e) {
+                const contextMenu = document.getElementById('canvasContextMenu');
+                if (contextMenu && !e.target.closest('#canvasContextMenu') && e.button !== 2) {
+                    contextMenu.classList.add('hidden');
+                }
+            });
 
             // Save initial state
             setTimeout(saveCanvasState, 500);
@@ -3009,4 +3072,134 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Gagal: ' + error.message);
         }
     };
+
+    // --- CANVAS CONTEXT MENU ACTIONS ---
+    document.getElementById('menuSplitText')?.addEventListener('click', function() {
+        document.getElementById('canvasContextMenu').classList.add('hidden');
+        const target = window._currentContextMenuTarget;
+        if (target && target.type === 'textbox') {
+            const text = target.text;
+            if (!text || text.length < 5) return alert('Teks terlalu pendek untuk dibelah.');
+            
+            const lines = text.split('\n');
+            if (lines.length > 1) {
+                const halfLines = Math.floor(lines.length / 2);
+                const text1 = lines.slice(0, halfLines).join('\n');
+                const text2 = lines.slice(halfLines).join('\n');
+                
+                target.set('text', text1);
+                if (typeof target.initDimensions === 'function') target.initDimensions();
+                
+                const newTextBox = new fabric.Textbox(text2, {
+                    left: target.left,
+                    top: target.top + target.height + 20,
+                    width: target.width,
+                    fontSize: target.fontSize,
+                    fontFamily: target.fontFamily,
+                    fontWeight: target.fontWeight,
+                    fill: target.fill,
+                    lineHeight: target.lineHeight,
+                    textAlign: target.textAlign,
+                    splitByGrapheme: false
+                });
+                newTextBox.setControlsVisibility({ mt: false, mb: false });
+                
+                // If there are objects below the current target, push them down to make room
+                const extraSpace = newTextBox.height + 20;
+                canvas.getObjects().forEach(obj => {
+                    if (obj !== target && obj !== newTextBox && obj.top > target.top + target.height / 2) {
+                        obj.set('top', obj.top + extraSpace);
+                        obj.setCoords();
+                    }
+                });
+
+                canvas.add(newTextBox);
+                canvas.setActiveObject(newTextBox);
+                canvas.renderAll();
+                
+                if (typeof saveCanvasState === 'function') saveCanvasState();
+            } else {
+                alert('Tidak ada baris yang bisa dibelah. Coba tambahkan Enter (baris baru) pada teks Anda terlebih dahulu agar sistem tahu di mana harus membelah.');
+            }
+        }
+    });
+
+    document.getElementById('menuInLineWithText')?.addEventListener('click', function() {
+        document.getElementById('canvasContextMenu').classList.add('hidden');
+        const imgObj = window._currentContextMenuTarget;
+        if (imgObj && imgObj.type === 'image') {
+            const textboxes = canvas.getObjects().filter(o => o.type === 'textbox');
+            if (textboxes.length === 0) return alert('Tidak ada teks di canvas untuk diselaraskan.');
+            
+            let intersectingText = null;
+            // 1. Check for strict intersection
+            for (let tb of textboxes) {
+                if (imgObj.intersectsWithObject(tb)) {
+                    intersectingText = tb;
+                    break;
+                }
+            }
+            
+            // 2. If no strict intersection, find one that horizontally matches and is vertically close
+            if (!intersectingText) {
+                for (let tb of textboxes) {
+                    if (imgObj.top >= tb.top && imgObj.top <= tb.top + tb.height) {
+                        intersectingText = tb;
+                        break;
+                    }
+                }
+            }
+            
+            if (!intersectingText) {
+                return alert('Tolong seret (drag) gambar agar menumpuk di atas kotak teks yang ingin dibelah, lalu coba lagi.');
+            }
+            
+            const ratio = Math.max(0.1, Math.min(0.9, (imgObj.top - intersectingText.top) / intersectingText.height));
+            const lines = intersectingText.text.split('\n');
+            if (lines.length < 2) return alert('Teks ini hanya satu baris, tidak bisa dibelah. Silakan buat baris baru (Enter) terlebih dahulu.');
+            
+            const splitLineIndex = Math.floor(lines.length * ratio);
+            const text1 = lines.slice(0, splitLineIndex).join('\n');
+            const text2 = lines.slice(splitLineIndex).join('\n');
+            
+            intersectingText.set('text', text1);
+            if (typeof intersectingText.initDimensions === 'function') intersectingText.initDimensions();
+            
+            imgObj.set({
+                top: intersectingText.top + intersectingText.height + 15,
+                left: (800 - imgObj.getScaledWidth()) / 2
+            });
+            imgObj.setCoords();
+            
+            const newTextBox = new fabric.Textbox(text2, {
+                left: intersectingText.left,
+                top: imgObj.top + imgObj.getScaledHeight() + 15,
+                width: intersectingText.width,
+                fontSize: intersectingText.fontSize,
+                fontFamily: intersectingText.fontFamily,
+                fontWeight: intersectingText.fontWeight,
+                fill: intersectingText.fill,
+                lineHeight: intersectingText.lineHeight,
+                textAlign: intersectingText.textAlign,
+                splitByGrapheme: false
+            });
+            newTextBox.setControlsVisibility({ mt: false, mb: false });
+            canvas.add(newTextBox);
+            
+            const pushDownAmount = imgObj.getScaledHeight() + newTextBox.height + 30;
+            canvas.getObjects().forEach(obj => {
+                if (obj !== intersectingText && obj !== imgObj && obj !== newTextBox) {
+                    if (obj.top >= intersectingText.top + (intersectingText.height/2)) {
+                        obj.set('top', obj.top + pushDownAmount);
+                        obj.setCoords();
+                    }
+                }
+            });
+
+            canvas.setActiveObject(imgObj);
+            canvas.renderAll();
+            if (typeof saveCanvasState === 'function') saveCanvasState();
+        }
+    });
+
 });
