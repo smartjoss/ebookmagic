@@ -984,7 +984,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.selectedEbookSubtitle = '';
                     
                     // Show a generic cover prompt for the original theme
-                    coverPromptText.innerText = `A high quality, professional, 8k resolution, modern minimalist ebook cover illustration about ${niche}. No text, clear background.`;
+                    coverPromptText.innerText = `Ebook cover design, a high quality, professional, 8k resolution, modern minimalist book cover illustration about ${niche}. Vertical composition, empty space for title text, clear background. --ar 2:3 --v 6.0`;
                     coverPromptBox.classList.remove('hidden');
 
                     updateOutlineButtons();

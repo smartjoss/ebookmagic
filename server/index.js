@@ -483,9 +483,9 @@ app.post('/api/generate-titles', async (req, res) => {
     if (!apiKey && !openai) {
         return setTimeout(() => res.json({
             titles: [
-                { title: `Rahasia ${niche}`, subtitle: `Cara ampuh untuk ${audience}`, cover_prompt: `A beautiful and minimalist cover for a book about ${niche}, with a focus on ${audience}, high quality, 8k, photorealistic.` },
-                { title: `Mastering ${niche}`, subtitle: `Langkah demi langkah untuk pemula`, cover_prompt: `An inspiring vector illustration for an ebook cover about ${niche}, modern, vibrant colors.` },
-                { title: `${niche} Blueprint`, subtitle: `Sistem terbukti menghasilkan`, cover_prompt: `A professional corporate ebook cover design representing ${niche}, minimalist graphic, blue and gold colors.` }
+                { title: `Rahasia ${niche}`, subtitle: `Cara ampuh untuk ${audience}`, cover_prompt: `Ebook cover design, a beautiful and minimalist cover for a book about ${niche}, with a focus on ${audience}, high quality, 8k, photorealistic, vertical composition, leaving space for title. --ar 2:3 --v 6.0` },
+                { title: `Mastering ${niche}`, subtitle: `Langkah demi langkah untuk pemula`, cover_prompt: `Book cover design, an inspiring vector illustration for an ebook about ${niche}, modern, vibrant colors, vertical layout, empty space at the top for typography. --ar 2:3 --v 6.0` },
+                { title: `${niche} Blueprint`, subtitle: `Sistem terbukti menghasilkan`, cover_prompt: `Professional corporate ebook cover design representing ${niche}, minimalist graphic, blue and gold colors, vertical book cover ratio, clean background for text. --ar 2:3 --v 6.0` }
             ]
         }), 2000);
     }
@@ -498,7 +498,7 @@ app.post('/api/generate-titles', async (req, res) => {
         Setiap judul harus memiliki:
         1. "title": Judul utama yang bombastis dan bikin penasaran (maks 6 kata). WAJIB menggunakan Bahasa Indonesia.
         2. "subtitle": Subjudul deskriptif yang menjelaskan nilai tambah atau solusi praktis (maks 10 kata). WAJIB menggunakan Bahasa Indonesia.
-        3. "cover_prompt": Sebuah prompt bahasa inggris (maks 30 kata) yang sangat deskriptif untuk diumpankan ke AI Image Generator (Midjourney/DALL-E) agar menghasilkan gambar cover/sampul ebook yang visualnya memukau dan relevan dengan judul tersebut.
+        3. "cover_prompt": Sebuah prompt bahasa inggris (maks 40 kata) yang sangat deskriptif untuk diumpankan ke AI Image Generator (Midjourney/DALL-E). PENTING: Prompt WAJIB diawali dengan kata "Ebook cover design" atau "Book cover", dan mencakup instruksi komposisi vertikal serta menyisakan ruang kosong untuk teks judul, agar hasilnya benar-benar terlihat seperti desain sampul buku profesional (bukan sekadar ilustrasi atau banner biasa). WAJIB akhiri prompt dengan parameter aspek rasio "--ar 2:3 --v 6.0" agar ukurannya pas untuk cover buku vertikal.
         
         Jawab HANYA dalam format JSON dengan struktur array:
         [
@@ -668,22 +668,22 @@ app.post('/api/generate-chapter', async (req, res) => {
         }, 3000);
     }
 
-    let chapterLengthInstructions = "Jelaskan konsep utama dengan ringkas, tajam, dan langsung pada intinya (cocok untuk ebook lead magnet pendek).";
+    let chapterLengthInstructions = "Jelaskan konsep utama dengan ringkas, tajam, dan langsung pada intinya (cocok untuk ebook lead magnet pendek, sekitar 300-400 kata).";
     if (type === 'panduan') {
-        chapterLengthInstructions = "Jelaskan konsep utama secara komprehensif. Buat beberapa sub-bab, berikan contoh, dan buat paragraf yang lebih panjang.";
+        chapterLengthInstructions = "PENTING: Tuliskan konten secara komprehensif dan mendalam. Buat setidaknya 3-4 sub-bab, berikan contoh nyata, dan buat paragraf yang panjang. Panjang tulisan WAJIB minimal 700-1000 kata.";
     } else if (type === 'masterclass') {
-        chapterLengthInstructions = "Bahas materi ini dengan SANGAT MENDETAIL layaknya sebuah ensiklopedia atau buku masterclass premium. Berikan studi kasus mendalam, penjabaran teknis langkah demi langkah, dan buat isi bab ini sangat panjang dan berbobot.";
+        chapterLengthInstructions = "SANGAT PENTING: Bahas materi ini dengan SANGAT MENDETAIL layaknya sebuah buku masterclass premium. Berikan studi kasus mendalam, penjabaran teknis langkah demi langkah, dan analisis komprehensif. Panjang tulisan WAJIB minimal 1200-1500 kata.";
     }
 
     let toneInstructions = "Gunakan nada bicara yang komunikatif namun otoritatif (menarik seperti tulisan blogger terkenal).";
     if (tone === 'humanizer') {
-        toneInstructions = "Gunakan gaya bahasa AI Humanizer: SANGAT santai, seperti ngobrol akrab dengan teman di kafe. Gunakan kata ganti luwes, bahasa membumi, jangan kaku, dan hindari kata-kata bersayap layaknya teks robot.";
+        toneInstructions = "Gunakan gaya bahasa AI Humanizer: SANGAT santai, seperti ngobrol akrab dengan teman di kafe. Gunakan bahasa gaul/luwes yang membumi, jangan kaku, hindari kesan menggurui, dan hindari kata-kata bersayap layaknya teks robot AI.";
     } else if (tone === 'islamic') {
-        toneInstructions = "Gunakan Islamic Copy Mode: Bahasa sangat santun, teduh, dan islami. Selipkan kalimat basmalah, 'InsyaAllah', 'Alhamdulillah', atau hikmah syariah yang relevan dengan topik secara natural.";
+        toneInstructions = "Gunakan Islamic Copy Mode: Bahasa sangat santun, teduh, dan islami. WAJIB sertakan minimal 1 kutipan ayat Al-Qur'an atau Hadits yang sahih dan relevan dengan topik (lengkap beserta terjemahannya) sebagai landasan utama/dalil argumen. Selipkan juga basmalah, 'InsyaAllah', 'Alhamdulillah', atau hikmah syariah secara natural.";
     } else if (tone === 'storytelling') {
-        toneInstructions = "Gunakan gaya Storytelling: Sepanjang bab ini harus terasa seperti novel non-fiksi. Gunakan perumpamaan, konflik, dan resolusi. Mulai dan bangun argumentasi lewat studi kasus nyata atau cerita fiksi yang sangat emosional.";
+        toneInstructions = "Gunakan gaya Storytelling: Sepanjang bab ini harus terasa seperti novel non-fiksi. Porsi cerita harus mendominasi minimal 40% dari isi bab. Gunakan perumpamaan, konflik, dan resolusi. Mulai dan bangun argumentasi lewat studi kasus nyata atau cerita fiksi yang sangat emosional sebelum masuk ke teori.";
     } else if (tone === 'wa_cta') {
-        toneInstructions = "Gunakan gaya tulisan persuasif. PENTING: Di bagian paling akhir teks, buatlah Call-To-Action (CTA) yang sangat kuat agar pembaca segera menghubungi admin via WhatsApp untuk konsultasi, beli produk, atau tanya jawab.";
+        toneInstructions = "Gunakan gaya tulisan persuasif. PENTING: Di bagian paling akhir teks, buatlah Call-To-Action (CTA) yang sangat memikat dan agresif agar pembaca segera menghubungi admin via WhatsApp (misal: 'Klik link WhatsApp di bawah ini sekarang') untuk konsultasi atau beli produk.";
     }
 
     try {
@@ -739,7 +739,7 @@ app.post('/api/generate-image-prompt', async (req, res) => {
     if (!apiKey && !openai) {
         return setTimeout(() => {
             res.json({
-                prompt: `A highly detailed, photorealistic illustration of ${chapterTitle} related to ${niche}, professional lighting, 8k resolution, cinematic composition`
+                prompt: `A highly detailed, photorealistic illustration of ${chapterTitle} related to ${niche}, professional lighting, 8k resolution, cinematic composition --ar 16:9 --v 6.0`
             });
         }, 1500);
     }
@@ -750,8 +750,7 @@ app.post('/api/generate-image-prompt', async (req, res) => {
         Buatlah 1 (satu) buah prompt gambar berbahasa Inggris yang sangat deskriptif dan unik untuk mengilustrasikan ISI dari bab berjudul "${chapterTitle}". Buku ini secara umum membahas tentang "${niche}".
         PENTING: Pastikan visual yang dihasilkan sangat spesifik dan mencerminkan tema dari judul bab "${chapterTitle}", BUKAN sekadar gambar umum tentang topik buku. Buat adegan atau objek utama yang berbeda-beda agar setiap bab memiliki ilustrasi unik.
         Prompt harus mencakup subjek utama yang spesifik sesuai bab, aksi/situasi, latar belakang, gaya visual (misal: photorealistic, 3d render, vector art), pencahayaan, dan resolusi.
-        Jangan tambahkan penjelasan apa pun. Cukup kembalikan teks prompt bahasa Inggrisnya saja.
-        `;
+        Jangan tambahkan penjelasan apa pun. Cukup kembalikan teks prompt bahasa Inggrisnya saja. WAJIB akhiri prompt dengan "--ar 16:9 --v 6.0" untuk orientasi landscape.
 
         let resultPrompt;
         if (isGemini) {
