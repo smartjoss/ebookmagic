@@ -514,7 +514,7 @@ app.post('/api/generate-titles', async (req, res) => {
         let data;
         if (isGemini) {
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", generationConfig: { temperature: 0.4 } });
             const result = await model.generateContent(prompt);
             let text = result.response.text().replace(/```json/gi, '').replace(/```/g, '').trim();
             data = JSON.parse(text);
@@ -522,7 +522,8 @@ app.post('/api/generate-titles', async (req, res) => {
             let activeOpenai = apiKey ? new OpenAI({ apiKey: apiKey }) : openai;
             const completion = await activeOpenai.chat.completions.create({
                 model: "gpt-3.5-turbo",
-                messages: [{ role: "user", content: prompt }]
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.4
             });
             let text = completion.choices[0].message.content.replace(/```json/gi, '').replace(/```/g, '').trim();
             data = JSON.parse(text);
@@ -617,7 +618,7 @@ app.post('/api/generate-outline', async (req, res) => {
         let data;
         if (isGemini) {
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", generationConfig: { temperature: 0.4 } });
             const result = await model.generateContent(prompt);
             let text = result.response.text();
             text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
@@ -628,7 +629,7 @@ app.post('/api/generate-outline', async (req, res) => {
                 model: 'gpt-3.5-turbo',
                 messages: [{ role: 'user', content: prompt }],
                 response_format: { type: 'json_object' },
-                temperature: 0.7
+                temperature: 0.4
             });
             data = JSON.parse(response.choices[0].message.content);
         }
@@ -711,7 +712,7 @@ app.post('/api/generate-chapter', async (req, res) => {
         let htmlContent;
         if (isGemini) {
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", generationConfig: { temperature: 0.4 } });
             const result = await model.generateContent(prompt);
             htmlContent = result.response.text().replace(/```html/g, '').replace(/```/g, '').trim();
         } else {
@@ -719,7 +720,7 @@ app.post('/api/generate-chapter', async (req, res) => {
             const response = await activeOpenai.chat.completions.create({
                 model: 'gpt-3.5-turbo',
                 messages: [{ role: 'user', content: prompt }],
-                temperature: 0.8
+                temperature: 0.4
             });
             htmlContent = response.choices[0].message.content.trim();
         }
@@ -757,7 +758,7 @@ app.post('/api/generate-image-prompt', async (req, res) => {
         let resultPrompt;
         if (isGemini) {
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", generationConfig: { temperature: 0.4 } });
             const result = await model.generateContent(promptText);
             resultPrompt = result.response.text().trim();
         } else {
@@ -765,7 +766,7 @@ app.post('/api/generate-image-prompt', async (req, res) => {
             const response = await activeOpenai.chat.completions.create({
                 model: 'gpt-3.5-turbo',
                 messages: [{ role: 'user', content: promptText }],
-                temperature: 0.7
+                temperature: 0.4
             });
             resultPrompt = response.choices[0].message.content.trim();
         }
