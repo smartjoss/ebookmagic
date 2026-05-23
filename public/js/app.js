@@ -1408,6 +1408,8 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const toneSelector = document.getElementById('chapterToneSelector');
             const selectedTone = toneSelector ? toneSelector.value : 'standar';
+            const contextInput = document.getElementById('chapterContextInput');
+            const customContext = contextInput ? contextInput.value : '';
 
             const response = await fetch('/api/generate-chapter', {
                 method: 'POST',
@@ -1418,6 +1420,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     audience: window.currentAudience,
                     type: window.currentEbookType || 'praktis',
                     tone: selectedTone,
+                    customContext: customContext,
                     apiKey: window.userApiKey,
                     authorProfile: window.currentAuthorProfile,
                     cta: window.currentCTA

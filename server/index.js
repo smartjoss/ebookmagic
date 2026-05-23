@@ -657,7 +657,7 @@ app.post('/api/generate-outline', async (req, res) => {
 
 // API Endpoint for generating chapter content
 app.post('/api/generate-chapter', async (req, res) => {
-    const { chapterTitle, niche, audience, type, tone, authorProfile, cta } = req.body;
+    const { chapterTitle, niche, audience, type, tone, customContext, authorProfile, cta } = req.body;
     const apiKey = (req.body.apiKey || '').trim();
     const isGemini = apiKey && apiKey.startsWith('AIza');
 
@@ -696,6 +696,7 @@ app.post('/api/generate-chapter', async (req, res) => {
         Target Pembaca: ${audience}
         Judul Bab: "${chapterTitle}"
         
+        ${customContext ? `Konteks Khusus / Instruksi Tambahan (SANGAT PENTING): ${customContext}\n        (PENTING: Wajib patuhi instruksi ini dan fokus pada pembahasan tersebut sesuai konteks. Jangan menyimpang dari instruksi ini!).` : ''}
         ${authorProfile ? `Profil Penulis (Sebagai Konteks): ${authorProfile}\n        (PENTING: Jika bab ini berjudul 'Tentang Penulis' atau mirip, ceritakan profil ini dengan menarik. Jika bukan, jadikan ini sebagai konteks bahwa penulis adalah ahli di bidang ini).` : ''}
         ${cta ? `Call-to-Action / Penawaran Spesial: ${cta}\n        (PENTING: Jika bab ini adalah bab penutup atau tentang penawaran, WAJIB sertakan Call-to-Action ini dengan bahasa yang sangat persuasif di bagian akhir).` : ''}
 
