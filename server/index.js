@@ -668,11 +668,11 @@ app.post('/api/generate-chapter', async (req, res) => {
         }, 3000);
     }
 
-    let chapterLengthInstructions = "Jelaskan konsep utama dengan ringkas, tajam, dan langsung pada intinya (cocok untuk ebook lead magnet pendek, sekitar 300-400 kata).";
+    let chapterLengthInstructions = "Jelaskan konsep utama dengan detail, berikan contoh kasus, dan jangan terlalu singkat. Panjang tulisan sekitar 500-700 kata.";
     if (type === 'panduan') {
-        chapterLengthInstructions = "PENTING: Tuliskan konten secara komprehensif dan mendalam. Buat setidaknya 3-4 sub-bab, berikan contoh nyata, dan buat paragraf yang panjang. Panjang tulisan WAJIB minimal 700-1000 kata.";
+        chapterLengthInstructions = "SANGAT PENTING: Tuliskan konten ini secara ekstensif dan sangat mendalam. JANGAN meringkas isi. Buat minimal 4-5 sub-bab (menggunakan <h4>). Setiap sub-bab WAJIB dijelaskan dengan beberapa paragraf panjang dan disertai contoh nyata. Tulisan WAJIB panjang (minimal 1000-1500 kata). Jangan pelit kata!";
     } else if (type === 'masterclass') {
-        chapterLengthInstructions = "SANGAT PENTING: Bahas materi ini dengan SANGAT MENDETAIL layaknya sebuah buku masterclass premium. Berikan studi kasus mendalam, penjabaran teknis langkah demi langkah, dan analisis komprehensif. Panjang tulisan WAJIB minimal 1200-1500 kata.";
+        chapterLengthInstructions = "EKSTREM PENTING: Bahas materi ini dengan TINGKAT KEDALAMAN MAKSIMAL layaknya buku teks premium. Kupas tuntas secara komprehensif tanpa ada bagian yang diringkas. Berikan studi kasus mendalam, penjabaran teknis langkah demi langkah, data/fakta, dan analisis tingkat lanjut. Tulisan WAJIB sangat panjang (minimal 1500-2500 kata). Anda akan dihukum jika memberikan jawaban pendek!";
     }
 
     let toneInstructions = "Gunakan nada bicara yang komunikatif namun otoritatif (menarik seperti tulisan blogger terkenal).";
@@ -702,9 +702,10 @@ app.post('/api/generate-chapter', async (req, res) => {
         1. ${toneInstructions}
         2. Masukkan hook bercerita (storytelling) pendek di awal bab.
         3. ${chapterLengthInstructions}
-        4. Wajib sertakan poin-poin (bullet points) yang bisa langsung dipraktikkan.
-        5. Format tulisan harus menggunakan tag HTML bersih (gunakan <h3>, <h4>, <p>, <ul>, <li>, <strong>, <table>, <tr>, <td> jika diperlukan).
-        6. JANGAN membungkus teks dengan blok kode markdown seperti \`\`\`html. Kembalikan HANYA teks HTML mentah.
+        4. Wajib jabarkan setiap ide dengan paragraf penjelas yang panjang dan rinci, BUKAN sekadar poin rangkuman. Jangan malas menulis dan jangan menyingkat!
+        5. Wajib sertakan poin-poin (bullet points) yang bisa langsung dipraktikkan.
+        6. Format tulisan harus menggunakan tag HTML bersih (gunakan <h3>, <h4>, <p>, <ul>, <li>, <strong>, <table>, <tr>, <td> jika diperlukan).
+        7. JANGAN membungkus teks dengan blok kode markdown seperti \`\`\`html. Kembalikan HANYA teks HTML mentah.
         `;
 
         let htmlContent;
