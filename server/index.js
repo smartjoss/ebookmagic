@@ -751,6 +751,7 @@ app.post('/api/generate-image-prompt', async (req, res) => {
         PENTING: Pastikan visual yang dihasilkan sangat spesifik dan mencerminkan tema dari judul bab "${chapterTitle}", BUKAN sekadar gambar umum tentang topik buku. Buat adegan atau objek utama yang berbeda-beda agar setiap bab memiliki ilustrasi unik.
         Prompt harus mencakup subjek utama yang spesifik sesuai bab, aksi/situasi, latar belakang, gaya visual (misal: photorealistic, 3d render, vector art), pencahayaan, dan resolusi.
         Jangan tambahkan penjelasan apa pun. Cukup kembalikan teks prompt bahasa Inggrisnya saja. WAJIB akhiri prompt dengan "--ar 16:9 --v 6.0" untuk orientasi landscape.
+        `;
 
         let resultPrompt;
         if (isGemini) {
