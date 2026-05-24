@@ -2830,82 +2830,89 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- SAVE PROJECT LOGIC ---
+    const saveProjectToCloud = async (btnElement) => {
+        if(!window.currentUser) return alert('Anda harus login untuk menyimpan.');
+        if(!window.currentOutlineData) return alert('Tidak ada data proyek untuk disimpan.');
+
+        btnElement.disabled = true;
+        const originalText = btnElement.innerHTML;
+        btnElement.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Menyimpan...';
+
+        if (typeof activeChapterElement !== 'undefined' && activeChapterElement && typeof quill !== 'undefined') {
+            window.chaptersContent[activeChapterElement.innerText] = quill.root.innerHTML;
+        }
+
+        try {
+            // Prepare Data
+            if (typeof saveCurrentPage === 'function') saveCurrentPage();
+            // Generate thumbnail
+            let thumbnailBase64 = null;
+            if (typeof canvas !== 'undefined' && canvas) {
+                canvas.discardActiveObject();
+                canvas.renderAll();
+                thumbnailBase64 = canvas.toDataURL({ format: 'jpeg', quality: 0.5, multiplier: 0.5 });
+            }
+
+            const payload = {
+                projectId: window.currentProjectId,
+                userId: window.currentUser.id,
+                title: window.currentOutlineData.title || 'Untitled Ebook',
+                niche: window.currentNiche || '',
+                outline: window.currentOutlineData.outline || [],
+                chapters: window.chaptersContent || {},
+                canvasData: {
+                    pages: canvasPages,
+                    currentPage: currentCanvasPage,
+                    thumbnail: thumbnailBase64,
+                    authorProfile: window.currentAuthorProfile || '',
+                    cta: window.currentCTA || '',
+                    audience: window.currentAudience || '',
+                    ebookType: window.currentEbookType || 'praktis'
+                },
+                token: window.currentUser.token // Send token for RLS bypass
+            };
+
+            const response = await fetch('/api/save-ebook', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            if(result.error) throw new Error(result.error);
+            
+            if (result.projectId) {
+                window.currentProjectId = result.projectId;
+            }
+
+            window._isDirty = false;
+            alert('✅ ' + result.message);
+        } catch(error) {
+            console.error(error);
+            if (error.message.includes('JWT expired') || error.message.includes('Unauthorized') || error.message.includes('Sesi')) {
+                alert('Sesi Anda telah berakhir. Silakan login kembali untuk menyimpan proyek.');
+                localStorage.removeItem('ebookMagicUser');
+                window.currentUser = null;
+                document.getElementById('authView').style.display = 'flex';
+                document.getElementById('mainAppContainer').style.pointerEvents = 'none';
+                document.getElementById('mainAppContainer').style.opacity = '0.5';
+            } else {
+                alert('❌ Gagal menyimpan proyek: ' + error.message);
+            }
+        } finally {
+            btnElement.disabled = false;
+            btnElement.innerHTML = originalText;
+        }
+    };
+
     const btnSaveProject = document.getElementById('btnSaveProject');
     if(btnSaveProject) {
-        btnSaveProject.addEventListener('click', async () => {
-            if(!window.currentUser) return alert('Anda harus login untuk menyimpan.');
-            if(!window.currentOutlineData) return alert('Tidak ada data proyek untuk disimpan.');
-
-            btnSaveProject.disabled = true;
-            const originalText = btnSaveProject.innerHTML;
-            btnSaveProject.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Menyimpan...';
-
-            if (typeof activeChapterElement !== 'undefined' && activeChapterElement && typeof quill !== 'undefined') {
-                window.chaptersContent[activeChapterElement.innerText] = quill.root.innerHTML;
-            }
-
-            try {
-                // Prepare Data
-                if (typeof saveCurrentPage === 'function') saveCurrentPage();
-                // Generate thumbnail
-                let thumbnailBase64 = null;
-                if (typeof canvas !== 'undefined' && canvas) {
-                    canvas.discardActiveObject();
-                    canvas.renderAll();
-                    thumbnailBase64 = canvas.toDataURL({ format: 'jpeg', quality: 0.5, multiplier: 0.5 });
-                }
-
-                const payload = {
-                    projectId: window.currentProjectId,
-                    userId: window.currentUser.id,
-                    title: window.currentOutlineData.title || 'Untitled Ebook',
-                    niche: window.currentNiche || '',
-                    outline: window.currentOutlineData.outline || [],
-                    chapters: window.chaptersContent || {},
-                    canvasData: {
-                        pages: canvasPages,
-                        currentPage: currentCanvasPage,
-                        thumbnail: thumbnailBase64,
-                        authorProfile: window.currentAuthorProfile || '',
-                        cta: window.currentCTA || '',
-                        audience: window.currentAudience || '',
-                        ebookType: window.currentEbookType || 'praktis'
-                    },
-                    token: window.currentUser.token // Send token for RLS bypass
-                };
-
-                const response = await fetch('/api/save-ebook', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const result = await response.json();
-                if(result.error) throw new Error(result.error);
-                
-                if (result.projectId) {
-                    window.currentProjectId = result.projectId;
-                }
-
-                window._isDirty = false;
-                alert('✅ ' + result.message);
-            } catch(error) {
-                console.error(error);
-                if (error.message.includes('JWT expired') || error.message.includes('Unauthorized') || error.message.includes('Sesi')) {
-                    alert('Sesi Anda telah berakhir. Silakan login kembali untuk menyimpan proyek.');
-                    localStorage.removeItem('ebookMagicUser');
-                    window.currentUser = null;
-                    document.getElementById('authView').style.display = 'flex';
-                    document.getElementById('mainAppContainer').style.pointerEvents = 'none';
-                    document.getElementById('mainAppContainer').style.opacity = '0.5';
-                } else {
-                    alert('❌ Gagal menyimpan proyek: ' + error.message);
-                }
-            } finally {
-                btnSaveProject.disabled = false;
-                btnSaveProject.innerHTML = originalText;
-            }
-        });
+        btnSaveProject.addEventListener('click', () => saveProjectToCloud(btnSaveProject));
+    }
+    
+    const btnSaveProjectWriter = document.getElementById('btnSaveProjectWriter');
+    if(btnSaveProjectWriter) {
+        btnSaveProjectWriter.addEventListener('click', () => saveProjectToCloud(btnSaveProjectWriter));
     }
 
     // --- AGENCY & PROFILE FUNCTIONS ---
