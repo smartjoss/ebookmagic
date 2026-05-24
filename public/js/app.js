@@ -1417,6 +1417,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    const btnAddChapterInWriter = document.getElementById('btnAddChapterInWriter');
+    if (btnAddChapterInWriter) {
+        btnAddChapterInWriter.addEventListener('click', () => {
+            const chapterName = prompt('Masukkan nama bab baru:');
+            if (chapterName && chapterName.trim() !== '') {
+                const newChapter = chapterName.trim();
+                if (!window.currentOutlineData.outline.includes(newChapter)) {
+                    window.currentOutlineData.outline.push(newChapter);
+                    window._isDirty = true;
+                    
+                    const li = document.createElement('li');
+                    li.innerText = newChapter;
+                    
+                    li.addEventListener('click', () => {
+                        if(activeChapterElement) {
+                            window.chaptersContent[activeChapterElement.innerText] = quill.root.innerHTML;
+                            activeChapterElement.classList.remove('active');
+                        }
+                        
+                        li.classList.add('active');
+                        activeChapterElement = li;
+                        currentChapterTitle.innerText = newChapter;
+                        
+                        if(window.chaptersContent[newChapter]) {
+                            quill.clipboard.dangerouslyPasteHTML(window.chaptersContent[newChapter]);
+                        } else {
+                            quill.setText('');
+                        }
+                    });
+                    
+                    const writerOutlineList = document.getElementById('writerOutlineList');
+                    if (writerOutlineList) writerOutlineList.appendChild(li);
+                    
+                    li.click();
+                } else {
+                    alert('Bab dengan nama tersebut sudah ada.');
+                }
+            }
+        });
+    }
+
     btnGenerateChapterContent.addEventListener('click', async () => {
         if(!activeChapterElement) return;
         const chapterTitle = activeChapterElement.innerText;

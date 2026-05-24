@@ -477,7 +477,12 @@ Penutup"></textarea>
                 <div class="writer-layout">
                     <!-- Left Sidebar for Outline -->
                     <div class="writer-sidebar glass">
-                        <h3>Daftar Isi Anda</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="margin: 0;">Daftar Isi Anda</h3>
+                            <button id="btnAddChapterInWriter" class="btn-icon" style="background: var(--primary); color: white; padding: 4px 8px; border-radius: 4px; border: none; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 4px;" title="Tambah Bab Baru">
+                                <i class="ph ph-plus"></i> Bab
+                            </button>
+                        </div>
                         <ul class="writer-outline-list" id="writerOutlineList">
                             <!-- Populated dynamically -->
                         </ul>
