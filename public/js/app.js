@@ -87,9 +87,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('ebookMagicUser', JSON.stringify(window.currentUser));
                 console.log('✅ Sesi berhasil diperpanjang otomatis.');
             } else {
-                console.warn('⚠️ Refresh token expired. Memaksa login ulang.');
+                console.warn('⚠️ Refresh token expired. Sesi berakhir.');
                 localStorage.removeItem('ebookMagicUser');
-                window.location.reload();
+                if (window.currentUser) {
+                    window.currentUser = null;
+                    alert('Sesi login Anda telah kedaluwarsa. Silakan login kembali untuk melanjutkan pekerjaan Anda.');
+                    document.getElementById('authView').style.display = 'flex';
+                    document.getElementById('mainAppContainer').style.pointerEvents = 'none';
+                    document.getElementById('mainAppContainer').style.opacity = '0.5';
+                }
             }
         } catch (err) {
             console.warn('⚠️ Gagal refresh token:', err.message);
@@ -249,6 +255,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => {
                     authView.style.display = 'none';
                     mainAppContainer.classList.remove('hidden');
+                    mainAppContainer.style.pointerEvents = 'auto';
+                    mainAppContainer.style.opacity = '1';
                 }, 1000);
             } else {
                 throw new Error(data.error);
@@ -347,7 +355,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.error.includes('JWT expired') || data.error.includes('Unauthorized')) {
                     alert('Sesi Anda telah berakhir. Silakan login kembali.');
                     localStorage.removeItem('ebookMagicUser');
-                    location.reload();
+                    window.currentUser = null;
+                    document.getElementById('authView').style.display = 'flex';
+                    document.getElementById('mainAppContainer').style.pointerEvents = 'none';
+                    document.getElementById('mainAppContainer').style.opacity = '0.5';
                     return;
                 }
                 throw new Error(data.error);
@@ -1278,7 +1289,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('✅ Konsep eBook berhasil disimpan! Anda bisa melihatnya nanti di menu "eBook Saya".');
             } catch(error) {
                 console.error(error);
-                alert('❌ Gagal menyimpan konsep: ' + error.message);
+                if (error.message.includes('JWT expired') || error.message.includes('Unauthorized') || error.message.includes('Sesi')) {
+                    alert('Sesi Anda telah berakhir. Silakan login kembali untuk menyimpan konsep.');
+                    localStorage.removeItem('ebookMagicUser');
+                    window.currentUser = null;
+                    document.getElementById('authView').style.display = 'flex';
+                    document.getElementById('mainAppContainer').style.pointerEvents = 'none';
+                    document.getElementById('mainAppContainer').style.opacity = '0.5';
+                } else {
+                    alert('❌ Gagal menyimpan konsep: ' + error.message);
+                }
             } finally {
                 btnSaveOutlineOnly.disabled = false;
                 btnSaveOutlineOnly.innerHTML = originalText;
@@ -2830,7 +2850,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('✅ ' + result.message);
             } catch(error) {
                 console.error(error);
-                alert('❌ Gagal menyimpan proyek: ' + error.message);
+                if (error.message.includes('JWT expired') || error.message.includes('Unauthorized') || error.message.includes('Sesi')) {
+                    alert('Sesi Anda telah berakhir. Silakan login kembali untuk menyimpan proyek.');
+                    localStorage.removeItem('ebookMagicUser');
+                    window.currentUser = null;
+                    document.getElementById('authView').style.display = 'flex';
+                    document.getElementById('mainAppContainer').style.pointerEvents = 'none';
+                    document.getElementById('mainAppContainer').style.opacity = '0.5';
+                } else {
+                    alert('❌ Gagal menyimpan proyek: ' + error.message);
+                }
             } finally {
                 btnSaveProject.disabled = false;
                 btnSaveProject.innerHTML = originalText;
