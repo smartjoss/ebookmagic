@@ -1652,11 +1652,22 @@ document.addEventListener('DOMContentLoaded', () => {
                             elements.push({ type: 'list', text: bulletText });
                         }
                     } else if (tag === 'p') {
-                        const text = node.textContent.trim();
+                        let text = node.textContent.trim();
                         if (text) {
                             // Check if has bold/strong children
                             const isBold = node.querySelector('strong, b') && node.textContent === (node.querySelector('strong, b')?.textContent || '');
-                            elements.push({ type: 'paragraph', text: text, bold: isBold });
+                            
+                            // Split long paragraphs to prevent single objects exceeding canvas page height
+                            const MAX_CHARS = 1200;
+                            while (text.length > MAX_CHARS) {
+                                let splitIndex = text.lastIndexOf(' ', MAX_CHARS);
+                                if (splitIndex === -1) splitIndex = MAX_CHARS;
+                                elements.push({ type: 'paragraph', text: text.substring(0, splitIndex).trim(), bold: isBold });
+                                text = text.substring(splitIndex).trim();
+                            }
+                            if (text.length > 0) {
+                                elements.push({ type: 'paragraph', text: text, bold: isBold });
+                            }
                         }
                     } else if (tag === 'table') {
                         // Convert table to formatted text
@@ -1728,13 +1739,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // Add chapter title
-                const titleHeight = getTextHeight(chapterTitle, 28, 800, CONTENT_W);
                 const titleObj = new fabric.Textbox(chapterTitle, {
                     left: MARGIN_X, top: yPos, width: CONTENT_W,
                     fontSize: 28, fontFamily: 'Outfit', fontWeight: 800,
                     fill: '#6C63FF', lineHeight: 1.3, splitByGrapheme: false
                 });
                 titleObj.setControlsVisibility({ mt: false, mb: false });
+                const titleHeight = titleObj.height || getTextHeight(chapterTitle, 28, 800, CONTENT_W);
                 currentPageObjs.push(titleObj);
                 yPos += titleHeight + 20;
 
@@ -1762,14 +1773,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     else if (el.type === 'table') { fontSize = 12; fill = '#555555'; spacing = 10; }
                     else if (el.bold) { fontWeight = 'bold'; }
 
-                    const elHeight = getTextHeight(el.text, fontSize, fontWeight, CONTENT_W);
-
-                    // Check if we need a new page
-                    if (yPos + elHeight > MAX_Y) {
-                        flushPage();
-                    }
-
-                    const textObj = new fabric.Textbox(el.text, {
+                    let textObj = new fabric.Textbox(el.text, {
                         left: el.type === 'list' ? MARGIN_X + 15 : MARGIN_X,
                         top: yPos,
                         width: el.type === 'list' ? CONTENT_W - 15 : CONTENT_W,
@@ -1780,6 +1784,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         lineHeight: 1.6,
                         splitByGrapheme: false
                     });
+
+                    let elHeight = textObj.height || getTextHeight(el.text, fontSize, fontWeight, CONTENT_W);
+
+                    // Check if we need a new page
+                    if (yPos + elHeight > MAX_Y) {
+                        flushPage();
+                        // Update top position for the new page
+                        textObj.set('top', yPos);
+                    }
+
                     textObj.setControlsVisibility({ mt: false, mb: false });
                     currentPageObjs.push(textObj);
                     yPos += elHeight + spacing;
