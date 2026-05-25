@@ -478,9 +478,17 @@ document.addEventListener('DOMContentLoaded', () => {
                             canvasPages = Array.isArray(cData) ? cData : [JSON.stringify(cData)];
                             currentCanvasPage = 0;
                         }
+                        window.selectedTemplateId = cData.selectedTemplateId || 'modern';
+                        window.selectedTemplateDetails = TEMPLATES_DATA.find(t => t.id === window.selectedTemplateId) || TEMPLATES_DATA[0];
+                        const editorTemplateSelector = document.getElementById('editorTemplateSelector');
+                        if (editorTemplateSelector) {
+                            editorTemplateSelector.value = window.selectedTemplateId;
+                        }
                     } else {
                         canvasPages = [];
                         currentCanvasPage = 0;
+                        window.selectedTemplateId = 'modern';
+                        window.selectedTemplateDetails = TEMPLATES_DATA[0];
                     }
 
                     if (typeof hideAllViews === 'function') {
@@ -899,6 +907,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const apiKey = document.getElementById('inputApiKey').value.trim();
             const niche = document.getElementById('inputNiche').value;
             const audience = document.getElementById('inputAudience').value;
+            const goal = document.getElementById('inputGoal') ? document.getElementById('inputGoal').value : '';
 
             if(!apiKey) return alert('Silakan masukkan API Key (Gemini atau OpenAI) terlebih dahulu.');
             if(!niche || !audience) return alert('Masukkan niche dan audiens.');
@@ -913,7 +922,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const response = await fetch('/api/generate-titles', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ niche, audience, apiKey })
+                    body: JSON.stringify({ niche, audience, goal, apiKey })
                 });
 
                 const data = await response.json();
@@ -953,8 +962,28 @@ document.addEventListener('DOMContentLoaded', () => {
                         window.selectedEbookTitle = item.title;
                         window.selectedEbookSubtitle = item.subtitle;
 
-                        // Show cover prompt
+                        // Show cover prompt and marketing insights
                         coverPromptText.innerText = item.cover_prompt;
+                        
+                        if (document.getElementById('aiMarketingHook')) {
+                            document.getElementById('aiMarketingHook').innerText = item.hook || '-';
+                        }
+                        if (document.getElementById('aiMarketingPositioning')) {
+                            document.getElementById('aiMarketingPositioning').innerText = item.positioning || '-';
+                        }
+                        if (document.getElementById('aiMarketingTarget')) {
+                            document.getElementById('aiMarketingTarget').innerText = item.target_reader || '-';
+                        }
+
+                        const insightsDiv = document.getElementById('aiMarketingInsights');
+                        if (insightsDiv) {
+                            if (item.hook) {
+                                insightsDiv.classList.remove('hidden');
+                            } else {
+                                insightsDiv.classList.add('hidden');
+                            }
+                        }
+
                         coverPromptBox.classList.remove('hidden');
 
                         // Enable outline generation (with custom outline awareness)
@@ -996,6 +1025,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     // Show a generic cover prompt for the original theme
                     coverPromptText.innerText = `Ebook cover design, a high quality, professional, 8k resolution, modern minimalist book cover illustration about ${niche}. Vertical composition, empty space for title text, clear background. --ar 2:3 --v 6.0`;
+                    
+                    const insightsDiv = document.getElementById('aiMarketingInsights');
+                    if (insightsDiv) insightsDiv.classList.add('hidden');
+                    
                     coverPromptBox.classList.remove('hidden');
 
                     updateOutlineButtons();
@@ -1701,9 +1734,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const CONTENT_W = CANVAS_W - (MARGIN_X * 2);
             const MAX_Y = CANVAS_H - MARGIN_BOTTOM;
 
+            const template = window.selectedTemplateDetails || TEMPLATES_DATA[0];
+            const primaryFont = template.font.replace(/['"]/g, '').split(',')[0].trim();
+            const bgFill = template.bg;
+            const textFill = template.textColor;
+            const accentFill = template.accent;
+
             function createNewPage() {
                 const pageCanvas = new fabric.StaticCanvas(null, { width: CANVAS_W, height: CANVAS_H });
-                pageCanvas.backgroundColor = '#ffffff';
+                pageCanvas.backgroundColor = bgFill;
                 return pageCanvas;
             }
 
@@ -1741,8 +1780,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Add chapter title
                 const titleObj = new fabric.Textbox(chapterTitle, {
                     left: MARGIN_X, top: yPos, width: CONTENT_W,
-                    fontSize: 28, fontFamily: 'Outfit', fontWeight: 800,
-                    fill: '#6C63FF', lineHeight: 1.3, splitByGrapheme: false
+                    fontSize: 28, fontFamily: primaryFont, fontWeight: 800,
+                    fill: accentFill, lineHeight: 1.3, splitByGrapheme: false
                 });
                 titleObj.setControlsVisibility({ mt: false, mb: false });
                 const titleHeight = titleObj.height || getTextHeight(chapterTitle, 28, 800, CONTENT_W);
@@ -1753,7 +1792,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const decorLine = new fabric.Rect({
                     left: MARGIN_X, top: yPos - 10,
                     width: 80, height: 4,
-                    fill: '#6C63FF', rx: 2, ry: 2
+                    fill: accentFill, rx: 2, ry: 2
                 });
                 currentPageObjs.push(decorLine);
                 yPos += 15;
@@ -1762,15 +1801,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.forEach(el => {
                     let fontSize = 14;
                     let fontWeight = 'normal';
-                    let fill = '#333333';
+                    let fill = textFill;
                     let spacing = 12;
 
-                    if (el.type === 'h1') { fontSize = 24; fontWeight = 800; fill = '#1a1a2e'; spacing = 20; }
-                    else if (el.type === 'h2') { fontSize = 20; fontWeight = 700; fill = '#1a1a2e'; spacing = 18; }
-                    else if (el.type === 'h3') { fontSize = 17; fontWeight = 700; fill = '#333333'; spacing = 15; }
-                    else if (el.type === 'h4') { fontSize = 15; fontWeight = 700; fill = '#444444'; spacing = 12; }
-                    else if (el.type === 'list') { fontSize = 13; fill = '#444444'; spacing = 10; }
-                    else if (el.type === 'table') { fontSize = 12; fill = '#555555'; spacing = 10; }
+                    if (el.type === 'h1') { fontSize = 24; fontWeight = 800; fill = textFill; spacing = 20; }
+                    else if (el.type === 'h2') { fontSize = 20; fontWeight = 700; fill = textFill; spacing = 18; }
+                    else if (el.type === 'h3') { fontSize = 17; fontWeight = 700; fill = textFill; spacing = 15; }
+                    else if (el.type === 'h4') { fontSize = 15; fontWeight = 700; fill = textFill; spacing = 12; }
+                    else if (el.type === 'list') { fontSize = 13; fill = textFill; spacing = 10; }
+                    else if (el.type === 'table') { fontSize = 12; fill = textFill; spacing = 10; }
                     else if (el.bold) { fontWeight = 'bold'; }
 
                     let textObj = new fabric.Textbox(el.text, {
@@ -1778,7 +1817,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         top: yPos,
                         width: el.type === 'list' ? CONTENT_W - 15 : CONTENT_W,
                         fontSize: fontSize,
-                        fontFamily: 'Outfit',
+                        fontFamily: primaryFont,
                         fontWeight: fontWeight,
                         fill: fill,
                         lineHeight: 1.6,
@@ -1875,7 +1914,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnAddPage')?.addEventListener('click', () => {
         saveCurrentPage();
         canvas.clear();
-        canvas.backgroundColor = '#ffffff';
+        const template = window.selectedTemplateDetails || TEMPLATES_DATA[0];
+        canvas.backgroundColor = template.bg;
         canvasPages.push(JSON.stringify(canvas.toJSON()));
         currentCanvasPage = canvasPages.length - 1;
         updatePageIndicator();
@@ -2146,12 +2186,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Editor Tools
     document.getElementById('btnAddText').addEventListener('click', () => {
         if (!canvas) return alert('Canvas belum siap. Silakan buka editor terlebih dahulu.');
+        
+        const template = window.selectedTemplateDetails || TEMPLATES_DATA[0];
+        const activeFont = template.font ? template.font.replace(/['"]/g, '').split(',')[0].trim() : 'Outfit';
+        
         const text = new fabric.Textbox('Ketik di sini...', {
             left: 0,
             top: 100,
             width: 800, // FULL canvas width, NO limits!
             fontSize: 20,
-            fontFamily: 'Outfit',
+            fontFamily: activeFont,
             fill: document.getElementById('colorPicker').value,
             splitByGrapheme: false
         });
@@ -2353,6 +2397,550 @@ document.addEventListener('DOMContentLoaded', () => {
                 canvas.remove(object);
             });
         }
+    });
+
+    // --- ICON LIBRARY & LAYOUT SELECTOR ---
+    const SVG_ICONS = {
+        'Star': 'M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z',
+        'Checkmark': 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z',
+        'Arrow Right': 'M16.01 11H4v2h12.01v3L20 12l-3.99-4z',
+        'Book': 'M12 11.55C9.64 9.35 6.48 8 3 8v11c3.48 0 6.64 1.35 9 3.55 2.36-2.2 5.52-3.55 9-3.55V8c-3.48 0-6.64 1.35-9 3.55z',
+        'Lightbulb': 'M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z',
+        'User': 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z',
+        'Phone': 'M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z',
+        'Email': 'M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z',
+        'Calendar': 'M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z',
+        'Chat': 'M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z',
+        'Globe': 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.53c-.26-.81-1-1.4-1.9-1.4h-1v-3c0-.55-.45-1-1-1h-6v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.4z',
+        'Heart': 'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z',
+        'Shopping Cart': 'M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.9 2 1.99 2 2-.9 2-2-.9-2-2-2zm-8.9-5h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.37-.66-.11-1.48-.87-1.48H5.21l-.94-2H1v2h2l3.6 7.59-1.35 2.44C4.52 15.37 5.48 17 7 17h12v-2H7l1.1-2z',
+        'Tag': 'M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 8C4.67 8 4 7.33 4 6.5S4.67 5 5.5 5 7 5.67 7 6.5 6.33 8 5.5 8z',
+        'Trophy': 'M19 5h-2V3H7v2H5C3.9 5 3 5.9 3 7v1c0 2.55 1.92 4.63 4.39 4.94c.63 1.5 1.98 2.62 3.61 2.93V18H7v2h10v-2h-4v-2.13c1.63-.31 2.98-1.43 3.61-2.93C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.45 5 9.32 5 8zm14 0c0 1.32-.84 2.45-2 2.82V7h2v1z',
+        'Quote': 'M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z',
+        'Shield': 'M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z',
+        'Gear': 'M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z',
+        'Lock': 'M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z',
+        'Home': 'M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z'
+    };
+
+    // Render icons inside the Floating Panel
+    function setupIconPicker() {
+        const grid = document.getElementById('iconGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        
+        Object.keys(SVG_ICONS).forEach(name => {
+            const path = SVG_ICONS[name];
+            const btn = document.createElement('button');
+            btn.style.cssText = 'background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 10px; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; transition: all 0.2s;';
+            btn.title = name;
+            btn.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="${path}"/></svg>`;
+            
+            btn.addEventListener('mouseover', () => {
+                btn.style.background = 'rgba(108, 99, 255, 0.2)';
+                btn.style.borderColor = 'var(--primary)';
+            });
+            btn.addEventListener('mouseout', () => {
+                btn.style.background = 'rgba(255,255,255,0.05)';
+                btn.style.borderColor = 'rgba(255,255,255,0.1)';
+            });
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                insertIconToCanvas(path);
+                document.getElementById('iconPickerPanel').classList.add('hidden');
+            });
+            grid.appendChild(btn);
+        });
+    }
+
+    function insertIconToCanvas(pathData) {
+        if (!canvas) return alert('Canvas belum siap.');
+        const template = window.selectedTemplateDetails || TEMPLATES_DATA[0];
+        
+        const path = new fabric.Path(pathData, {
+            left: 100,
+            top: 100,
+            fill: template.accent || '#6C63FF',
+            scaleX: 2.5,
+            scaleY: 2.5
+        });
+        
+        canvas.add(path);
+        canvas.setActiveObject(path);
+        canvas.renderAll();
+        saveCurrentPage();
+    }
+
+    // Toggle Icon Panel
+    document.getElementById('btnInsertIcon')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const panel = document.getElementById('iconPickerPanel');
+        if (panel) {
+            panel.classList.toggle('hidden');
+        }
+    });
+
+    document.getElementById('btnCloseIconPicker')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.getElementById('iconPickerPanel').classList.add('hidden');
+    });
+
+    // Prevent closing icon panel when clicking inside it
+    document.getElementById('iconPickerPanel')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
+
+    // Close panel on clicking elsewhere
+    document.addEventListener('click', () => {
+        const picker = document.getElementById('iconPickerPanel');
+        if (picker) picker.classList.add('hidden');
+    });
+
+    // Setup icon picker once
+    setupIconPicker();
+
+    // --- DYNAMIC TEMPLATE SELECTOR IN EDITOR ---
+    function applyTemplateToCanvas(templateId) {
+        const template = TEMPLATES_DATA.find(t => t.id === templateId);
+        if (!template || !canvas) return;
+
+        window.selectedTemplateId = templateId;
+        window.selectedTemplateDetails = template;
+
+        canvas.backgroundColor = template.bg;
+        const primaryFont = template.font.replace(/['"]/g, '').split(',')[0].trim();
+
+        canvas.getObjects().forEach(obj => {
+            if (obj.type === 'textbox') {
+                obj.set({
+                    fontFamily: primaryFont,
+                    fill: template.textColor
+                });
+                if (typeof obj.initDimensions === 'function') obj.initDimensions();
+            } else if (obj.type === 'rect' && (obj.height <= 8 || obj.fill === '#6C63FF' || obj.fill === 'var(--primary)')) {
+                // Accent shapes
+                obj.set('fill', template.accent);
+            }
+        });
+
+        canvas.renderAll();
+        saveCurrentPage();
+    }
+
+    function applyTemplateToAllPages(templateId) {
+        const template = TEMPLATES_DATA.find(t => t.id === templateId);
+        if (!template) return;
+
+        window.selectedTemplateId = templateId;
+        window.selectedTemplateDetails = template;
+
+        // 1. Update current canvas active page
+        if (canvas) {
+            canvas.backgroundColor = template.bg;
+            const primaryFont = template.font.replace(/['"]/g, '').split(',')[0].trim();
+            canvas.getObjects().forEach(obj => {
+                if (obj.type === 'textbox') {
+                    obj.set({
+                        fontFamily: primaryFont,
+                        fill: template.textColor
+                    });
+                    if (typeof obj.initDimensions === 'function') obj.initDimensions();
+                } else if (obj.type === 'rect' && (obj.height <= 8 || obj.fill === '#6C63FF' || obj.fill === 'var(--primary)')) {
+                    obj.set('fill', template.accent);
+                }
+            });
+            canvas.renderAll();
+            saveCurrentPage();
+        }
+
+        // 2. Update all stored page JSONs in canvasPages
+        const primaryFont = template.font.replace(/['"]/g, '').split(',')[0].trim();
+        canvasPages = canvasPages.map((pageJson, idx) => {
+            if (idx === currentCanvasPage) return pageJson; // Current page is already saved above
+            try {
+                const pageData = JSON.parse(pageJson);
+                pageData.background = template.bg;
+                if (Array.isArray(pageData.objects)) {
+                    pageData.objects.forEach(obj => {
+                        if (obj.type === 'textbox') {
+                            obj.fontFamily = primaryFont;
+                            obj.fill = template.textColor;
+                        } else if (obj.type === 'rect' && (obj.height <= 8 || obj.fill === '#6C63FF' || obj.fill === 'var(--primary)')) {
+                            obj.fill = template.accent;
+                        }
+                    });
+                }
+                return JSON.stringify(pageData);
+            } catch (e) {
+                console.error("Error updating saved page template: ", e);
+                return pageJson;
+            }
+        });
+
+        alert(`Tema "${template.name}" berhasil diterapkan ke SEMUA ${canvasPages.length} halaman eBook Anda!`);
+    }
+
+    document.getElementById('editorTemplateSelector')?.addEventListener('change', (e) => {
+        const val = e.target.value;
+        const applyAll = confirm(`Apakah Anda ingin menerapkan tema "${val.toUpperCase()}" ke seluruh halaman eBook?\n\n- Klik [OK] untuk menerapkan ke SEMUA halaman.\n- Klik [BATAL] untuk menerapkan ke halaman saat ini saja.`);
+        if (applyAll) {
+            applyTemplateToAllPages(val);
+        } else {
+            applyTemplateToCanvas(val);
+        }
+    });
+
+    // --- PAGE LAYOUT TEMPLATES INJECTION ---
+    function applyPageLayout(layoutType) {
+        if (!canvas) return alert('Canvas belum siap.');
+        if (!confirm('Apakah Anda ingin menerapkan layout baru?\nSemua objek pada halaman saat ini akan dihapus.')) return;
+
+        canvas.clear();
+        const template = window.selectedTemplateDetails || TEMPLATES_DATA[0];
+        canvas.backgroundColor = template.bg;
+
+        const primaryFont = template.font.replace(/['"]/g, '').split(',')[0].trim();
+        const title = window.currentOutlineData?.title || 'Judul eBook Anda';
+        const subtitle = window.currentOutlineData?.subtitle || 'Subjudul menarik dari karya Anda';
+
+        if (layoutType === 'cover') {
+            // Accent rectangle
+            const shape = new fabric.Rect({
+                left: 800/2 - 50,
+                top: 200,
+                width: 100,
+                height: 6,
+                fill: template.accent,
+                rx: 3,
+                ry: 3
+            });
+
+            const titleText = new fabric.Textbox(title, {
+                left: 50,
+                top: 240,
+                width: 700,
+                fontSize: 42,
+                fontFamily: primaryFont,
+                fontWeight: 800,
+                textAlign: 'center',
+                fill: template.textColor,
+                lineHeight: 1.2
+            });
+
+            const subtitleText = new fabric.Textbox(subtitle, {
+                left: 70,
+                top: 240 + titleText.getScaledHeight() + 30,
+                width: 660,
+                fontSize: 18,
+                fontFamily: primaryFont,
+                textAlign: 'center',
+                fill: template.textColor,
+                opacity: 0.8,
+                lineHeight: 1.5
+            });
+
+            const authorText = new fabric.Textbox('Penulis: ' + (window.currentUser?.user_metadata?.full_name || 'Nama Anda'), {
+                left: 50,
+                top: 750,
+                width: 700,
+                fontSize: 16,
+                fontFamily: primaryFont,
+                fontWeight: 'bold',
+                textAlign: 'center',
+                fill: template.accent
+            });
+
+            canvas.add(shape, titleText, subtitleText, authorText);
+
+        } else if (layoutType === 'chapter') {
+            const badge = new fabric.Textbox('BAB 01', {
+                left: 100,
+                top: 250,
+                width: 600,
+                fontSize: 16,
+                fontFamily: primaryFont,
+                fontWeight: 800,
+                fill: template.accent,
+                textAlign: 'left'
+            });
+
+            const titleText = new fabric.Textbox('Memulai Langkah Pertama', {
+                left: 100,
+                top: 280,
+                width: 600,
+                fontSize: 36,
+                fontFamily: primaryFont,
+                fontWeight: 800,
+                fill: template.textColor,
+                textAlign: 'left'
+            });
+
+            const line = new fabric.Rect({
+                left: 100,
+                top: 280 + titleText.getScaledHeight() + 20,
+                width: 120,
+                height: 4,
+                fill: template.accent,
+                rx: 2,
+                ry: 2
+            });
+
+            const descText = new fabric.Textbox('Poin pembelajaran utama dari bab ini meliputi fondasi penting yang akan menghemat waktu Anda.', {
+                left: 100,
+                top: 280 + titleText.getScaledHeight() + 45,
+                width: 500,
+                fontSize: 15,
+                fontFamily: primaryFont,
+                fill: template.textColor,
+                opacity: 0.8,
+                lineHeight: 1.6
+            });
+
+            canvas.add(badge, titleText, line, descText);
+
+        } else if (layoutType === 'text-image') {
+            const headingText = new fabric.Textbox('Strategi & Solusi Nyata', {
+                left: 50,
+                top: 120,
+                width: 360,
+                fontSize: 24,
+                fontFamily: primaryFont,
+                fontWeight: 800,
+                fill: template.textColor,
+                textAlign: 'left'
+            });
+
+            const bodyText = new fabric.Textbox('Gunakan visual yang mendukung teori Anda agar pembaca tidak bosan. Diagram alir, tabel data, atau ilustrasi sederhana terbukti meningkatkan fokus pembaca digital hingga 40%.\n\nPastikan untuk merangkum poin penting di akhir bagian.', {
+                left: 50,
+                top: 170,
+                width: 360,
+                fontSize: 14,
+                fontFamily: primaryFont,
+                fill: template.textColor,
+                lineHeight: 1.6,
+                textAlign: 'left'
+            });
+
+            const imgPlaceholder = new fabric.Rect({
+                left: 450,
+                top: 120,
+                width: 300,
+                height: 400,
+                fill: 'rgba(108,99,255,0.05)',
+                stroke: 'rgba(108,99,255,0.2)',
+                strokeWidth: 2,
+                strokeDashArray: [6, 4],
+                rx: 8,
+                ry: 8
+            });
+
+            const placeholderText = new fabric.Textbox('Klik "Unggah Gambar" untuk menaruh visual di sini', {
+                left: 470,
+                top: 280,
+                width: 260,
+                fontSize: 13,
+                fontFamily: primaryFont,
+                fill: template.textColor,
+                opacity: 0.6,
+                textAlign: 'center'
+            });
+
+            canvas.add(headingText, bodyText, imgPlaceholder, placeholderText);
+
+        } else if (layoutType === 'quote') {
+            const quoteIcon = new fabric.Path(SVG_ICONS['Quote'], {
+                left: 800/2 - 25,
+                top: 250,
+                fill: template.accent,
+                scaleX: 2.5,
+                scaleY: 2.5
+            });
+
+            const quoteText = new fabric.Textbox('"Tindakan kecil yang nyata jauh lebih berharga daripada seribu rencana besar yang tidak pernah dijalankan."', {
+                left: 100,
+                top: 330,
+                width: 600,
+                fontSize: 22,
+                fontFamily: primaryFont,
+                fontWeight: 'bold',
+                fontStyle: 'italic',
+                textAlign: 'center',
+                fill: template.textColor,
+                lineHeight: 1.5
+            });
+
+            const authorText = new fabric.Textbox('— Penulis Sukses', {
+                left: 100,
+                top: 330 + quoteText.getScaledHeight() + 30,
+                width: 600,
+                fontSize: 15,
+                fontFamily: primaryFont,
+                fontWeight: 'bold',
+                textAlign: 'center',
+                fill: template.accent
+            });
+
+            canvas.add(quoteIcon, quoteText, authorText);
+        } else if (layoutType === 'toc') {
+            const headingText = new fabric.Textbox('DAFTAR ISI', {
+                left: 100,
+                top: 150,
+                width: 600,
+                fontSize: 32,
+                fontFamily: primaryFont,
+                fontWeight: 800,
+                fill: template.textColor,
+                textAlign: 'center'
+            });
+
+            const line = new fabric.Rect({
+                left: 800/2 - 60,
+                top: 150 + headingText.getScaledHeight() + 15,
+                width: 120,
+                height: 4,
+                fill: template.accent,
+                rx: 2,
+                ry: 2
+            });
+
+            let tocLines = [];
+            // Dynamically fetch outline or put a beautiful template
+            if (window.currentOutlineData && Array.isArray(window.currentOutlineData.outline)) {
+                // Limit to first 7 items to avoid overflow, or use a scrollable layout feel
+                window.currentOutlineData.outline.slice(0, 7).forEach((item, index) => {
+                    let num = String(index + 1).padStart(2, '0');
+                    tocLines.push(`${num}. ${item}`);
+                });
+            } else {
+                tocLines = [
+                    "01. Fondasi Utama & Mindset Sukses",
+                    "02. Cara Cepat Riset Pasar & Niche Potensial",
+                    "03. Menulis Tanpa Stuck Menggunakan Framework AI",
+                    "04. Teknik Desain eBook yang Memukau di Canvas",
+                    "05. Strategi Eksport PDF & Setup Pemasaran",
+                    "06. Langkah Nyata Menghasilkan 1 Jam Pertama"
+                ];
+            }
+
+            const tocContent = tocLines.map(lineText => {
+                let base = lineText;
+                if (base.length > 50) base = base.substring(0, 47) + '...';
+                const dots = '.'.repeat(Math.max(10, 60 - base.length));
+                return `${base} ${dots} Hal 0${Math.floor(Math.random() * 5) + (tocLines.indexOf(lineText) * 8) + 2}`;
+            }).join('\n\n');
+
+            const tocText = new fabric.Textbox(tocContent, {
+                left: 100,
+                top: 250,
+                width: 600,
+                fontSize: 15,
+                fontFamily: primaryFont,
+                fill: template.textColor,
+                lineHeight: 1.8,
+                textAlign: 'left'
+            });
+
+            canvas.add(headingText, line, tocText);
+
+        } else if (layoutType === 'cta') {
+            // Elegant background container box for CTA
+            const ctaContainer = new fabric.Rect({
+                left: 80,
+                top: 150,
+                width: 640,
+                height: 500,
+                fill: template.id === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(108, 99, 255, 0.03)',
+                stroke: template.accent,
+                strokeWidth: 2,
+                rx: 15,
+                ry: 15
+            });
+
+            const badge = new fabric.Textbox('PROMOSI / CALL TO ACTION', {
+                left: 100,
+                top: 180,
+                width: 600,
+                fontSize: 14,
+                fontFamily: primaryFont,
+                fontWeight: 800,
+                fill: template.accent,
+                textAlign: 'center'
+            });
+
+            const titleText = new fabric.Textbox('LANGKAH NYATA BERIKUTNYA UNTUK ANDA', {
+                left: 100,
+                top: 210,
+                width: 600,
+                fontSize: 24,
+                fontFamily: primaryFont,
+                fontWeight: 800,
+                fill: template.textColor,
+                textAlign: 'center'
+            });
+
+            const descText = new fabric.Textbox('Terima kasih telah membaca eBook ini hingga tuntas. Mengetahui teori saja tidak akan mengubah kondisi finansial Anda—tindakan nyata lah yang menentukan.\n\nJika Anda ingin mendapatkan bimbingan privat 1-on-1, berkonsultasi mengenai strategi bisnis digital Anda, atau mendapatkan penawaran lisensi eksklusif produk ini...', {
+                left: 120,
+                top: 260,
+                width: 560,
+                fontSize: 14,
+                fontFamily: primaryFont,
+                fill: template.textColor,
+                lineHeight: 1.6,
+                textAlign: 'center',
+                opacity: 0.9
+            });
+
+            // Simulated premium CTA button
+            const buttonRect = new fabric.Rect({
+                left: 800/2 - 175,
+                top: 450,
+                width: 350,
+                height: 55,
+                fill: '#25D366', // WhatsApp green color
+                rx: 10,
+                ry: 10,
+                shadow: new fabric.Shadow({
+                    color: 'rgba(0,0,0,0.15)',
+                    blur: 15,
+                    offsetX: 0,
+                    offsetY: 6
+                })
+            });
+
+            const buttonText = new fabric.Textbox('💬 HUBUNGI KAMI DI WHATSAPP NOW', {
+                left: 800/2 - 175,
+                top: 467,
+                width: 350,
+                fontSize: 14,
+                fontFamily: primaryFont,
+                fontWeight: 800,
+                fill: '#ffffff',
+                textAlign: 'center',
+                editable: false
+            });
+
+            const footerText = new fabric.Textbox('*Dapatkan diskon khusus 50% untuk pembaca eBook edisi terbatas ini!', {
+                left: 100,
+                top: 530,
+                width: 600,
+                fontSize: 11,
+                fontFamily: primaryFont,
+                fontStyle: 'italic',
+                fill: template.textColor,
+                opacity: 0.6,
+                textAlign: 'center'
+            });
+
+            canvas.add(ctaContainer, badge, titleText, descText, buttonRect, buttonText, footerText);
+        }
+
+        canvas.renderAll();
+        saveCurrentPage();
+        document.getElementById('layoutSelector').value = '';
+    }
+
+    document.getElementById('layoutSelector')?.addEventListener('change', (e) => {
+        applyPageLayout(e.target.value);
     });
 
     // Undo/Redo Button Handlers
@@ -2881,7 +3469,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     authorProfile: window.currentAuthorProfile || '',
                     cta: window.currentCTA || '',
                     audience: window.currentAudience || '',
-                    ebookType: window.currentEbookType || 'praktis'
+                    ebookType: window.currentEbookType || 'praktis',
+                    selectedTemplateId: window.selectedTemplateId || 'modern'
                 },
                 token: window.currentUser.token // Send token for RLS bypass
             };

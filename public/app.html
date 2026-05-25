@@ -215,7 +215,7 @@
             <!-- Templates View (Hidden by default) -->
             <div class="templates-content hidden" id="templatesView" style="padding: 0 40px 40px;">
                 <div class="generator-header" style="margin-bottom: 20px;">
-                    <h2>Template Desain <span style="font-size:12px; background:var(--primary); padding:2px 8px; border-radius:12px; color:white;">BETA</span></h2>
+                    <h2>Template Desain <span style="font-size:12px; background:#FBBF24; padding:2px 8px; border-radius:12px; color:#111; font-weight:bold;">PREMIUM</span></h2>
                     <p style="color: var(--text-secondary);">Pilih gaya desain yang cocok untuk eBook Anda.</p>
                 </div>
                 <div class="projects-grid" id="templatesGrid">
@@ -368,6 +368,10 @@
                                 <input type="text" id="inputAudience" placeholder="contoh: Pemula, Ibu Rumah Tangga, Mahasiswa...">
                             </div>
                             <div class="form-group">
+                                <label>Apa Tujuan Utama Ebook Anda? (Tujuan Ebook)</label>
+                                <input type="text" id="inputGoal" placeholder="contoh: Menambah database email affiliate, promosi produk digital, dll">
+                            </div>
+                            <div class="form-group">
                                 <label>Jenis & Skala eBook?</label>
                                 <select id="inputType" style="width: 100%; padding: 16px; border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; font-size: 16px;">
                                     <option value="praktis" style="color: black;">eBook Praktis / Lead Magnet (4-6 Bab | Fokus Solusi Cepat)</option>
@@ -438,7 +442,22 @@ Penutup"></textarea>
                                     <span style="font-size: 13px; font-weight: 600; color: var(--primary);"><i class="ph ph-image"></i> Prompt AI Untuk Cover</span>
                                     <button id="btnCopyCoverPrompt" class="btn-icon" style="background: white; border: 1px solid #ddd; padding: 4px; border-radius: 4px;" title="Salin Prompt"><i class="ph ph-copy"></i></button>
                                 </div>
-                                <p id="coverPromptText" style="font-family: monospace; font-size: 12px; color: var(--text-primary); margin: 0; user-select: all;"></p>
+                                <p id="coverPromptText" style="font-family: monospace; font-size: 12px; color: var(--text-primary); margin: 0; user-select: all; margin-bottom: 15px;"></p>
+                                
+                                <div id="aiMarketingInsights" style="border-top: 1px solid rgba(108, 99, 255, 0.2); padding-top: 12px; display: flex; flex-direction: column; gap: 10px;">
+                                    <div>
+                                        <span style="font-size: 11px; font-weight: 600; color: var(--primary); text-transform: uppercase; display: block;"><i class="ph ph-anchor"></i> Hook Psikologis:</span>
+                                        <p id="aiMarketingHook" style="font-size: 12px; color: var(--text-primary); margin: 4px 0 0; line-height: 1.4;"></p>
+                                    </div>
+                                    <div>
+                                        <span style="font-size: 11px; font-weight: 600; color: var(--primary); text-transform: uppercase; display: block;"><i class="ph ph-map-pin"></i> Positioning Produk:</span>
+                                        <p id="aiMarketingPositioning" style="font-size: 12px; color: var(--text-primary); margin: 4px 0 0; line-height: 1.4;"></p>
+                                    </div>
+                                    <div>
+                                        <span style="font-size: 11px; font-weight: 600; color: var(--primary); text-transform: uppercase; display: block;"><i class="ph ph-user-focus"></i> Detail Target Pembaca:</span>
+                                        <p id="aiMarketingTarget" style="font-size: 12px; color: var(--text-primary); margin: 4px 0 0; line-height: 1.4;"></p>
+                                    </div>
+                                </div>
                             </div>
 
                             <button class="btn-primary w-full hidden" id="btnGenerateOutline" disabled>
@@ -554,6 +573,15 @@ Penutup"></textarea>
                             <option value="sans-serif">Sans-Serif</option>
                             <option value="serif">Serif</option>
                         </select>
+                        <select id="editorTemplateSelector" style="padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); font-size: 12px; cursor: pointer; background: var(--surface); color: var(--text-primary); max-width: 130px;" title="Ubah Template Desain">
+                            <option value="" disabled selected>Pilih Tema</option>
+                            <option value="modern">Modern Minimalist</option>
+                            <option value="dark">Dark Mode Ebook</option>
+                            <option value="islamic">Islamic Green</option>
+                            <option value="pastel">Soft Pastel</option>
+                            <option value="corporate">Corporate Blue</option>
+                            <option value="premium">Premium Gold</option>
+                        </select>
                         <!-- Font Size Control -->
                         <div style="display: flex; align-items: center; gap: 2px;" title="Ukuran Huruf">
                             <button class="btn-icon" id="btnFontSizeDown" title="Kecilkan" style="width: 24px; height: 28px; font-size: 14px; padding: 0; border-radius: 4px 0 0 4px; border: 1px solid var(--border);"><i class="ph ph-minus"></i></button>
@@ -569,6 +597,17 @@ Penutup"></textarea>
                         <input type="file" id="imageUploadInput" accept="image/*" class="hidden">
                         <button class="btn-icon" id="btnInsertLink" title="Sisipkan Link" style="width: 34px; height: 34px;"><i class="ph ph-link"></i></button>
                         <button class="btn-icon" id="btnAddRect" title="Tambah Kotak" style="width: 34px; height: 34px;"><i class="ph ph-square"></i></button>
+                        <button class="btn-icon" id="btnInsertIcon" title="Sisipkan Icon" style="width: 34px; height: 34px;"><i class="ph ph-sticker"></i></button>
+                        <select id="layoutSelector" style="padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); font-size: 12px; cursor: pointer; background: var(--surface); color: var(--text-primary); max-width: 110px;" title="Sisipkan Layout Halaman">
+                            <option value="" disabled selected>Pilih Layout</option>
+                            <option value="empty">Layout Kosong</option>
+                            <option value="cover">Halaman Sampul</option>
+                            <option value="toc">Daftar Isi</option>
+                            <option value="chapter">Halaman Bab</option>
+                            <option value="text-image">Teks & Gambar</option>
+                            <option value="quote">Quote / Kutipan</option>
+                            <option value="cta">Call to Action (WA)</option>
+                        </select>
                         <div style="width: 1px; height: 24px; background: var(--border); margin: 0 2px;"></div>
                         <button class="btn-icon" id="btnUndo" title="Undo (Ctrl+Z)" style="width: 34px; height: 34px; color: var(--primary);"><i class="ph ph-arrow-counter-clockwise"></i></button>
                         <button class="btn-icon" id="btnRedo" title="Redo (Ctrl+Y)" style="width: 34px; height: 34px; color: var(--primary);"><i class="ph ph-arrow-clockwise"></i></button>
@@ -595,6 +634,17 @@ Penutup"></textarea>
                         <div style="width: 1px; height: 24px; background: var(--border); margin: 0 2px;"></div>
                         <button class="btn-icon btn-margin-guide" id="btnToggleMarginGuide" title="Tampilkan Garis Margin" style="width: auto; height: 34px; padding: 0 10px; border-radius: 8px; font-size: 11px;"><i class="ph ph-ruler"></i> Margin</button>
                         <button class="btn-icon btn-margin-guide" id="btnToggleRuler" title="Tampilkan Penggaris" style="width: auto; height: 34px; padding: 0 10px; border-radius: 8px; font-size: 11px;"><i class="ph ph-columns"></i> Ruler</button>
+                    </div>
+                </div>
+                
+                <!-- Floating Icon Picker Panel (Hidden by default) -->
+                <div id="iconPickerPanel" class="hidden glass" style="position: absolute; top: 180px; left: 50%; transform: translateX(-50%); width: 320px; background: rgba(30, 30, 45, 0.95); border: 1px solid var(--border); border-radius: 12px; z-index: 1100; padding: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); backdrop-filter: blur(10px);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
+                        <span style="font-weight: bold; font-size: 14px; color: white;"><i class="ph ph-sticker" style="color: var(--primary);"></i> Pilih Icon</span>
+                        <button id="btnCloseIconPicker" style="background: none; border: none; color: #999; cursor: pointer; font-size: 16px;"><i class="ph ph-x"></i></button>
+                    </div>
+                    <div id="iconGrid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; max-height: 200px; overflow-y: auto; padding: 4px;">
+                        <!-- Icons injected dynamically by JS -->
                     </div>
                 </div>
                 

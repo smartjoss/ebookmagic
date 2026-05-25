@@ -475,7 +475,7 @@ app.delete('/api/agency/users/:id', async (req, res) => {
 // --- AI GENERATION ENDPOINTS ---
 
 app.post('/api/generate-titles', async (req, res) => {
-    const { niche, audience } = req.body;
+    const { niche, audience, goal } = req.body;
     const apiKey = (req.body.apiKey || '').trim();
     const isGemini = apiKey && apiKey.startsWith('AIza');
 
@@ -483,9 +483,30 @@ app.post('/api/generate-titles', async (req, res) => {
     if (!apiKey && !openai) {
         return setTimeout(() => res.json({
             titles: [
-                { title: `Rahasia ${niche}`, subtitle: `Cara ampuh untuk ${audience}`, cover_prompt: `Ebook cover design, a beautiful and minimalist cover for a book about ${niche}, with a focus on ${audience}, high quality, 8k, photorealistic, vertical composition, leaving space for title. --ar 2:3 --v 6.0` },
-                { title: `Mastering ${niche}`, subtitle: `Langkah demi langkah untuk pemula`, cover_prompt: `Book cover design, an inspiring vector illustration for an ebook about ${niche}, modern, vibrant colors, vertical layout, empty space at the top for typography. --ar 2:3 --v 6.0` },
-                { title: `${niche} Blueprint`, subtitle: `Sistem terbukti menghasilkan`, cover_prompt: `Professional corporate ebook cover design representing ${niche}, minimalist graphic, blue and gold colors, vertical book cover ratio, clean background for text. --ar 2:3 --v 6.0` }
+                { 
+                    title: `Rahasia ${niche}`, 
+                    subtitle: `Cara ampuh untuk ${audience}`, 
+                    cover_prompt: `Ebook cover design, a beautiful and minimalist cover for a book about ${niche}, with a focus on ${audience}, high quality, 8k, photorealistic, vertical composition, leaving space for title. --ar 2:3 --v 6.0`,
+                    hook: `Mengapa bersusah payah jika Anda bisa menguasai ${niche} dengan metode cepat dan teruji?`,
+                    positioning: `Ebook praktis dan to-the-point yang berfokus pada hasil instan untuk ${audience}.`,
+                    target_reader: `${audience} yang ingin segera mempraktikkan dasar-dasar ${niche} tanpa membuang banyak waktu.`
+                },
+                { 
+                    title: `Mastering ${niche}`, 
+                    subtitle: `Langkah demi langkah untuk pemula`, 
+                    cover_prompt: `Book cover design, an inspiring vector illustration for an ebook about ${niche}, modern, vibrant colors, vertical layout, empty space at the top for typography. --ar 2:3 --v 6.0`,
+                    hook: `Panduan langkah demi langkah terlengkap untuk melompat dari pemula ke ahli ${niche}.`,
+                    positioning: `Buku pegangan komprehensif dengan pendekatan visual dan panduan teknis yang mudah diikuti.`,
+                    target_reader: `Pemula di bidang ${niche} yang membutuhkan bimbingan terstruktur dari nol.`
+                },
+                { 
+                    title: `${niche} Blueprint`, 
+                    subtitle: `Sistem terbukti menghasilkan`, 
+                    cover_prompt: `Professional corporate ebook cover design representing ${niche}, minimalist graphic, blue and gold colors, vertical book cover ratio, clean background for text. --ar 2:3 --v 6.0`,
+                    hook: `Blueprint rahasia para praktisi sukses untuk mencapai tujuan ${goal || 'keberhasilan bisnis'} melalui ${niche}.`,
+                    positioning: `Pendekatan strategis tingkat tinggi berbasis studi kasus nyata yang sangat aplikatif.`,
+                    target_reader: `Pebisnis atau profesional yang ingin mendominasi pasar ${niche}.`
+                }
             ]
         }), 2000);
     }
@@ -493,19 +514,25 @@ app.post('/api/generate-titles', async (req, res) => {
     try {
         const prompt = `
         Anda adalah seorang copywriter jenius dan ahli pemasaran digital.
-        Tugas Anda adalah membuat 3 ide Judul Ebook yang sangat memikat (mengandung "hook" psikologis) tentang topik: "${niche}", ditargetkan untuk: "${audience}".
+        Tugas Anda adalah membuat 3 ide Judul Ebook yang sangat memikat (mengandung "hook" psikologis) tentang topik: "${niche}", ditargetkan untuk: "${audience}", dengan tujuan utama ebook: "${goal || 'meningkatkan personal brand dan penjualan'}".
         
         Setiap judul harus memiliki:
         1. "title": Judul utama yang bombastis dan bikin penasaran (maks 6 kata). WAJIB menggunakan Bahasa Indonesia.
         2. "subtitle": Subjudul deskriptif yang menjelaskan nilai tambah atau solusi praktis (maks 10 kata). WAJIB menggunakan Bahasa Indonesia.
         3. "cover_prompt": Sebuah prompt bahasa inggris (maks 40 kata) yang sangat deskriptif untuk diumpankan ke AI Image Generator (Midjourney/DALL-E). PENTING: Prompt WAJIB diawali dengan kata "Ebook cover design" atau "Book cover", dan mencakup instruksi komposisi vertikal serta menyisakan ruang kosong untuk teks judul, agar hasilnya benar-benar terlihat seperti desain sampul buku profesional (bukan sekadar ilustrasi atau banner biasa). WAJIB akhiri prompt dengan parameter aspek rasio "--ar 2:3 --v 6.0" agar ukurannya pas untuk cover buku vertikal.
+        4. "hook": Kalimat penarik perhatian (hook psikologis) yang menjelaskan mengapa ebook dengan judul ini sangat relevan dan menarik bagi pembaca (WAJIB menggunakan Bahasa Indonesia).
+        5. "positioning": Penjelasan singkat positioning produk atau keunikan dari sudut pandang ini dibandingkan kompetitor (WAJIB menggunakan Bahasa Indonesia).
+        6. "target_reader": Deskripsi detail mengenai profil pembaca ideal yang akan paling tertarik dengan sudut pandang judul ini (WAJIB menggunakan Bahasa Indonesia).
         
         Jawab HANYA dalam format JSON dengan struktur array:
         [
             {
                 "title": "...",
                 "subtitle": "...",
-                "cover_prompt": "..."
+                "cover_prompt": "...",
+                "hook": "...",
+                "positioning": "...",
+                "target_reader": "..."
             },
             ...
         ]
