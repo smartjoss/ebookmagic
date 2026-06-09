@@ -116,7 +116,8 @@ app.post('/api/auth/register', async (req, res) => {
             };
             if (ref) profileData.parent_id = ref;
             
-            const { error: profileError } = await supabase.from('user_profiles').upsert(profileData);
+            const client = adminSupabase || supabase;
+            const { error: profileError } = await client.from('user_profiles').upsert(profileData);
             if (profileError) console.error("Failed to insert profile on register:", profileError.message);
         }
 
@@ -222,6 +223,31 @@ app.post('/api/auth/verify-otp', async (req, res) => {
         }
     } catch (error) {
         console.error('Verify OTP error:', error.message);
+        res.status(400).json({ success: false, error: error.message });
+    }
+});
+
+// 3d. Exchange PKCE Auth Code for Session
+app.post('/api/auth/exchange-code', async (req, res) => {
+    const { code } = req.body;
+    if (!supabase) return res.status(500).json({ error: 'Supabase Database is not connected yet.' });
+    if (!code) return res.status(400).json({ error: 'Authorization code wajib diisi.' });
+
+    try {
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) throw error;
+
+        if (data.session && data.session.access_token) {
+            res.json({ 
+                success: true, 
+                access_token: data.session.access_token,
+                refresh_token: data.session.refresh_token
+            });
+        } else {
+            throw new Error('Gagal menukarkan kode. Sesi tidak ditemukan.');
+        }
+    } catch (error) {
+        console.error('Exchange code error:', error.message);
         res.status(400).json({ success: false, error: error.message });
     }
 });

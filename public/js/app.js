@@ -25,6 +25,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Dirty flag for unsaved changes
     window._isDirty = false;
+
+    // Helper to check if a JWT token is expired client-side
+    function isTokenExpired(token) {
+        if (!token) return true;
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            const payload = JSON.parse(jsonPayload);
+            const now = Math.floor(Date.now() / 1000);
+            return payload.exp < now + 60; // Consider expired if it expires in less than 60 seconds
+        } catch (e) {
+            return true;
+        }
+    }
+
+    // Smart fetch wrapper that refreshes token automatically if expired
+    async function authenticatedFetch(url, options = {}) {
+        if (window.currentUser && window.currentUser.token) {
+            if (isTokenExpired(window.currentUser.token)) {
+                console.log('🔄 Token is expired or expiring soon, refreshing before request to:', url);
+                await refreshToken();
+            }
+            if (!options.headers) options.headers = {};
+            options.headers['Authorization'] = `Bearer ${window.currentUser.token}`;
+        }
+        return fetch(url, options);
+    }
     
     // --- AUTHENTICATION LOGIC ---
     const authView = document.getElementById('authView');
@@ -61,10 +91,13 @@ document.addEventListener('DOMContentLoaded', () => {
             window.currentUser = JSON.parse(savedUser);
             authView.style.display = 'none';
             mainAppContainer.classList.remove('hidden');
-            setTimeout(() => {
+            
+            // Perbarui token sebelum memanggil API lainnya untuk menghindari auto-logout jika JWT kedaluwarsa
+            (async () => {
+                await refreshToken();
                 fetchUserProfile();
                 if (typeof loadProjects === 'function') loadProjects();
-            }, 100);
+            })();
         } catch(e) {
             console.error('Failed to parse user session', e);
         }
@@ -344,11 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!projectsGrid) return;
 
         try {
-            const response = await fetch(`/api/ebooks?userId=${window.currentUser.id}`, {
-                headers: {
-                    'Authorization': `Bearer ${window.currentUser.token || ''}`
-                }
-            });
+            const response = await authenticatedFetch(`/api/ebooks?userId=${window.currentUser.id}`);
             const data = await response.json();
 
             if (data.error) {
@@ -417,11 +446,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     if(confirm('Yakin ingin menghapus proyek ini secara permanen?')) {
                         deleteBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Menghapus...';
                         try {
-                            const res = await fetch(`/api/ebooks/${ebook.id}`, {
-                                method: 'DELETE',
-                                headers: {
-                                    'Authorization': `Bearer ${window.currentUser.token || ''}`
-                                }
+                            const res = await authenticatedFetch(`/api/ebooks/${ebook.id}`, {
+                                method: 'DELETE'
                             });
                             if(!res.ok) throw new Error('Gagal menghapus');
                             card.remove();
@@ -1297,6 +1323,9 @@ document.addEventListener('DOMContentLoaded', () => {
             btnSaveOutlineOnly.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Menyimpan...';
 
             try {
+                if (window.currentUser && isTokenExpired(window.currentUser.token)) {
+                    await refreshToken();
+                }
                 const payload = {
                     projectId: window.currentProjectId,
                     userId: window.currentUser.id,
@@ -1880,6 +1909,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 canvas.getObjects().forEach(obj => {
                     if (typeof obj.initDimensions === 'function') obj.initDimensions();
                     // FORCE ALL TEXTBOXES TO FULL WIDTH TO FIX LEGACY NARROW MARGIN ISSUES
+                    // (Commented out to keep user layout customization, alignment and margins)
+                    /*
                     if (obj.type === 'textbox') {
                         obj.set({
                             width: 800,
@@ -1889,6 +1920,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         obj.setControlsVisibility({ mt: false, mb: false });
                         obj.initDimensions();
                     }
+                    */
                 });
                 canvas.renderAll();
                 updatePageIndicator();
@@ -3445,6 +3477,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
+            if (window.currentUser && isTokenExpired(window.currentUser.token)) {
+                await refreshToken();
+            }
             // Prepare Data
             if (typeof saveCurrentPage === 'function') saveCurrentPage();
             // Generate thumbnail
@@ -3522,9 +3557,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchUserProfile() {
         if (!window.currentUser || !window.currentUser.token) return;
         try {
-            const res = await fetch('/api/user/profile', {
-                headers: { 'Authorization': `Bearer ${window.currentUser.token}` }
-            });
+            const res = await authenticatedFetch('/api/user/profile');
             const data = await res.json();
             if (data.success && data.profile) {
                 window.userProfile = data.profile;
@@ -3587,18 +3620,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Load users
-        tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;"><i class="ph ph-spinner ph-spin"></i> Memuat...</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;"><i class="ph ph-spinner ph-spin"></i> Memuat...</td></tr>';
         
         try {
-            const res = await fetch('/api/agency/users', {
-                headers: { 'Authorization': `Bearer ${window.currentUser.token}` }
-            });
+            const res = await authenticatedFetch('/api/agency/users');
             const data = await res.json();
             
             if (data.error) throw new Error(data.error);
 
             if (!data.users || data.users.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--text-secondary);">Belum ada klien yang dibuat.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: var(--text-secondary);">Belum ada klien yang dibuat.</td></tr>';
                 return;
             }
 
@@ -3625,7 +3656,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             tableBody.innerHTML = html;
         } catch (error) {
-            tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px; color: #ff6b6b;">Gagal memuat: ${error.message}</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px; color: #ff6b6b;">Gagal memuat: ${error.message}</td></tr>`;
         }
     }
 
@@ -3644,12 +3675,9 @@ document.addEventListener('DOMContentLoaded', () => {
             msg.classList.add('hidden');
 
             try {
-                const res = await fetch('/api/agency/create-user', {
+                const res = await authenticatedFetch('/api/agency/create-user', {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${window.currentUser.token}`
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password, newRole })
                 });
 
@@ -3683,12 +3711,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (agencyQ !== null && personalQ !== null) {
             try {
-                const res = await fetch('/api/agency/add-quota', {
+                const res = await authenticatedFetch('/api/agency/add-quota', {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${window.currentUser.token}`
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         targetUserId, 
                         add_agency: parseInt(agencyQ) || 0, 
@@ -3711,12 +3736,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (newRole && newRole !== currentRole && ['free', 'personal', 'agency', 'super_agency'].includes(newRole.trim().toLowerCase())) {
             try {
-                const res = await fetch('/api/agency/update-role', {
+                const res = await authenticatedFetch('/api/agency/update-role', {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${window.currentUser.token}`
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         targetUserId, 
                         newRole: newRole.trim().toLowerCase()
@@ -3738,9 +3760,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!confirm('Apakah Anda yakin ingin menghapus klien ini secara permanen? Tindakan ini tidak dapat dibatalkan dan semua data ebook klien akan hilang!')) return;
         
         try {
-            const res = await fetch(`/api/agency/users/${userId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${window.currentUser.token}` }
+            const res = await authenticatedFetch(`/api/agency/users/${userId}`, {
+                method: 'DELETE'
             });
             const data = await res.json();
             if (data.error) throw new Error(data.error);
