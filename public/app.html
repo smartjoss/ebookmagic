@@ -35,7 +35,12 @@
                 </div>
                 <div class="form-group">
                     <label>Kata Sandi</label>
-                    <input type="password" id="loginPassword" required placeholder="••••••••">
+                    <div style="position: relative;">
+                        <input type="password" id="loginPassword" required placeholder="••••••••" style="width: 100%; padding-right: 40px;">
+                        <button type="button" class="btn-toggle-pwd" data-target="loginPassword" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #94A3B8; font-size: 18px; display: flex; align-items: center; justify-content: center; padding: 0;">
+                            <i class="ph ph-eye"></i>
+                        </button>
+                    </div>
                 </div>
                 <div style="text-align: right; margin-bottom: 15px;">
                     <a href="#" id="linkForgotPassword" style="font-size: 14px; color: var(--primary);">Lupa Kata Sandi?</a>
@@ -56,7 +61,12 @@
                 </div>
                 <div class="form-group">
                     <label>Kata Sandi</label>
-                    <input type="password" id="registerPassword" required placeholder="••••••••" minlength="6">
+                    <div style="position: relative;">
+                        <input type="password" id="registerPassword" required placeholder="••••••••" minlength="6" style="width: 100%; padding-right: 40px;">
+                        <button type="button" class="btn-toggle-pwd" data-target="registerPassword" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #94A3B8; font-size: 18px; display: flex; align-items: center; justify-content: center; padding: 0;">
+                            <i class="ph ph-eye"></i>
+                        </button>
+                    </div>
                 </div>
                 <button type="submit" class="btn-primary w-full" id="btnRegisterSubmit">
                     Buat Akun Baru
@@ -263,7 +273,12 @@
                         </div>
                         <div class="form-group" style="margin-bottom: 0; flex: 1;">
                             <label>Password Akun</label>
-                            <input type="password" id="agencyNewPassword" required minlength="6" placeholder="Minimal 6 karakter">
+                            <div style="position: relative;">
+                                <input type="password" id="agencyNewPassword" required minlength="6" placeholder="Minimal 6 karakter" style="width: 100%; padding-right: 40px;">
+                                <button type="button" class="btn-toggle-pwd" data-target="agencyNewPassword" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #94A3B8; font-size: 18px; display: flex; align-items: center; justify-content: center; padding: 0;">
+                                    <i class="ph ph-eye"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="form-group" style="margin-bottom: 0; flex: 1;">
                             <label>Pilih Role (Tipe Akun)</label>
@@ -330,7 +345,12 @@
                         </div>
                         <div class="form-group" style="margin-bottom: 0; flex: 1;">
                             <label>Password</label>
-                            <input type="password" id="freeMemberPassword" required minlength="6" placeholder="Minimal 6 karakter">
+                            <div style="position: relative;">
+                                <input type="password" id="freeMemberPassword" required minlength="6" placeholder="Minimal 6 karakter" style="width: 100%; padding-right: 40px;">
+                                <button type="button" class="btn-toggle-pwd" data-target="freeMemberPassword" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #94A3B8; font-size: 18px; display: flex; align-items: center; justify-content: center; padding: 0;">
+                                    <i class="ph ph-eye"></i>
+                                </button>
+                            </div>
                         </div>
                         <button type="submit" class="btn-primary" id="btnCreateFreeMember" style="padding: 16px 24px; height: 55px;">
                             <i class="ph ph-plus"></i> Tambah Member

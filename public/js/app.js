@@ -250,6 +250,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
+
+        // Toggle visibility for other password inputs
+        document.querySelectorAll('.btn-toggle-pwd').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault(); // Prevent accidental form submit
+                const targetId = btn.getAttribute('data-target');
+                const targetInput = document.getElementById(targetId);
+                if (targetInput) {
+                    if (targetInput.type === 'password') {
+                        targetInput.type = 'text';
+                        btn.innerHTML = '<i class="ph ph-eye-slash"></i>';
+                    } else {
+                        targetInput.type = 'password';
+                        btn.innerHTML = '<i class="ph ph-eye"></i>';
+                    }
+                }
+            });
+        });
     }
 
     linkBackToLogin.addEventListener('click', (e) => {
