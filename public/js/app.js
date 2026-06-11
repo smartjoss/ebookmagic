@@ -1803,9 +1803,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const allPages = [];
-            // Keep existing cover page(s) if they exist
+            // Keep only the cover page (index 0) if it exists, to avoid duplicating chapter pages on re-copy
             if (canvasPages.length > 0) {
-                canvasPages.forEach(p => allPages.push(p));
+                allPages.push(canvasPages[0]);
             }
 
             chaptersWithContent.forEach(chapterTitle => {
@@ -1923,25 +1923,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (index >= 0 && index < canvasPages.length) {
             saveCurrentPage();
             currentCanvasPage = index;
+            
+            // Lock history to prevent object:added from flooding it with partial states
+            if (canvas) {
+                window._canvasHistoryLocked = true;
+            }
+            
             canvas.loadFromJSON(canvasPages[currentCanvasPage], function() {
                 canvas.getObjects().forEach(obj => {
                     if (typeof obj.initDimensions === 'function') obj.initDimensions();
-                    // FORCE ALL TEXTBOXES TO FULL WIDTH TO FIX LEGACY NARROW MARGIN ISSUES
-                    // (Commented out to keep user layout customization, alignment and margins)
-                    /*
-                    if (obj.type === 'textbox') {
-                        obj.set({
-                            width: 800,
-                            left: 0,
-                            originX: 'left'
-                        });
-                        obj.setControlsVisibility({ mt: false, mb: false });
-                        obj.initDimensions();
-                    }
-                    */
                 });
                 canvas.renderAll();
                 updatePageIndicator();
+                
+                // Unlock history and reset the history state specific to this page
+                if (canvas) {
+                    window._canvasHistoryLocked = false;
+                    window._canvasHistory = [JSON.stringify(canvas.toJSON())];
+                    window._canvasHistoryIndex = 0;
+                }
+                
                 // Sync background color picker with current canvas background
                 const bgPicker = document.getElementById('bgColorPicker');
                 if (bgPicker && canvas.backgroundColor) {
@@ -1963,12 +1964,14 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnNextPage')?.addEventListener('click', () => loadPage(currentCanvasPage + 1));
     document.getElementById('btnAddPage')?.addEventListener('click', () => {
         saveCurrentPage();
-        canvas.clear();
         const template = window.selectedTemplateDetails || TEMPLATES_DATA[0];
-        canvas.backgroundColor = template.bg;
-        canvasPages.push(JSON.stringify(canvas.toJSON()));
-        currentCanvasPage = canvasPages.length - 1;
-        updatePageIndicator();
+        const blankPageJson = JSON.stringify({
+            version: "5.3.0",
+            objects: [],
+            background: template.bg
+        });
+        canvasPages.push(blankPageJson);
+        loadPage(canvasPages.length - 1);
     });
     document.getElementById('btnDeletePage')?.addEventListener('click', () => {
         if (canvasPages.length <= 1) {

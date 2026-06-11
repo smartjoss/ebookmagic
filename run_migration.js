@@ -15,6 +15,19 @@ async function runMigration() {
 
     const queries = [
         {
+            name: 'Create Extension uuid-ossp',
+            sql: `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`
+        },
+        {
+            name: 'Helper function: get_user_role',
+            sql: `CREATE OR REPLACE FUNCTION public.get_user_role(user_id UUID)
+                RETURNS TEXT AS $$
+                BEGIN
+                    RETURN (SELECT role FROM public.user_profiles WHERE id = user_id);
+                END;
+                $$ LANGUAGE plpgsql SECURITY DEFINER;`
+        },
+        {
             name: 'RLS Policy: Allow insert own profile',
             sql: `DO $$ BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow insert own profile' AND tablename = 'user_profiles') THEN
@@ -33,17 +46,15 @@ async function runMigration() {
         {
             name: 'RLS Policy: Owner can update all profiles',
             sql: `DO $$ BEGIN
-                IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Owner can update all profiles' AND tablename = 'user_profiles') THEN
-                    CREATE POLICY "Owner can update all profiles" ON user_profiles FOR UPDATE USING ((SELECT role FROM user_profiles WHERE id = auth.uid()) = 'owner');
-                END IF;
+                DROP POLICY IF EXISTS "Owner can update all profiles" ON user_profiles;
+                CREATE POLICY "Owner can update all profiles" ON user_profiles FOR UPDATE USING (public.get_user_role(auth.uid()) = 'owner');
             END $$;`
         },
         {
             name: 'RLS Policy: Owner can delete profiles',
             sql: `DO $$ BEGIN
-                IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Owner can delete profiles' AND tablename = 'user_profiles') THEN
-                    CREATE POLICY "Owner can delete profiles" ON user_profiles FOR DELETE USING ((SELECT role FROM user_profiles WHERE id = auth.uid()) = 'owner');
-                END IF;
+                DROP POLICY IF EXISTS "Owner can delete profiles" ON user_profiles;
+                CREATE POLICY "Owner can delete profiles" ON user_profiles FOR DELETE USING (public.get_user_role(auth.uid()) = 'owner');
             END $$;`
         },
         {
@@ -94,23 +105,33 @@ async function runMigration() {
         console.log('    Buka: https://supabase.com/dashboard/project/kjahnecvqyvxgylvgmla/sql/new');
         console.log('\n    Salin dan paste query berikut:\n');
         console.log('--- SALIN MULAI DARI BAWAH INI ---\n');
-        console.log(`-- 1. Policy INSERT
+        console.log(`-- 1. Helper function
+CREATE OR REPLACE FUNCTION public.get_user_role(user_id UUID)
+RETURNS TEXT AS $$
+BEGIN
+  RETURN (SELECT role FROM public.user_profiles WHERE id = user_id);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 2. Policy INSERT
 CREATE POLICY "Allow insert own profile" ON user_profiles
   FOR INSERT WITH CHECK (auth.uid() = id);
 
--- 2. Policy UPDATE (self)
+-- 3. Policy UPDATE (self)
 CREATE POLICY "Users can update their own profile" ON user_profiles
   FOR UPDATE USING (auth.uid() = id);
 
--- 3. Policy UPDATE (owner)
+-- 4. Policy UPDATE (owner)
+DROP POLICY IF EXISTS "Owner can update all profiles" ON user_profiles;
 CREATE POLICY "Owner can update all profiles" ON user_profiles
-  FOR UPDATE USING ((SELECT role FROM user_profiles WHERE id = auth.uid()) = 'owner');
+  FOR UPDATE USING (public.get_user_role(auth.uid()) = 'owner');
 
--- 4. Policy DELETE (owner)
+-- 5. Policy DELETE (owner)
+DROP POLICY IF EXISTS "Owner can delete profiles" ON user_profiles;
 CREATE POLICY "Owner can delete profiles" ON user_profiles
-  FOR DELETE USING ((SELECT role FROM user_profiles WHERE id = auth.uid()) = 'owner');
+  FOR DELETE USING (public.get_user_role(auth.uid()) = 'owner');
 
--- 5. Fix trigger (tambah email)
+-- 6. Fix trigger (tambah email)
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN

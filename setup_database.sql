@@ -1,5 +1,7 @@
 -- Run this script in the Supabase SQL Editor to create the necessary tables
 
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE IF NOT EXISTS ebooks (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -46,6 +48,12 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Helper function to get user role without causing RLS recursion
+CREATE OR REPLACE FUNCTION public.get_user_role(user_id UUID)
+RETURNS TEXT AS $$
+  SELECT role FROM public.user_profiles WHERE id = user_id;
+$$ LANGUAGE sql SECURITY DEFINER;
+
 -- RLS for user_profiles
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 
@@ -56,7 +64,7 @@ CREATE POLICY "Users can view children profiles" ON user_profiles
   FOR SELECT USING (parent_id = auth.uid());
 
 CREATE POLICY "Owner can view all profiles" ON user_profiles
-  FOR SELECT USING ( (SELECT role FROM user_profiles WHERE id = auth.uid()) = 'owner' );
+  FOR SELECT USING ( public.get_user_role(auth.uid()) = 'owner' );
 
 -- INSERT policy: allow new profile creation (needed for trigger and registration)
 CREATE POLICY "Allow insert own profile" ON user_profiles
@@ -68,11 +76,11 @@ CREATE POLICY "Users can update their own profile" ON user_profiles
 
 -- UPDATE policy: owner can update any profile
 CREATE POLICY "Owner can update all profiles" ON user_profiles
-  FOR UPDATE USING ( (SELECT role FROM user_profiles WHERE id = auth.uid()) = 'owner' );
+  FOR UPDATE USING ( public.get_user_role(auth.uid()) = 'owner' );
 
 -- DELETE policy: owner can delete any profile
 CREATE POLICY "Owner can delete profiles" ON user_profiles
-  FOR DELETE USING ( (SELECT role FROM user_profiles WHERE id = auth.uid()) = 'owner' );
+  FOR DELETE USING ( public.get_user_role(auth.uid()) = 'owner' );
 
 -- 2. Trigger to create user_profiles automatically on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user() 

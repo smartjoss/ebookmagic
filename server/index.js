@@ -25,7 +25,13 @@ app.use(express.static(path.join(__dirname, '../public'), {
 // Initialize Supabase Client
 let supabase = null;
 if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY && process.env.SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
-    supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+    supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+        auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false
+        }
+    });
     console.log('✅ Supabase client initialized');
 } else {
     console.warn('⚠️ SUPABASE_URL or KEY is missing. Database features are disabled.');
@@ -34,7 +40,13 @@ if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY && process.env.SUP
 // Initialize Admin Supabase Client (for privileged operations like deleting users)
 let adminSupabase = null;
 if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    adminSupabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    adminSupabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+        auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false
+        }
+    });
     console.log('✅ Admin Supabase client initialized (Service Role)');
 }
 
