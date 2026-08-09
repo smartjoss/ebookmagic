@@ -543,13 +543,55 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (myEbooksView) myEbooksView.classList.add('hidden');
                     }
                     
-                    const btnProceedToChapters = document.getElementById('btnProceedToChapters');
-                    try {
-                        if (btnProceedToChapters) {
-                            btnProceedToChapters.click();
+                    if (window.userProfile && window.userProfile.role === 'free') {
+                        // Populate form inputs for free user
+                        const inputNiche = document.getElementById('inputNiche');
+                        const inputAudience = document.getElementById('inputAudience');
+                        const inputType = document.getElementById('inputType');
+                        const inputAuthorProfile = document.getElementById('inputAuthorProfile');
+                        const inputCTA = document.getElementById('inputCTA');
+
+                        if (inputNiche) inputNiche.value = ebook.niche || '';
+                        if (inputAudience) inputAudience.value = (canvasDataObj && canvasDataObj.audience) || ebook.niche || '';
+                        if (inputType) inputType.value = (canvasDataObj && canvasDataObj.ebookType) || 'praktis';
+                        if (inputAuthorProfile) inputAuthorProfile.value = (canvasDataObj && canvasDataObj.authorProfile) || '';
+                        if (inputCTA) inputCTA.value = (canvasDataObj && canvasDataObj.cta) || '';
+
+                        // Render outline in Generator view
+                        const outlineResults = document.getElementById('outlineResults');
+                        const outlineContent = document.getElementById('outlineContent');
+                        const btnGenerateOutline = document.getElementById('btnGenerateOutline');
+
+                        if (outlineResults && outlineContent) {
+                            outlineResults.classList.remove('hidden');
+                            if (btnGenerateOutline) btnGenerateOutline.classList.add('hidden');
+
+                            let html = `
+                                <div style="margin-bottom: 16px;">
+                                    <h4 style="color: var(--primary); margin-bottom: 4px;">${escapeHtml(ebook.title || 'Untitled Ebook')}</h4>
+                                    <p style="color: var(--text-secondary); font-size: 14px;">${escapeHtml(ebook.niche || '')}</p>
+                                    <span style="font-size: 11px; padding: 3px 10px; background: rgba(16, 185, 129, 0.15); border-radius: 20px; color: #10b981;"><i class="ph ph-user"></i> Kerangka Ebook (Free Mode)</span>
+                                </div>
+                                <ul class="outline-list">
+                            `;
+                            parsedOutline.forEach(chapter => {
+                                html += `<li class="outline-item"><i class="ph ph-check-circle"></i><span>${escapeHtml(chapter)}</span></li>`;
+                            });
+                            html += '</ul>';
+                            outlineContent.innerHTML = html;
                         }
-                    } catch(err) {
-                        console.error('Error during transition:', err);
+
+                        const generatorView = document.getElementById('generatorView');
+                        if (generatorView) generatorView.classList.remove('hidden');
+                    } else {
+                        const btnProceedToChapters = document.getElementById('btnProceedToChapters');
+                        try {
+                            if (btnProceedToChapters) {
+                                btnProceedToChapters.click();
+                            }
+                        } catch(err) {
+                            console.error('Error during transition:', err);
+                        }
                     }
                 };
 
@@ -1911,6 +1953,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnBackToDashboard = document.getElementById('btnBackToDashboard');
 
     let canvas;
+    let saveCanvasState;
 
 
     function saveCurrentPage() {
@@ -2060,7 +2103,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window._canvasHistoryLocked = false;
             const MAX_HISTORY = 30;
 
-            function saveCanvasState() {
+            saveCanvasState = function() {
                 if (window._canvasHistoryLocked) return;
                 // Remove any future states if we're in the middle of history
                 if (window._canvasHistoryIndex < window._canvasHistory.length - 1) {
@@ -2276,6 +2319,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     activeObject.set('fontWeight', isBold ? 'normal' : 'bold');
                 }
                 canvas.renderAll();
+                if (typeof saveCanvasState === 'function') saveCanvasState();
             }
         });
     }
@@ -2295,6 +2339,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     activeObject.set('fontStyle', isItalic ? 'normal' : 'italic');
                 }
                 canvas.renderAll();
+                if (typeof saveCanvasState === 'function') saveCanvasState();
             }
         });
     }
@@ -2320,6 +2365,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 activeObject.set('text', lines.join('\n'));
                 if (typeof activeObject.initDimensions === 'function') activeObject.initDimensions();
                 canvas.renderAll();
+                if (typeof saveCanvasState === 'function') saveCanvasState();
             }
         });
     }
@@ -2337,6 +2383,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
                 canvas.renderAll();
+                if (typeof saveCanvasState === 'function') saveCanvasState();
             });
         }
     });
@@ -2367,6 +2414,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             canvas.renderAll();
+            if (typeof saveCanvasState === 'function') saveCanvasState();
             
             if (applied) {
                 alert('Teks berhasil diatur ke layar penuh dari kiri ke kanan tanpa sisa margin!');
@@ -3026,6 +3074,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    document.getElementById('colorPicker').addEventListener('change', () => {
+        if (typeof saveCanvasState === 'function') saveCanvasState();
+    });
+
     // Update canvas background color
     const bgColorPicker = document.getElementById('bgColorPicker');
     if (bgColorPicker) {
@@ -3033,6 +3085,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!canvas) return;
             canvas.backgroundColor = e.target.value;
             canvas.renderAll();
+        });
+        bgColorPicker.addEventListener('change', () => {
+            if (typeof saveCanvasState === 'function') saveCanvasState();
         });
     }
 
@@ -3172,6 +3227,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (typeof activeObject.initDimensions === 'function') activeObject.initDimensions();
             canvas.renderAll();
+            if (typeof saveCanvasState === 'function') saveCanvasState();
         }
     });
 
@@ -3193,6 +3249,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (typeof activeObject.initDimensions === 'function') activeObject.initDimensions();
             canvas.renderAll();
+            if (typeof saveCanvasState === 'function') saveCanvasState();
         }
     });
 
@@ -3222,6 +3279,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (typeof activeObject.initDimensions === 'function') activeObject.initDimensions();
             canvas.renderAll();
+            if (typeof saveCanvasState === 'function') saveCanvasState();
         }
     }
 
@@ -3303,7 +3361,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 canvas.remove(obj);
                 canvas.discardActiveObject();
                 canvas.renderAll();
+                if (typeof saveCanvasState === 'function') saveCanvasState();
             }
+        }
+    });
+
+    window.addEventListener('keyup', (e) => {
+        if(e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'textarea' || e.target.closest('.ql-editor') || e.target.tagName.toLowerCase() === 'select') return;
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+            if (typeof saveCanvasState === 'function') saveCanvasState();
         }
     });
 

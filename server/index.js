@@ -106,7 +106,7 @@ app.post('/api/auth/login', async (req, res) => {
 
 // 2. Register
 app.post('/api/auth/register', async (req, res) => {
-    const { email, password, role, ref } = req.body;
+    const { email, password, ref } = req.body;
     if (!supabase) return res.status(500).json({ error: 'Supabase Database is not connected yet.' });
 
     try {
@@ -122,7 +122,7 @@ app.post('/api/auth/register', async (req, res) => {
             const profileData = {
                 id: data.user.id,
                 email: email,
-                role: role || 'free',
+                role: 'free',
                 quota_agency: 0,
                 quota_personal: 0
             };
@@ -142,6 +142,7 @@ app.post('/api/auth/register', async (req, res) => {
         res.status(400).json({ success: false, error: error.message });
     }
 });
+
 
 // 3. Forgot Password
 app.post('/api/auth/reset-password', async (req, res) => {
@@ -383,16 +384,10 @@ app.post('/api/agency/create-user', async (req, res) => {
             newUserData = signUpData;
         }
 
-        const cost_agency = newRole === 'agency' ? 1 : 0;
-        const cost_personal = newRole === 'personal' ? 1 : 0;
-
         // Call RPC to assign role and deduct quota
         const { error: rpcError } = await userSupabase.rpc('assign_agency_user', {
-            creator_id: user.id,
             new_user_id: newUserData.user.id,
-            new_role: newRole,
-            cost_agency: cost_agency,
-            cost_personal: cost_personal
+            new_role: newRole
         });
 
         if (rpcError) throw rpcError;
@@ -515,7 +510,7 @@ app.delete('/api/agency/users/:id', async (req, res) => {
 app.post('/api/generate-titles', async (req, res) => {
     const { niche, audience, goal } = req.body;
     const apiKey = (req.body.apiKey || '').trim();
-    const isGemini = apiKey && apiKey.startsWith('AIza');
+    const isGemini = apiKey && (apiKey.startsWith('AIza') || apiKey.startsWith('AQ') || !apiKey.startsWith('sk-'));
 
     // Fallback Mock
     if (!apiKey && !openai) {
@@ -579,7 +574,7 @@ app.post('/api/generate-titles', async (req, res) => {
         let data;
         if (isGemini) {
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", generationConfig: { temperature: 0.4 } });
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", generationConfig: { temperature: 0.4 } });
             const result = await model.generateContent(prompt);
             let text = result.response.text().replace(/```json/gi, '').replace(/```/g, '').trim();
             data = JSON.parse(text);
@@ -604,7 +599,7 @@ app.post('/api/generate-titles', async (req, res) => {
 app.post('/api/generate-outline', async (req, res) => {
     const { niche, audience, type, selectedTitle, selectedSubtitle, authorProfile, cta, customOutline } = req.body;
     const apiKey = (req.body.apiKey || '').trim();
-    const isGemini = apiKey && apiKey.startsWith('AIza');
+    const isGemini = apiKey && (apiKey.startsWith('AIza') || apiKey.startsWith('AQ') || !apiKey.startsWith('sk-'));
 
     let babCountText = "4-6 Bab";
     if (type === 'panduan') babCountText = "8-12 Bab";
@@ -683,7 +678,7 @@ app.post('/api/generate-outline', async (req, res) => {
         let data;
         if (isGemini) {
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", generationConfig: { temperature: 0.4 } });
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", generationConfig: { temperature: 0.4 } });
             const result = await model.generateContent(prompt);
             let text = result.response.text();
             text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
@@ -724,7 +719,7 @@ app.post('/api/generate-outline', async (req, res) => {
 app.post('/api/generate-chapter', async (req, res) => {
     const { chapterTitle, niche, audience, type, tone, customContext, authorProfile, cta } = req.body;
     const apiKey = (req.body.apiKey || '').trim();
-    const isGemini = apiKey && apiKey.startsWith('AIza');
+    const isGemini = apiKey && (apiKey.startsWith('AIza') || apiKey.startsWith('AQ') || !apiKey.startsWith('sk-'));
 
     if (!apiKey && !openai) {
         return setTimeout(() => {
@@ -778,7 +773,7 @@ app.post('/api/generate-chapter', async (req, res) => {
         let htmlContent;
         if (isGemini) {
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", generationConfig: { temperature: 0.4 } });
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", generationConfig: { temperature: 0.4 } });
             const result = await model.generateContent(prompt);
             htmlContent = result.response.text().replace(/```html/g, '').replace(/```/g, '').trim();
         } else {
@@ -802,7 +797,7 @@ app.post('/api/generate-chapter', async (req, res) => {
 app.post('/api/generate-image-prompt', async (req, res) => {
     const { chapterTitle, niche } = req.body;
     const apiKey = (req.body.apiKey || '').trim();
-    const isGemini = apiKey && apiKey.startsWith('AIza');
+    const isGemini = apiKey && (apiKey.startsWith('AIza') || apiKey.startsWith('AQ') || !apiKey.startsWith('sk-'));
 
     if (!apiKey && !openai) {
         return setTimeout(() => {
@@ -824,7 +819,7 @@ app.post('/api/generate-image-prompt', async (req, res) => {
         let resultPrompt;
         if (isGemini) {
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", generationConfig: { temperature: 0.4 } });
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", generationConfig: { temperature: 0.4 } });
             const result = await model.generateContent(promptText);
             resultPrompt = result.response.text().trim();
         } else {

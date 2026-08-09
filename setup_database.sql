@@ -18,18 +18,22 @@ CREATE TABLE IF NOT EXISTS ebooks (
 ALTER TABLE ebooks ENABLE ROW LEVEL SECURITY;
 
 -- Allow users to see only their own ebooks
+DROP POLICY IF EXISTS "Users can view their own ebooks" ON ebooks;
 CREATE POLICY "Users can view their own ebooks" ON ebooks
   FOR SELECT USING (auth.uid() = user_id);
 
 -- Allow users to insert their own ebooks
+DROP POLICY IF EXISTS "Users can insert their own ebooks" ON ebooks;
 CREATE POLICY "Users can insert their own ebooks" ON ebooks
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- Allow users to update their own ebooks
+DROP POLICY IF EXISTS "Users can update their own ebooks" ON ebooks;
 CREATE POLICY "Users can update their own ebooks" ON ebooks
   FOR UPDATE USING (auth.uid() = user_id);
 
 -- Allow users to delete their own ebooks
+DROP POLICY IF EXISTS "Users can delete their own ebooks" ON ebooks;
 CREATE POLICY "Users can delete their own ebooks" ON ebooks
   FOR DELETE USING (auth.uid() = user_id);
 
@@ -57,28 +61,35 @@ $$ LANGUAGE sql SECURITY DEFINER;
 -- RLS for user_profiles
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view their own profile" ON user_profiles;
 CREATE POLICY "Users can view their own profile" ON user_profiles 
   FOR SELECT USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can view children profiles" ON user_profiles;
 CREATE POLICY "Users can view children profiles" ON user_profiles 
   FOR SELECT USING (parent_id = auth.uid());
 
+DROP POLICY IF EXISTS "Owner can view all profiles" ON user_profiles;
 CREATE POLICY "Owner can view all profiles" ON user_profiles
   FOR SELECT USING ( public.get_user_role(auth.uid()) = 'owner' );
 
 -- INSERT policy: allow new profile creation (needed for trigger and registration)
+DROP POLICY IF EXISTS "Allow insert own profile" ON user_profiles;
 CREATE POLICY "Allow insert own profile" ON user_profiles
   FOR INSERT WITH CHECK (auth.uid() = id);
 
 -- UPDATE policy: users can update own profile
+DROP POLICY IF EXISTS "Users can update their own profile" ON user_profiles;
 CREATE POLICY "Users can update their own profile" ON user_profiles
   FOR UPDATE USING (auth.uid() = id);
 
 -- UPDATE policy: owner can update any profile
+DROP POLICY IF EXISTS "Owner can update all profiles" ON user_profiles;
 CREATE POLICY "Owner can update all profiles" ON user_profiles
   FOR UPDATE USING ( public.get_user_role(auth.uid()) = 'owner' );
 
 -- DELETE policy: owner can delete any profile
+DROP POLICY IF EXISTS "Owner can delete profiles" ON user_profiles;
 CREATE POLICY "Owner can delete profiles" ON user_profiles
   FOR DELETE USING ( public.get_user_role(auth.uid()) = 'owner' );
 
@@ -101,20 +112,33 @@ CREATE TRIGGER on_auth_user_created
 
 -- 3. RPC to assign role and deduct quota (runs as SECURITY DEFINER to bypass RLS)
 CREATE OR REPLACE FUNCTION assign_agency_user(
-  creator_id UUID,
   new_user_id UUID,
-  new_role TEXT,
-  cost_agency INT,
-  cost_personal INT
+  new_role TEXT
 ) RETURNS BOOLEAN AS $$
 DECLARE
+  creator_id UUID;
   v_role TEXT;
   v_quota_agency INT;
   v_quota_personal INT;
+  cost_agency INT := 0;
+  cost_personal INT := 0;
 BEGIN
+  -- Securely get current authenticated user ID
+  creator_id := auth.uid();
+  IF creator_id IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
   -- Get creator info
   SELECT role, quota_agency, quota_personal INTO v_role, v_quota_agency, v_quota_personal
   FROM user_profiles WHERE id = creator_id;
+
+  -- Calculate secure costs based on target role
+  IF new_role = 'agency' THEN
+    cost_agency := 1;
+  ELSIF new_role = 'personal' THEN
+    cost_personal := 1;
+  END IF;
 
   -- Verify permissions
   IF v_role = 'owner' THEN

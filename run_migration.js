@@ -67,6 +67,72 @@ async function runMigration() {
                     RETURN new;
                 END;
                 $$ LANGUAGE plpgsql SECURITY DEFINER;`
+        },
+        {
+            name: 'Secure function assign_agency_user',
+            sql: `DROP FUNCTION IF EXISTS assign_agency_user(UUID, UUID, TEXT, INT, INT);
+                  CREATE OR REPLACE FUNCTION assign_agency_user(
+                    new_user_id UUID,
+                    new_role TEXT
+                  ) RETURNS BOOLEAN AS $$
+                  DECLARE
+                    creator_id UUID;
+                    v_role TEXT;
+                    v_quota_agency INT;
+                    v_quota_personal INT;
+                    cost_agency INT := 0;
+                    cost_personal INT := 0;
+                  BEGIN
+                    creator_id := auth.uid();
+                    IF creator_id IS NULL THEN
+                      RAISE EXCEPTION 'Not authenticated';
+                    END IF;
+
+                    SELECT role, quota_agency, quota_personal INTO v_role, v_quota_agency, v_quota_personal
+                    FROM user_profiles WHERE id = creator_id;
+
+                    IF new_role = 'agency' THEN
+                      cost_agency := 1;
+                    ELSIF new_role = 'personal' THEN
+                      cost_personal := 1;
+                    END IF;
+
+                    IF v_role = 'owner' THEN
+                      cost_agency := 0;
+                      cost_personal := 0;
+                    ELSIF v_role = 'super_agency' THEN
+                      IF new_role = 'super_agency' THEN
+                        RAISE EXCEPTION 'Super Agency cannot create another Super Agency';
+                      END IF;
+                      IF new_role = 'agency' AND v_quota_agency < cost_agency THEN
+                        RAISE EXCEPTION 'Not enough agency quota';
+                      END IF;
+                      IF new_role = 'personal' AND v_quota_personal < cost_personal THEN
+                        RAISE EXCEPTION 'Not enough personal quota';
+                      END IF;
+                    ELSIF v_role = 'agency' THEN
+                      IF new_role != 'personal' THEN
+                        RAISE EXCEPTION 'Agency can only create personal accounts';
+                      END IF;
+                      IF v_quota_personal < cost_personal THEN
+                        RAISE EXCEPTION 'Not enough personal quota';
+                      END IF;
+                    ELSE
+                      RAISE EXCEPTION 'Unauthorized role: %', v_role;
+                    END IF;
+
+                    UPDATE user_profiles 
+                    SET quota_agency = quota_agency - cost_agency,
+                        quota_personal = quota_personal - cost_personal
+                    WHERE id = creator_id;
+
+                    UPDATE user_profiles
+                    SET role = new_role, parent_id = creator_id
+                    WHERE id = new_user_id;
+
+                    RETURN TRUE;
+                  END;
+                  $$ LANGUAGE plpgsql SECURITY DEFINER;`
         }
     ];
 
@@ -138,6 +204,71 @@ BEGIN
   INSERT INTO public.user_profiles (id, email, role, quota_agency, quota_personal)
   VALUES (new.id, new.email, 'free', 0, 0);
   RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 7. Secure assign_agency_user function
+DROP FUNCTION IF EXISTS assign_agency_user(UUID, UUID, TEXT, INT, INT);
+CREATE OR REPLACE FUNCTION assign_agency_user(
+  new_user_id UUID,
+  new_role TEXT
+) RETURNS BOOLEAN AS $$
+DECLARE
+  creator_id UUID;
+  v_role TEXT;
+  v_quota_agency INT;
+  v_quota_personal INT;
+  cost_agency INT := 0;
+  cost_personal INT := 0;
+BEGIN
+  creator_id := auth.uid();
+  IF creator_id IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
+  SELECT role, quota_agency, quota_personal INTO v_role, v_quota_agency, v_quota_personal
+  FROM user_profiles WHERE id = creator_id;
+
+  IF new_role = 'agency' THEN
+    cost_agency := 1;
+  ELSIF new_role = 'personal' THEN
+    cost_personal := 1;
+  END IF;
+
+  IF v_role = 'owner' THEN
+    cost_agency := 0;
+    cost_personal := 0;
+  ELSIF v_role = 'super_agency' THEN
+    IF new_role = 'super_agency' THEN
+      RAISE EXCEPTION 'Super Agency cannot create another Super Agency';
+    END IF;
+    IF new_role = 'agency' AND v_quota_agency < cost_agency THEN
+      RAISE EXCEPTION 'Not enough agency quota';
+    END IF;
+    IF new_role = 'personal' AND v_quota_personal < cost_personal THEN
+      RAISE EXCEPTION 'Not enough personal quota';
+    END IF;
+  ELSIF v_role = 'agency' THEN
+    IF new_role != 'personal' THEN
+      RAISE EXCEPTION 'Agency can only create personal accounts';
+    END IF;
+    IF v_quota_personal < cost_personal THEN
+      RAISE EXCEPTION 'Not enough personal quota';
+    END IF;
+  ELSE
+    RAISE EXCEPTION 'Unauthorized role: %', v_role;
+  END IF;
+
+  UPDATE user_profiles 
+  SET quota_agency = quota_agency - cost_agency,
+      quota_personal = quota_personal - cost_personal
+  WHERE id = creator_id;
+
+  UPDATE user_profiles
+  SET role = new_role, parent_id = creator_id
+  WHERE id = new_user_id;
+
+  RETURN TRUE;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;`);
         console.log('\n--- SALIN SAMPAI ATAS INI ---');
