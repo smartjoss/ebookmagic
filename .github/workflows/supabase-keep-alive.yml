@@ -1,0 +1,26 @@
+name: Supabase Keep-Alive
+
+on:
+  schedule:
+    # Runs every 2 days at 04:00 UTC (11:00 WIB)
+    - cron: '0 4 */2 * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  ping-supabase:
+    name: Keep Supabase Active
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase Database
+        run: |
+          echo "Mengirim ping otomatis ke Supabase database..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqYWhuZWN2cXl2eGd5bHZnbWxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzMDA1NjEsImV4cCI6MjA5Mzg3NjU2MX0.YSULBVdNcOMCjzL9PQzkvLq9Z0zo0Mb8j6qheaZwPas" \
+            "https://kjahnecvqyvxgylvgmla.supabase.co/rest/v1/user_profiles?select=id&limit=1")
+          
+          echo "Supabase HTTP Response Status: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
+            echo "✅ Supabase berhasil diping! Aktivitas database tercatat aktif."
+          else
+            echo "⚠️ Status code: $HTTP_STATUS"
+          fi
