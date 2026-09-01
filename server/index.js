@@ -58,6 +58,52 @@ if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'YOUR_OPENAI_AP
     });
 }
 
+// Resilient Gemini Generator with automatic model fallback
+async function generateWithGemini(apiKey, prompt, generationConfig = { temperature: 0.4 }) {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const candidateModels = [
+        "gemini-2.5-flash",
+        "gemini-2.0-flash",
+        "gemini-1.5-flash-latest",
+        "gemini-1.5-flash",
+        "gemini-1.5-pro",
+        "gemini-pro"
+    ];
+
+    let lastError = null;
+    for (const modelName of candidateModels) {
+        try {
+            const model = genAI.getGenerativeModel({ model: modelName, generationConfig });
+            const result = await model.generateContent(prompt);
+            if (result && result.response) {
+                return result.response.text();
+            }
+        } catch (err) {
+            lastError = err;
+            const errMsg = (err.message || '').toLowerCase();
+            if (errMsg.includes('404') || errMsg.includes('not found') || errMsg.includes('is not supported') || errMsg.includes('unsupported')) {
+                console.warn(`[Gemini Fallback] Model ${modelName} returned 404/not supported, trying next model...`);
+                continue;
+            }
+            throw err;
+        }
+    }
+
+    // If all candidate models gave 404, let's fetch available models for helpful error
+    try {
+        const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+        const modelsData = await modelsRes.json();
+        if (modelsData && modelsData.models && modelsData.models.length > 0) {
+            const available = modelsData.models.map(m => m.name.replace('models/', '')).join(', ');
+            throw new Error(`Model standar Gemini tidak dapat diakses. Model yang aktif pada API Key Anda: ${available}. Pastikan Generative Language API aktif di Google Cloud / AI Studio.`);
+        }
+    } catch (fetchErr) {
+        // keep original error
+    }
+
+    throw lastError || new Error('Gagal menghubungi model Google Gemini. Periksa izin API Key Anda.');
+}
+
 // --- AUTHENTICATION ENDPOINTS ---
 
 // 0. Refresh Token - Auto-perpanjang sesi tanpa login ulang
@@ -573,10 +619,8 @@ app.post('/api/generate-titles', async (req, res) => {
 
         let data;
         if (isGemini) {
-            const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", generationConfig: { temperature: 0.4 } });
-            const result = await model.generateContent(prompt);
-            let text = result.response.text().replace(/```json/gi, '').replace(/```/g, '').trim();
+            const rawText = await generateWithGemini(apiKey, prompt, { temperature: 0.4 });
+            let text = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
             data = JSON.parse(text);
         } else {
             let activeOpenai = apiKey ? new OpenAI({ apiKey: apiKey }) : openai;
@@ -677,11 +721,8 @@ app.post('/api/generate-outline', async (req, res) => {
 
         let data;
         if (isGemini) {
-            const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", generationConfig: { temperature: 0.4 } });
-            const result = await model.generateContent(prompt);
-            let text = result.response.text();
-            text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+            const rawText = await generateWithGemini(apiKey, prompt, { temperature: 0.4 });
+            let text = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
             data = JSON.parse(text);
         } else {
             let activeOpenai = apiKey ? new OpenAI({ apiKey: apiKey }) : openai;
@@ -772,10 +813,8 @@ app.post('/api/generate-chapter', async (req, res) => {
 
         let htmlContent;
         if (isGemini) {
-            const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", generationConfig: { temperature: 0.4 } });
-            const result = await model.generateContent(prompt);
-            htmlContent = result.response.text().replace(/```html/g, '').replace(/```/g, '').trim();
+            const rawText = await generateWithGemini(apiKey, prompt, { temperature: 0.4 });
+            htmlContent = rawText.replace(/```html/g, '').replace(/```/g, '').trim();
         } else {
             let activeOpenai = apiKey ? new OpenAI({ apiKey: apiKey }) : openai;
             const response = await activeOpenai.chat.completions.create({
@@ -818,10 +857,8 @@ app.post('/api/generate-image-prompt', async (req, res) => {
 
         let resultPrompt;
         if (isGemini) {
-            const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", generationConfig: { temperature: 0.4 } });
-            const result = await model.generateContent(promptText);
-            resultPrompt = result.response.text().trim();
+            const rawText = await generateWithGemini(apiKey, promptText, { temperature: 0.4 });
+            resultPrompt = rawText.trim();
         } else {
             let activeOpenai = apiKey ? new OpenAI({ apiKey: apiKey }) : openai;
             const response = await activeOpenai.chat.completions.create({
