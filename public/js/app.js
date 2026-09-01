@@ -237,6 +237,32 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 50);
         });
 
+        // Tombol Simpan API Key Manual
+        const btnSaveApiKey = document.getElementById('btnSaveApiKey');
+        if (btnSaveApiKey) {
+            btnSaveApiKey.addEventListener('click', () => {
+                const val = inputApiKey.value.trim();
+                inputApiKey.value = val;
+                if (!val) {
+                    alert('Silakan masukkan API Key Anda terlebih dahulu.');
+                    return;
+                }
+                window.userApiKey = val;
+                localStorage.setItem('ebookMagicApiKey', val);
+                apiKeyStatus.style.display = 'inline-block';
+                apiKeyStatus.innerHTML = '<i class="ph-fill ph-check-circle"></i> Tersimpan!';
+                inputApiKey.style.borderColor = '#10B981';
+                btnSaveApiKey.style.background = '#10B981';
+                btnSaveApiKey.innerHTML = '<i class="ph ph-check"></i> Disimpan';
+                setTimeout(() => {
+                    apiKeyStatus.style.display = 'none';
+                    inputApiKey.style.borderColor = '#ddd';
+                    btnSaveApiKey.style.background = 'var(--primary, #6C63FF)';
+                    btnSaveApiKey.innerHTML = '<i class="ph ph-floppy-disk"></i> Simpan';
+                }, 2000);
+            });
+        }
+
         // Toggle visibility
         const btnToggleApiKey = document.getElementById('btnToggleApiKey');
         if (btnToggleApiKey) {
