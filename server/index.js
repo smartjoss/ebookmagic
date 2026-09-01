@@ -89,19 +89,12 @@ async function generateWithGemini(apiKey, prompt, generationConfig = { temperatu
         }
     }
 
-    // If all candidate models gave 404, let's fetch available models for helpful error
-    try {
-        const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-        const modelsData = await modelsRes.json();
-        if (modelsData && modelsData.models && modelsData.models.length > 0) {
-            const available = modelsData.models.map(m => m.name.replace('models/', '')).join(', ');
-            throw new Error(`Model standar Gemini tidak dapat diakses. Model yang aktif pada API Key Anda: ${available}. Pastikan Generative Language API aktif di Google Cloud / AI Studio.`);
-        }
-    } catch (fetchErr) {
-        // keep original error
+    // If all candidate models failed with 404, provide a clear actionable error message
+    if (lastError && (lastError.message || '').includes('404')) {
+        throw new Error('API Key Google ini tidak memiliki izin akses Generative Language API (Error 404). Pastikan membuat API Key resmi dan gratis langsung dari Google AI Studio di https://aistudio.google.com/app/apikey (kunci diawali AIzaSy...).');
     }
 
-    throw lastError || new Error('Gagal menghubungi model Google Gemini. Periksa izin API Key Anda.');
+    throw lastError || new Error('Gagal menghubungi model Google Gemini. Periksa API Key Anda.');
 }
 
 // --- AUTHENTICATION ENDPOINTS ---
