@@ -62,18 +62,16 @@ if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'YOUR_OPENAI_AP
 async function generateWithGemini(apiKey, prompt, generationConfig = { temperature: 0.4 }) {
     const genAI = new GoogleGenerativeAI(apiKey);
     const candidateModels = [
-        "gemini-3.6-flash",
-        "gemini-3.7-flash",
         "gemini-3.5-flash",
         "gemini-flash-latest",
         "gemini-3.1-flash-lite",
+        "gemini-3.6-flash",
+        "gemini-3.7-flash",
         "gemini-pro-latest",
         "gemini-2.5-flash",
         "gemini-2.0-flash",
         "gemini-1.5-flash-latest",
-        "gemini-1.5-flash",
-        "gemini-1.5-pro",
-        "gemini-pro"
+        "gemini-1.5-flash"
     ];
 
     let lastError = null;
@@ -87,8 +85,14 @@ async function generateWithGemini(apiKey, prompt, generationConfig = { temperatu
         } catch (err) {
             lastError = err;
             const errMsg = (err.message || '').toLowerCase();
-            if (errMsg.includes('404') || errMsg.includes('not found') || errMsg.includes('is not supported') || errMsg.includes('unsupported')) {
-                console.warn(`[Gemini Fallback] Model ${modelName} returned 404/not supported, trying next model...`);
+            // Automatically failover on 404, 503 (high demand), 429 (rate limit), 500, etc.
+            if (
+                errMsg.includes('404') || errMsg.includes('not found') || errMsg.includes('not supported') || errMsg.includes('unsupported') ||
+                errMsg.includes('503') || errMsg.includes('unavailable') || errMsg.includes('high demand') ||
+                errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('rate') ||
+                errMsg.includes('overloaded') || errMsg.includes('500') || errMsg.includes('internal')
+            ) {
+                console.warn(`[Gemini Fallback] Model ${modelName} encountered issue: ${err.message}. Trying next model...`);
                 continue;
             }
             throw err;
@@ -97,10 +101,10 @@ async function generateWithGemini(apiKey, prompt, generationConfig = { temperatu
 
     // If all candidate models failed with 404, provide a clear actionable error message
     if (lastError && (lastError.message || '').includes('404')) {
-        throw new Error('API Key Google ini tidak memiliki izin akses Generative Language API (Error 404). Pastikan membuat API Key resmi dan gratis langsung dari Google AI Studio di https://aistudio.google.com/app/apikey (kunci diawali AIzaSy...).');
+        throw new Error('API Key Google ini tidak memiliki izin akses Generative Language API (Error 404). Pastikan membuat API Key resmi dan gratis langsung dari Google AI Studio di https://aistudio.google.com/app/apikey.');
     }
 
-    throw lastError || new Error('Gagal menghubungi model Google Gemini. Periksa API Key Anda.');
+    throw lastError || new Error('Gagal menghubungi model Google Gemini. Silakan coba sesaat lagi.');
 }
 
 // --- AUTHENTICATION ENDPOINTS ---
