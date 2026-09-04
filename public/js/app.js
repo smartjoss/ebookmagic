@@ -764,37 +764,48 @@ document.addEventListener('DOMContentLoaded', () => {
         TEMPLATES_DATA.forEach(template => {
             const card = document.createElement('div');
             card.className = 'project-card glass';
-            card.style.cursor = 'pointer';
+            card.style.display = 'flex';
+            card.style.flexDirection = 'column';
+            card.style.overflow = 'hidden';
+            card.style.borderRadius = '16px';
+            card.style.border = '1px solid rgba(255,255,255,0.1)';
+            card.style.transition = 'transform 0.3s, box-shadow 0.3s';
+            
             card.innerHTML = `
-                <div class="project-cover" style="background: ${template.bg}; display:flex; flex-direction:column; padding: 24px; border: 1px solid rgba(0,0,0,0.1); position: relative; overflow: hidden; box-shadow: inset 0 0 20px rgba(0,0,0,0.05);">
+                <div class="project-cover" style="background: ${template.bg}; display:flex; flex-direction:column; padding: 24px; border-bottom: 1px solid rgba(0,0,0,0.1); position: relative; overflow: hidden; height: 260px; box-shadow: inset 0 0 20px rgba(0,0,0,0.05); cursor: pointer;" onclick="window.openTemplateQuickApply('${template.id}')">
                     <!-- Decorative background shapes -->
-                    <div style="position: absolute; top: -20px; right: -20px; width: 120px; height: 120px; border-radius: 50%; background: ${template.accent}; opacity: 0.15;"></div>
-                    <div style="position: absolute; bottom: -40px; left: -20px; width: 180px; height: 180px; border-radius: 50%; background: ${template.accent}; opacity: 0.08;"></div>
+                    <div style="position: absolute; top: -20px; right: -20px; width: 120px; height: 120px; border-radius: 50%; background: ${template.accent}; opacity: 0.18;"></div>
+                    <div style="position: absolute; bottom: -40px; left: -20px; width: 180px; height: 180px; border-radius: 50%; background: ${template.accent}; opacity: 0.1;"></div>
                     
                     <!-- Cover Content Preview -->
-                    <div style="margin-top: 30px; text-align: left; z-index: 1;">
-                        <span style="font-size: 11px; color: ${template.accent}; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;">EBOOK TITLE</span>
-                        <h3 style="color: ${template.textColor}; font-size: 26px; margin-top: 12px; font-family: ${template.font}; line-height: 1.1; font-weight: 800;">Rahasia Sukses<br>Digital Marketing</h3>
-                        <p style="color: ${template.textColor}; opacity: 0.7; font-size: 13px; margin-top: 12px; line-height: 1.4;">Panduan praktis membangun bisnis dari nol tanpa modal besar.</p>
+                    <div style="margin-top: 15px; text-align: left; z-index: 1;">
+                        <span style="font-size: 10px; color: ${template.accent}; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;">PREMIUM TEMPLATE</span>
+                        <h3 style="color: ${template.textColor}; font-size: 22px; margin-top: 10px; font-family: ${template.font}; line-height: 1.2; font-weight: 800;">Rahasia Sukses<br>Digital Marketing</h3>
+                        <p style="color: ${template.textColor}; opacity: 0.75; font-size: 12px; margin-top: 8px; line-height: 1.4;">Panduan praktis membangun bisnis dari nol tanpa modal besar.</p>
                     </div>
                     
-                    <div style="margin-top: auto; display: flex; align-items: center; gap: 10px; z-index: 1;">
-                        <i class="ph ${template.icon}" style="font-size: 24px; color: ${template.accent};"></i>
-                        <span style="font-size: 12px; color: ${template.textColor}; opacity: 0.9; font-weight: 600;">Nama Penulis</span>
+                    <div style="margin-top: auto; display: flex; align-items: center; justify-content: space-between; z-index: 1;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="ph ${template.icon}" style="font-size: 20px; color: ${template.accent};"></i>
+                            <span style="font-size: 11px; color: ${template.textColor}; opacity: 0.9; font-weight: 700;">Nama Penulis</span>
+                        </div>
+                        <span style="font-size: 10px; padding: 2px 8px; border-radius: 10px; background: ${template.accent}22; color: ${template.accent}; font-weight: 700;">${template.id.toUpperCase()}</span>
                     </div>
                 </div>
-                <div class="project-info">
-                    <h4 style="color: var(--text-primary); font-size: 16px;">${template.name}</h4>
-                    <span style="color: var(--primary); font-weight: 600;">Gunakan Template Ini &rarr;</span>
+                <div class="project-info" style="padding: 16px; background: rgba(0,0,0,0.25); display: flex; flex-direction: column; gap: 12px; flex: 1;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h4 style="color: var(--text-primary); font-size: 15px; margin: 0; font-weight: 700;">${template.name}</h4>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" onclick="window.openTemplateQuickApply('${template.id}')" style="flex: 1; padding: 10px 12px; background: linear-gradient(135deg, #6C63FF, #10B981); border: none; color: #fff; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);">
+                            <i class="ph ph-lightning"></i> Tempel Naskah
+                        </button>
+                        <button type="button" onclick="window.openEmptyCanvasWithTemplate('${template.id}')" style="padding: 10px 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #CBD5E1; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;" title="Buka Canvas Kosong dengan gaya template ini">
+                            <i class="ph ph-file-plus"></i> Kanvas Kosong
+                        </button>
+                    </div>
                 </div>
             `;
-            
-            card.addEventListener('click', () => {
-                window.selectedTemplateId = template.id;
-                window.selectedTemplateDetails = template;
-                alert(`Template '${template.name}' terpilih! Anda akan diarahkan ke Pembuat AI untuk memulai.`);
-                document.getElementById('navGenerator').click();
-            });
             
             grid.appendChild(card);
         });
@@ -1779,6 +1790,78 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 200);
     });
 
+    // --- HTML Parser to Fabric.js elements (Reusable) ---
+    function parseHtmlToElements(html) {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        const elements = [];
+
+        function processNode(node) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                const text = node.textContent.trim();
+                if (text) {
+                    elements.push({ type: 'paragraph', text: text });
+                }
+                return;
+            }
+
+            if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+            const tag = node.tagName.toLowerCase();
+
+            if (['h1', 'h2', 'h3', 'h4'].includes(tag)) {
+                const text = node.textContent.trim();
+                if (text) elements.push({ type: tag, text: text });
+            } else if (tag === 'ul' || tag === 'ol') {
+                const items = [];
+                node.querySelectorAll('li').forEach(li => {
+                    const t = li.textContent.trim();
+                    if (t) items.push(t);
+                });
+                if (items.length > 0) {
+                    const prefix = tag === 'ol' ? 'num' : 'bullet';
+                    const bulletText = items.map((item, i) => {
+                        return prefix === 'num' ? `${i + 1}. ${item}` : `• ${item}`;
+                    }).join('\n');
+                    elements.push({ type: 'list', text: bulletText });
+                }
+            } else if (tag === 'p') {
+                let text = node.textContent.trim();
+                if (text) {
+                    const isBold = node.querySelector('strong, b') && node.textContent === (node.querySelector('strong, b')?.textContent || '');
+                    
+                    const MAX_CHARS = 1200;
+                    while (text.length > MAX_CHARS) {
+                        let splitIndex = text.lastIndexOf(' ', MAX_CHARS);
+                        if (splitIndex === -1) splitIndex = MAX_CHARS;
+                        elements.push({ type: 'paragraph', text: text.substring(0, splitIndex).trim(), bold: isBold });
+                        text = text.substring(splitIndex).trim();
+                    }
+                    if (text.length > 0) {
+                        elements.push({ type: 'paragraph', text: text, bold: isBold });
+                    }
+                }
+            } else if (tag === 'table') {
+                let tableText = '';
+                node.querySelectorAll('tr').forEach(tr => {
+                    const cells = [];
+                    tr.querySelectorAll('td, th').forEach(cell => {
+                        cells.push(cell.textContent.trim());
+                    });
+                    tableText += cells.join('  |  ') + '\n';
+                });
+                if (tableText.trim()) {
+                    elements.push({ type: 'table', text: tableText.trim() });
+                }
+            } else {
+                node.childNodes.forEach(child => processNode(child));
+            }
+        }
+
+        tempDiv.childNodes.forEach(child => processNode(child));
+        return elements;
+    }
+
     // --- SMART COPY ALL CHAPTERS TO CANVAS ---
     const btnCopyAllToCanvas = document.getElementById('btnCopyAllToCanvas');
     if (btnCopyAllToCanvas) {
@@ -1810,82 +1893,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Save current canvas page first
             if (typeof saveCurrentPage === 'function') saveCurrentPage();
-
-            // --- HTML Parser to Fabric.js elements ---
-            function parseHtmlToElements(html) {
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = html;
-                const elements = [];
-
-                function processNode(node) {
-                    if (node.nodeType === Node.TEXT_NODE) {
-                        const text = node.textContent.trim();
-                        if (text) {
-                            elements.push({ type: 'paragraph', text: text });
-                        }
-                        return;
-                    }
-
-                    if (node.nodeType !== Node.ELEMENT_NODE) return;
-
-                    const tag = node.tagName.toLowerCase();
-
-                    if (['h1', 'h2', 'h3', 'h4'].includes(tag)) {
-                        const text = node.textContent.trim();
-                        if (text) elements.push({ type: tag, text: text });
-                    } else if (tag === 'ul' || tag === 'ol') {
-                        const items = [];
-                        node.querySelectorAll('li').forEach(li => {
-                            const t = li.textContent.trim();
-                            if (t) items.push(t);
-                        });
-                        if (items.length > 0) {
-                            const prefix = tag === 'ol' ? 'num' : 'bullet';
-                            const bulletText = items.map((item, i) => {
-                                return prefix === 'num' ? `${i + 1}. ${item}` : `• ${item}`;
-                            }).join('\n');
-                            elements.push({ type: 'list', text: bulletText });
-                        }
-                    } else if (tag === 'p') {
-                        let text = node.textContent.trim();
-                        if (text) {
-                            // Check if has bold/strong children
-                            const isBold = node.querySelector('strong, b') && node.textContent === (node.querySelector('strong, b')?.textContent || '');
-                            
-                            // Split long paragraphs to prevent single objects exceeding canvas page height
-                            const MAX_CHARS = 1200;
-                            while (text.length > MAX_CHARS) {
-                                let splitIndex = text.lastIndexOf(' ', MAX_CHARS);
-                                if (splitIndex === -1) splitIndex = MAX_CHARS;
-                                elements.push({ type: 'paragraph', text: text.substring(0, splitIndex).trim(), bold: isBold });
-                                text = text.substring(splitIndex).trim();
-                            }
-                            if (text.length > 0) {
-                                elements.push({ type: 'paragraph', text: text, bold: isBold });
-                            }
-                        }
-                    } else if (tag === 'table') {
-                        // Convert table to formatted text
-                        let tableText = '';
-                        node.querySelectorAll('tr').forEach(tr => {
-                            const cells = [];
-                            tr.querySelectorAll('td, th').forEach(cell => {
-                                cells.push(cell.textContent.trim());
-                            });
-                            tableText += cells.join('  |  ') + '\n';
-                        });
-                        if (tableText.trim()) {
-                            elements.push({ type: 'table', text: tableText.trim() });
-                        }
-                    } else {
-                        // Recursively process children for divs, spans, etc.
-                        node.childNodes.forEach(child => processNode(child));
-                    }
-                }
-
-                tempDiv.childNodes.forEach(child => processNode(child));
-                return elements;
-            }
 
             // --- Create canvas pages from parsed elements ---
             const CANVAS_W = 800;
@@ -4543,5 +4550,455 @@ Silakan mulai tulis naskah lengkapnya sekarang dari Judul hingga Penutup!`;
 
     const btnImportToDesigner = document.getElementById('btnImportToDesigner');
     if (btnImportToDesigner) btnImportToDesigner.addEventListener('click', window.importSuperPromptAction);
+
+    // --- DIRECT TEMPLATE ENGINE: RENDER MANUSCRIPT TO TEMPLATE CANVAS & PDF ---
+    window.openEmptyCanvasWithTemplate = function(templateId) {
+        const template = TEMPLATES_DATA.find(t => t.id === templateId) || TEMPLATES_DATA[0];
+        window.selectedTemplateId = template.id;
+        window.selectedTemplateDetails = template;
+
+        initCanvas();
+        canvasPages.length = 0;
+
+        const CANVAS_W = 800;
+        const CANVAS_H = 1131;
+        const primaryFont = template.font.replace(/['"]/g, '').split(',')[0].trim();
+
+        const coverCanvas = new fabric.StaticCanvas(null, { width: CANVAS_W, height: CANVAS_H });
+        coverCanvas.backgroundColor = template.bg;
+
+        // Add shapes based on template
+        if (template.id === 'modern' || template.id === 'pastel' || template.id === 'islamic') {
+            const circleTop = new fabric.Circle({
+                left: CANVAS_W - 140,
+                top: -60,
+                radius: 120,
+                fill: template.accent,
+                opacity: 0.15,
+                selectable: false
+            });
+            const circleBottom = new fabric.Circle({
+                left: -80,
+                top: CANVAS_H - 180,
+                radius: 160,
+                fill: template.accent,
+                opacity: 0.1,
+                selectable: false
+            });
+            coverCanvas.add(circleTop, circleBottom);
+        } else if (template.id === 'dark' || template.id === 'premium') {
+            const frameRect = new fabric.Rect({
+                left: 30,
+                top: 30,
+                width: CANVAS_W - 60,
+                height: CANVAS_H - 60,
+                fill: 'transparent',
+                stroke: template.accent,
+                strokeWidth: 2,
+                opacity: 0.4,
+                rx: 12,
+                ry: 12,
+                selectable: false
+            });
+            coverCanvas.add(frameRect);
+        }
+
+        const badgeText = new fabric.Textbox('EBOOK TITLE', {
+            left: 0,
+            top: 150,
+            width: CANVAS_W,
+            fontSize: 12,
+            fontFamily: primaryFont,
+            fontWeight: 800,
+            textAlign: 'center',
+            fill: template.accent,
+            charSpacing: 150
+        });
+
+        const decorLine = new fabric.Rect({
+            left: (CANVAS_W - 80) / 2,
+            top: 195,
+            width: 80,
+            height: 5,
+            fill: template.accent,
+            rx: 3,
+            ry: 3
+        });
+
+        const titleObj = new fabric.Textbox('Judul Ebook Anda', {
+            left: 60,
+            top: 240,
+            width: CANVAS_W - 120,
+            fontSize: 40,
+            fontFamily: primaryFont,
+            fontWeight: 800,
+            textAlign: 'center',
+            fill: template.textColor,
+            lineHeight: 1.2
+        });
+
+        const subtitleObj = new fabric.Textbox('Sub-judul atau deskripsi singkat ebook Anda', {
+            left: 80,
+            top: 350,
+            width: CANVAS_W - 160,
+            fontSize: 18,
+            fontFamily: primaryFont,
+            textAlign: 'center',
+            fill: template.textColor,
+            opacity: 0.8,
+            lineHeight: 1.5
+        });
+
+        const authorName = window.userProfile?.user_metadata?.full_name || window.currentUser?.email?.split('@')[0] || 'Nama Penulis';
+        const authorObj = new fabric.Textbox(authorName, {
+            left: 0,
+            top: 980,
+            width: CANVAS_W,
+            fontSize: 18,
+            fontFamily: primaryFont,
+            fontWeight: 800,
+            textAlign: 'center',
+            fill: template.textColor
+        });
+
+        coverCanvas.add(badgeText, decorLine, titleObj, subtitleObj, authorObj);
+        canvasPages.push(JSON.stringify(coverCanvas.toJSON()));
+
+        hideAllViews();
+        if (editorView) editorView.classList.remove('hidden');
+        loadPage(0);
+        updatePageIndicator();
+
+        setTimeout(() => {
+            if (editorView) editorView.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 200);
+
+        alert(`🎨 Kanvas baru dengan gaya '${template.name}' siap digunakan! Anda dapat menambahkan teks, elemen, dan gambar.`);
+    };
+
+    window.applyTemplateDirectly = function(templateId, rawText, userTitle, userSubtitle, userAuthor) {
+        if (!rawText || rawText.trim().length < 15) {
+            return alert('⚠️ Silakan tempelkan naskah teks Anda terlebih dahulu.');
+        }
+
+        const template = TEMPLATES_DATA.find(t => t.id === templateId) || TEMPLATES_DATA[0];
+        window.selectedTemplateId = template.id;
+        window.selectedTemplateDetails = template;
+
+        const parsed = parseChatGPTMarkdown(rawText, userTitle, userSubtitle);
+        if (!parsed || !parsed.chapters || parsed.chapters.length === 0) {
+            return alert('Gagal memproses naskah. Pastikan teks naskah berisi kalimat atau bab.');
+        }
+
+        const title = userTitle ? userTitle.trim() : parsed.title;
+        const subtitle = userSubtitle ? userSubtitle.trim() : parsed.subtitle;
+        const author = userAuthor ? userAuthor.trim() : (window.userProfile?.user_metadata?.full_name || window.currentUser?.email?.split('@')[0] || 'Nama Penulis');
+
+        window.currentOutlineData = {
+            title: title,
+            subtitle: subtitle,
+            outline: parsed.chapters,
+            niche: title,
+            type: 'direct-template'
+        };
+        window.chaptersContent = parsed.chaptersContent;
+        window.currentAuthorProfile = author;
+
+        initCanvas();
+
+        const CANVAS_W = 800;
+        const CANVAS_H = 1131;
+        const MARGIN_X = 60;
+        const MARGIN_TOP = 70;
+        const MARGIN_BOTTOM = 80;
+        const CONTENT_W = CANVAS_W - (MARGIN_X * 2);
+        const MAX_Y = CANVAS_H - MARGIN_BOTTOM;
+
+        const primaryFont = template.font.replace(/['"]/g, '').split(',')[0].trim();
+        const bgFill = template.bg;
+        const textFill = template.textColor;
+        const accentFill = template.accent;
+
+        function createNewPage() {
+            const pageCanvas = new fabric.StaticCanvas(null, { width: CANVAS_W, height: CANVAS_H });
+            pageCanvas.backgroundColor = bgFill;
+            return pageCanvas;
+        }
+
+        function getTextHeight(text, fontSize, fontWeight, width) {
+            const charsPerLine = Math.floor(width / (fontSize * 0.52));
+            const lines = text.split('\n').reduce((total, line) => {
+                return total + Math.max(1, Math.ceil((line.length || 1) / charsPerLine));
+            }, 0);
+            return Math.round(lines * (fontSize * 1.6) + 12);
+        }
+
+        const allPages = [];
+
+        // --- PAGE 0: COVER PAGE ---
+        const coverCanvas = createNewPage();
+
+        if (template.id === 'modern' || template.id === 'pastel' || template.id === 'islamic') {
+            const circleTop = new fabric.Circle({
+                left: CANVAS_W - 140,
+                top: -60,
+                radius: 120,
+                fill: accentFill,
+                opacity: 0.14,
+                selectable: false
+            });
+            const circleBottom = new fabric.Circle({
+                left: -80,
+                top: CANVAS_H - 180,
+                radius: 160,
+                fill: accentFill,
+                opacity: 0.09,
+                selectable: false
+            });
+            coverCanvas.add(circleTop, circleBottom);
+        } else if (template.id === 'dark' || template.id === 'premium') {
+            const frameRect = new fabric.Rect({
+                left: 30,
+                top: 30,
+                width: CANVAS_W - 60,
+                height: CANVAS_H - 60,
+                fill: 'transparent',
+                stroke: accentFill,
+                strokeWidth: 2,
+                opacity: 0.35,
+                rx: 12,
+                ry: 12,
+                selectable: false
+            });
+            coverCanvas.add(frameRect);
+        } else if (template.id === 'corporate') {
+            const topBanner = new fabric.Rect({
+                left: 0,
+                top: 0,
+                width: CANVAS_W,
+                height: 16,
+                fill: accentFill,
+                selectable: false
+            });
+            coverCanvas.add(topBanner);
+        }
+
+        const badgeText = new fabric.Textbox('EDISI EBOOK EKSKLUSIF', {
+            left: 0,
+            top: 150,
+            width: CANVAS_W,
+            fontSize: 12,
+            fontFamily: primaryFont,
+            fontWeight: 800,
+            textAlign: 'center',
+            fill: accentFill,
+            charSpacing: 150
+        });
+        badgeText.setControlsVisibility({ mt: false, mb: false });
+
+        const decorLineCover = new fabric.Rect({
+            left: (CANVAS_W - 80) / 2,
+            top: 200,
+            width: 80,
+            height: 5,
+            fill: accentFill,
+            rx: 3,
+            ry: 3
+        });
+
+        const titleObj = new fabric.Textbox(title, {
+            left: 60,
+            top: 245,
+            width: CANVAS_W - 120,
+            fontSize: title.length > 50 ? 32 : 40,
+            fontFamily: primaryFont,
+            fontWeight: 800,
+            textAlign: 'center',
+            fill: textFill,
+            lineHeight: 1.25
+        });
+        titleObj.setControlsVisibility({ mt: false, mb: false });
+
+        const titleHeightCover = titleObj.height || 100;
+        const subtitleObj = new fabric.Textbox(subtitle, {
+            left: 80,
+            top: 245 + titleHeightCover + 25,
+            width: CANVAS_W - 160,
+            fontSize: 17,
+            fontFamily: primaryFont,
+            textAlign: 'center',
+            fill: textFill,
+            opacity: 0.85,
+            lineHeight: 1.5
+        });
+        subtitleObj.setControlsVisibility({ mt: false, mb: false });
+
+        const authorLabel = new fabric.Textbox('DITULIS OLEH', {
+            left: 0,
+            top: 960,
+            width: CANVAS_W,
+            fontSize: 11,
+            fontFamily: primaryFont,
+            fontWeight: 700,
+            textAlign: 'center',
+            fill: accentFill,
+            charSpacing: 120,
+            opacity: 0.8
+        });
+        const authorObj = new fabric.Textbox(author, {
+            left: 0,
+            top: 985,
+            width: CANVAS_W,
+            fontSize: 18,
+            fontFamily: primaryFont,
+            fontWeight: 800,
+            textAlign: 'center',
+            fill: textFill
+        });
+        authorLabel.setControlsVisibility({ mt: false, mb: false });
+        authorObj.setControlsVisibility({ mt: false, mb: false });
+
+        coverCanvas.add(badgeText, decorLineCover, titleObj, subtitleObj, authorLabel, authorObj);
+        allPages.push(JSON.stringify(coverCanvas.toJSON()));
+
+        // --- PAGES 1..N: CONTENT PAGES ---
+        let pageNumber = 1;
+
+        parsed.chapters.forEach((chapterTitle) => {
+            const html = parsed.chaptersContent[chapterTitle] || '';
+            const elements = parseHtmlToElements(html);
+
+            let currentPageObjs = [];
+            let yPos = MARGIN_TOP;
+
+            function flushPage() {
+                if (currentPageObjs.length === 0) return;
+                const pg = createNewPage();
+                currentPageObjs.forEach(obj => pg.add(obj));
+
+                // Add Page Number Footer
+                const pageFooter = new fabric.Textbox(`${pageNumber}`, {
+                    left: CANVAS_W - MARGIN_X - 100,
+                    top: CANVAS_H - 50,
+                    width: 100,
+                    fontSize: 12,
+                    fontFamily: primaryFont,
+                    textAlign: 'right',
+                    fill: textFill,
+                    opacity: 0.45
+                });
+                pageFooter.setControlsVisibility({ mt: false, mb: false });
+                pg.add(pageFooter);
+
+                // Add subtle top mini header (book title)
+                const miniHeader = new fabric.Textbox(title, {
+                    left: MARGIN_X,
+                    top: 28,
+                    width: CONTENT_W,
+                    fontSize: 10,
+                    fontFamily: primaryFont,
+                    fill: textFill,
+                    opacity: 0.35
+                });
+                miniHeader.setControlsVisibility({ mt: false, mb: false });
+                pg.add(miniHeader);
+
+                allPages.push(JSON.stringify(pg.toJSON()));
+                currentPageObjs = [];
+                yPos = MARGIN_TOP;
+                pageNumber++;
+            }
+
+            // Add Chapter Heading
+            const chapTitleObj = new fabric.Textbox(chapterTitle, {
+                left: MARGIN_X,
+                top: yPos,
+                width: CONTENT_W,
+                fontSize: 26,
+                fontFamily: primaryFont,
+                fontWeight: 800,
+                fill: accentFill,
+                lineHeight: 1.3,
+                splitByGrapheme: false
+            });
+            chapTitleObj.setControlsVisibility({ mt: false, mb: false });
+            const chHeight = chapTitleObj.height || getTextHeight(chapterTitle, 26, 800, CONTENT_W);
+            currentPageObjs.push(chapTitleObj);
+            yPos += chHeight + 15;
+
+            // Decorative Accent Line
+            const decorLine = new fabric.Rect({
+                left: MARGIN_X,
+                top: yPos - 8,
+                width: 70,
+                height: 4,
+                fill: accentFill,
+                rx: 2,
+                ry: 2
+            });
+            currentPageObjs.push(decorLine);
+            yPos += 18;
+
+            // Render each element
+            elements.forEach(el => {
+                let fontSize = 14;
+                let fontWeight = 'normal';
+                let fill = textFill;
+                let spacing = 12;
+
+                if (el.type === 'h1') { fontSize = 22; fontWeight = 800; fill = textFill; spacing = 18; }
+                else if (el.type === 'h2') { fontSize = 18; fontWeight = 700; fill = textFill; spacing = 16; }
+                else if (el.type === 'h3') { fontSize = 16; fontWeight = 700; fill = textFill; spacing = 14; }
+                else if (el.type === 'h4') { fontSize = 14; fontWeight = 700; fill = textFill; spacing = 12; }
+                else if (el.type === 'list') { fontSize = 13; fill = textFill; spacing = 10; }
+                else if (el.type === 'table') { fontSize = 12; fill = textFill; spacing = 10; }
+                else if (el.bold) { fontWeight = 'bold'; }
+
+                let textObj = new fabric.Textbox(el.text, {
+                    left: el.type === 'list' ? MARGIN_X + 15 : MARGIN_X,
+                    top: yPos,
+                    width: el.type === 'list' ? CONTENT_W - 15 : CONTENT_W,
+                    fontSize: fontSize,
+                    fontFamily: primaryFont,
+                    fontWeight: fontWeight,
+                    fill: fill,
+                    lineHeight: 1.6,
+                    splitByGrapheme: false
+                });
+
+                let elHeight = textObj.height || getTextHeight(el.text, fontSize, fontWeight, CONTENT_W);
+
+                if (yPos + elHeight > MAX_Y) {
+                    flushPage();
+                    textObj.set('top', yPos);
+                }
+
+                textObj.setControlsVisibility({ mt: false, mb: false });
+                currentPageObjs.push(textObj);
+                yPos += elHeight + spacing;
+            });
+
+            flushPage();
+        });
+
+        // Set into canvasPages
+        canvasPages.length = 0;
+        allPages.forEach(p => canvasPages.push(p));
+        currentCanvasPage = 0;
+
+        hideAllViews();
+        if (editorView) editorView.classList.remove('hidden');
+
+        loadPage(0);
+        updatePageIndicator();
+
+        if (window.closeTemplateQuickApply) window.closeTemplateQuickApply();
+
+        setTimeout(() => {
+            if (editorView) editorView.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 200);
+
+        alert(`🎉 SELESAI!\n\nNaskah berhasil diterapkan ke Template '${template.name}'.\nTotal ${canvasPages.length} halaman (1 Cover + ${canvasPages.length - 1} Halaman Isi) telah dibuat rapi.\n\nAnda dapat mengedit langsung di Canvas atau klik tombol 'Export PDF' di panel editor!`);
+    };
 
 });

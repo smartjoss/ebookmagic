@@ -9,7 +9,7 @@
     <title>Ebook Magic - AI Ebook Maker</title>
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="stylesheet" href="/css/style.css?v=6.5">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@400;700;900&family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;600;700;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <!-- Fabric.js -->
@@ -284,9 +284,31 @@
             <!-- Templates View (Hidden by default) -->
             <div class="templates-content hidden" id="templatesView" style="padding: 0 40px 40px;">
                 <div class="generator-header" style="margin-bottom: 20px;">
-                    <h2>Template Desain <span style="font-size:12px; background:#FBBF24; padding:2px 8px; border-radius:12px; color:#111; font-weight:bold;">PREMIUM</span></h2>
-                    <p style="color: var(--text-secondary);">Pilih gaya desain yang cocok untuk eBook Anda.</p>
+                    <h2>Template Desain <span style="font-size:12px; background:linear-gradient(135deg, #FBBF24, #F59E0B); padding:3px 10px; border-radius:12px; color:#111; font-weight:bold;">PREMIUM & INSTAN</span></h2>
+                    <p style="color: var(--text-secondary);">Pilih gaya desain yang cocok untuk eBook Anda, atau langsung tempel naskah hasil ChatGPT / Gemini tanpa perlu repot bikin judul & prompt!</p>
                 </div>
+
+                <!-- Instant Manuscript to Template Banner -->
+                <div class="glass" style="padding: 24px 30px; border-radius: 16px; margin-bottom: 30px; background: linear-gradient(135deg, rgba(108, 99, 255, 0.15), rgba(16, 185, 129, 0.12)); border: 1px solid rgba(108, 99, 255, 0.35); box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+                        <div style="max-width: 680px;">
+                            <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(108, 99, 255, 0.25); color: #A78BFA; padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; margin-bottom: 12px; border: 1px solid rgba(167, 139, 250, 0.4);">
+                                <i class="ph ph-lightning" style="font-size: 15px; color: #FBBF24;"></i> POST NASKAH LANGSUNG KE TEMPLATE
+                            </div>
+                            <h3 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 800; color: #fff;">Sudah Punya Naskah Jadi dari ChatGPT / Gemini?</h3>
+                            <p style="margin: 0; color: #CBD5E1; font-size: 14px; line-height: 1.6;">
+                                Cukup tempel naskah lengkap Anda! Sistem akan otomatis membagi bab, membuatkan cover elegan sesuai template yang Anda pilih, menyusun seluruh halaman isi secara rapi, dan langsung siap di-export ke PDF.
+                            </p>
+                        </div>
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <button type="button" class="btn-primary" onclick="window.openTemplateQuickApply('modern')" style="padding: 14px 26px; font-size: 15px; font-weight: 700; border-radius: 12px; background: linear-gradient(135deg, #6C63FF, #10B981); box-shadow: 0 6px 20px rgba(108, 99, 255, 0.4); border: none; cursor: pointer; color: white;">
+                                <i class="ph ph-clipboard-text" style="font-size: 20px;"></i>
+                                Tempel Naskah Langsung
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="projects-grid" id="templatesGrid">
                     <!-- Template cards will be loaded here dynamically -->
                 </div>
@@ -926,6 +948,94 @@ Penutup"></textarea>
             </li>
         </ul>
     </div>
+
+    <!-- Modal: Quick Apply Manuscript to Template -->
+    <div id="modalTemplateQuickApply" class="hidden" style="position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;">
+        <div class="glass" style="width: 100%; max-width: 820px; max-height: 90vh; overflow-y: auto; background: #161826; border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; padding: 28px; box-shadow: 0 25px 60px rgba(0,0,0,0.6); position: relative;">
+            
+            <!-- Modal Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 18px; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #6C63FF, #10B981); display: flex; align-items: center; justify-content: center; font-size: 22px; color: #fff;">
+                        <i class="ph ph-palette"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin: 0; font-size: 19px; font-weight: 800; color: #fff;">Terapkan Naskah ke Template Desain</h3>
+                        <p style="margin: 3px 0 0 0; font-size: 13px; color: var(--text-secondary);">Tempel naskah jadi dari ChatGPT / Gemini — Cover & seluruh Bab otomatis ter-layout siap PDF!</p>
+                    </div>
+                </div>
+                <button type="button" onclick="window.closeTemplateQuickApply()" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); color: #fff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; transition: 0.2s;">
+                    <i class="ph ph-x"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div style="display: flex; flex-direction: column; gap: 18px;">
+                
+                <!-- Template Selector Pills -->
+                <div>
+                    <label style="display: block; font-size: 13px; font-weight: 700; color: #CBD5E1; margin-bottom: 10px;">
+                        <i class="ph ph-paint-brush"></i> 1. Pilih Gaya Template:
+                    </label>
+                    <div id="tplModalPillsContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px;">
+                        <!-- Injected dynamically via JS -->
+                    </div>
+                </div>
+
+                <!-- Title, Subtitle, Author Inputs (Optional) -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label style="display: block; font-size: 13px; font-weight: 600; color: #CBD5E1; margin-bottom: 6px;">
+                            Judul eBook <span style="font-size: 11px; color: var(--text-secondary); font-weight: normal;">(Opsional - Otomatis dari naskah)</span>
+                        </label>
+                        <input type="text" id="tplDirectTitle" placeholder="Contoh: Rahasia Bisnis Online 2026" style="width: 100%; padding: 10px 14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; color: #fff; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 13px; font-weight: 600; color: #CBD5E1; margin-bottom: 6px;">
+                            Sub-Judul eBook <span style="font-size: 11px; color: var(--text-secondary); font-weight: normal;">(Opsional)</span>
+                        </label>
+                        <input type="text" id="tplDirectSubtitle" placeholder="Contoh: Panduan Praktis Langkah demi Langkah" style="width: 100%; padding: 10px 14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; color: #fff; box-sizing: border-box;">
+                    </div>
+                </div>
+
+                <div>
+                    <label style="display: block; font-size: 13px; font-weight: 600; color: #CBD5E1; margin-bottom: 6px;">
+                        Nama Penulis <span style="font-size: 11px; color: var(--text-secondary); font-weight: normal;">(Akan dicetak di Cover)</span>
+                    </label>
+                    <input type="text" id="tplDirectAuthor" placeholder="Nama Anda / Brand" style="width: 100%; padding: 10px 14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; color: #fff; box-sizing: border-box;">
+                </div>
+
+                <!-- Manuscript Paste Box -->
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label style="font-size: 13px; font-weight: 700; color: #CBD5E1;">
+                            <i class="ph ph-file-text"></i> 2. Tempel Naskah Lengkap (dari ChatGPT / Gemini / Claude): <span style="color: #EF4444;">*</span>
+                        </label>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" onclick="window.fillTemplateDemoText()" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #10B981; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 6px; cursor: pointer;">
+                                <i class="ph ph-sparkle"></i> Isi Contoh Naskah
+                            </button>
+                            <button type="button" onclick="document.getElementById('tplDirectText').value=''" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #EF4444; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 6px; cursor: pointer;">
+                                <i class="ph ph-trash"></i> Bersihkan
+                            </button>
+                        </div>
+                    </div>
+                    <textarea id="tplDirectText" rows="10" placeholder="Tempel naskah lengkap Anda di sini...&#10;&#10;Contoh format yang didukung:&#10;# Judul Ebook&#10;## Subjudul Ebook&#10;&#10;### Kata Pengantar&#10;Isi teks kata pengantar...&#10;&#10;### Bab 1: Mengenal Fondasi Bisnis&#10;Isi teks bab 1...&#10;- Poin penting 1&#10;- Poin penting 2&#10;&#10;### Bab 2: Langkah Eksekusi Praktis&#10;Isi teks bab 2...&#10;&#10;### Penutup&#10;Kata penutup dan ajakan aksi..." style="width: 100%; padding: 14px; background: #0B0E17; border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; color: #F8FAFC; font-family: monospace; font-size: 13px; line-height: 1.6; resize: vertical; box-sizing: border-box;"></textarea>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 18px; margin-top: 20px;">
+                <button type="button" onclick="window.closeTemplateQuickApply()" style="padding: 12px 22px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #CBD5E1; border-radius: 10px; font-weight: 600; cursor: pointer;">
+                    Batal
+                </button>
+                <button type="button" id="btnExecuteDirectTemplate" onclick="window.submitDirectTemplateApply()" style="padding: 12px 28px; background: linear-gradient(135deg, #6C63FF, #10B981); border: none; color: #fff; border-radius: 10px; font-weight: 700; font-size: 15px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 6px 20px rgba(108, 99, 255, 0.4);">
+                    <i class="ph ph-lightning" style="font-size: 18px;"></i>
+                    Render ke Template & Buka Canvas / PDF
+                </button>
+            </div>
+        </div>
+    </div>
     
     <script>
     // ========================================================
@@ -1150,8 +1260,137 @@ Penutup"></textarea>
         }
         alert('✅ Master Super-Prompt berhasil disalin!\n\nSilakan klik tombol "Buka ChatGPT" atau "Buka Claude", lalu tempelkan prompt ini di sana.');
     };
+
+    // ========================================================
+    // DIRECT TEMPLATE QUICK-APPLY MODAL SCRIPT
+    // ========================================================
+    window._modalActiveTemplateId = 'modern';
+
+    var MODAL_TEMPLATES_CONFIG = [
+        { id: 'modern', name: 'Modern Minimalist', bg: '#ffffff', textColor: '#111827', accent: '#6C63FF', icon: 'ph-leaf', font: 'Outfit' },
+        { id: 'dark', name: 'Dark Mode Ebook', bg: '#1F2937', textColor: '#F9FAFB', accent: '#3B82F6', icon: 'ph-moon', font: 'Outfit' },
+        { id: 'islamic', name: 'Islamic Green', bg: '#ECFDF5', textColor: '#065F46', accent: '#10B981', icon: 'ph-mosque', font: 'Outfit' },
+        { id: 'pastel', name: 'Soft Pastel', bg: '#FEF2F2', textColor: '#991B1B', accent: '#F43F5E', icon: 'ph-palette', font: 'Playfair Display' },
+        { id: 'corporate', name: 'Corporate Blue', bg: '#EFF6FF', textColor: '#1E3A8A', accent: '#2563EB', icon: 'ph-buildings', font: 'Roboto' },
+        { id: 'premium', name: 'Premium Gold', bg: '#111111', textColor: '#FBBF24', accent: '#D97706', icon: 'ph-crown', font: 'Merriweather' }
+    ];
+
+    window.renderTemplateModalPills = function() {
+        var container = document.getElementById('tplModalPillsContainer');
+        if (!container) return;
+        container.innerHTML = '';
+
+        MODAL_TEMPLATES_CONFIG.forEach(function(tpl) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'tpl-pill-btn';
+            btn.id = 'tplPill_' + tpl.id;
+            var isSelected = (tpl.id === window._modalActiveTemplateId);
+            
+            btn.style.cssText = 'padding: 10px 12px; border-radius: 12px; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 8px; transition: all 0.2s; ' +
+                (isSelected ? 'background: rgba(108, 99, 255, 0.25); border: 2px solid ' + tpl.accent + '; box-shadow: 0 0 12px ' + tpl.accent + '55;' : 'background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);');
+
+            btn.innerHTML = '<div style="width: 22px; height: 22px; border-radius: 6px; background:' + tpl.bg + '; border: 1px solid ' + tpl.accent + '; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">' +
+                '<div style="width: 8px; height: 8px; border-radius: 50%; background:' + tpl.accent + ';"></div>' +
+                '</div>' +
+                '<div style="overflow: hidden;">' +
+                '<div style="font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">' + tpl.name + '</div>' +
+                '<div style="font-size: 10px; color: var(--text-secondary);">' + tpl.font + '</div>' +
+                '</div>';
+
+            btn.onclick = function() {
+                window.selectTemplateInModal(tpl.id);
+            };
+
+            container.appendChild(btn);
+        });
+    };
+
+    window.selectTemplateInModal = function(templateId) {
+        window._modalActiveTemplateId = templateId;
+        window.renderTemplateModalPills();
+    };
+
+    window.openTemplateQuickApply = function(templateId) {
+        if (templateId) {
+            window._modalActiveTemplateId = templateId;
+        }
+        window.renderTemplateModalPills();
+
+        var authorInput = document.getElementById('tplDirectAuthor');
+        if (authorInput && !authorInput.value) {
+            if (window.userProfile && window.userProfile.user_metadata && window.userProfile.user_metadata.full_name) {
+                authorInput.value = window.userProfile.user_metadata.full_name;
+            } else if (window.currentUser && window.currentUser.email) {
+                authorInput.value = window.currentUser.email.split('@')[0];
+            }
+        }
+
+        var modal = document.getElementById('modalTemplateQuickApply');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+        }
+    };
+
+    window.closeTemplateQuickApply = function() {
+        var modal = document.getElementById('modalTemplateQuickApply');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+        }
+    };
+
+    window.fillTemplateDemoText = function() {
+        var demoText = '# Blueprint Sukses Digital Creator 2026\n' +
+            '## Panduan Praktis Menghasilkan Jutaan Rupiah dari Karya Digital Tanpa Modal Besar\n\n' +
+            '### Kata Pengantar\n' +
+            'Selamat datang di buku panduan praktis ini. Di era kecerdasan buatan saat ini, membuat karya digital berkualitas tinggi bukan lagi hak istimewa korporasi besar, melainkan peluang terbuka lebar bagi setiap kreator mandiri.\n\n' +
+            'Buku ini disusun secara ringkas, to the point, dan langsung dapat Anda praktikkan hari ini juga.\n\n' +
+            '### Bab 1: Memilih Niche Menguntungkan & Validasi Pasar\n' +
+            'Langkah pertama yang paling krusial sebelum membuat produk adalah menemukan irisan antara apa yang Anda kuasai dan apa yang bersedia dibayar oleh pasar.\n\n' +
+            'Berikut adalah 3 kriteria niche dengan potensi profit tertinggi:\n' +
+            '- Problem Solver: Menyelesaikan masalah mendesak yang bikin frustrasi calon pembeli.\n' +
+            '- High Purchasing Power: Target audiens yang memiliki daya beli dan привычка bertransaksi digital.\n' +
+            '- Scalable Product: Produk yang sekali dibuat, bisa dijual berkali-kali tanpa biaya cetak tambahan.\n\n' +
+            '### Bab 2: Framework Pembuatan Ebook Cepat & Berkualitas\n' +
+            'Gunakan struktur 4 tahap untuk menyelesaikan naskah dalam hitungan menit:\n' +
+            '1. Tentukan Satu Janji Utama (Core Promise).\n' +
+            '2. Susun 3 sampai 5 Bab sebagai pilar solusi.\n' +
+            '3. Tambahkan checklist aksi di setiap akhir bab agar pembaca merasakan manfaat langsung.\n\n' +
+            '### Penutup & Rencana Aksi\n' +
+            'Pengetahuan tanpa eksekusi hanyalah ilusi kemajuan. Mulai dari satu langkah kecil sekarang, publikasikan karya Anda, dan jadilah kreator berdampak!\n\n' +
+            'Salam sukses,\n' +
+            'Tim Ebook Magic';
+
+        var txtArea = document.getElementById('tplDirectText');
+        if (txtArea) txtArea.value = demoText;
+        var tTitle = document.getElementById('tplDirectTitle');
+        if (tTitle && !tTitle.value) tTitle.value = 'Blueprint Sukses Digital Creator 2026';
+        var tSub = document.getElementById('tplDirectSubtitle');
+        if (tSub && !tSub.value) tSub.value = 'Panduan Praktis Menghasilkan Jutaan Rupiah dari Karya Digital';
+    };
+
+    window.submitDirectTemplateApply = function() {
+        var rawText = document.getElementById('tplDirectText') ? document.getElementById('tplDirectText').value : '';
+        var title = document.getElementById('tplDirectTitle') ? document.getElementById('tplDirectTitle').value : '';
+        var subtitle = document.getElementById('tplDirectSubtitle') ? document.getElementById('tplDirectSubtitle').value : '';
+        var author = document.getElementById('tplDirectAuthor') ? document.getElementById('tplDirectAuthor').value : '';
+        var tplId = window._modalActiveTemplateId || 'modern';
+
+        if (!rawText || rawText.trim().length < 15) {
+            alert('⚠️ Silakan tempelkan naskah teks lengkap Anda ke dalam kotak naskah terlebih dahulu.');
+            return;
+        }
+
+        if (typeof window.applyTemplateDirectly === 'function') {
+            window.applyTemplateDirectly(tplId, rawText, title, subtitle, author);
+        } else {
+            alert('Sedang memuat engine editor... Silakan coba 1 detik lagi.');
+        }
+    };
     </script>
     
-    <script src="/js/app.js?v=6.8"></script>
+    <script src="/js/app.js?v=7.0"></script>
 </body>
 </html>
