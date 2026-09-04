@@ -919,6 +919,106 @@ app.post('/api/generate-image-prompt', async (req, res) => {
     }
 });
 
+// API Endpoint for generating Master Super-Prompt via AI
+app.post('/api/generate-super-prompt', async (req, res) => {
+    const { niche, audience, painPoint, promise, formula, scale, author, cta } = req.body;
+    const apiKey = (req.body.apiKey || '').trim();
+    const isGemini = apiKey && (apiKey.startsWith('AIza') || apiKey.startsWith('AQ') || !apiKey.startsWith('sk-'));
+
+    const formulaMap = {
+        'storytelling': 'Storytelling & Hypnotic Copy (Kisah nyata emosional, menggugah rasa, memikat, dan menginspirasi pembaca untuk bertindak)',
+        'pas': 'Problem - Agitate - Solution / PAS Framework (Bedah masalah secara tajam hingga ke akar kepedihan, lalu berikan solusi praktis tuntas)',
+        'quickwin': 'Step-by-Step Blueprint & Quick-Wins (Panduan teknis berurutan langkah demi langkah yang langsung bisa dipraktekkan)',
+        'islamic': 'Nilai Islami & Berkah Bisnis (Pendekatan nilai syariah, mindset keberkahan, etika amanah, dan hasil nyata)',
+        'authority': 'B2B Authority & Masterclass (Materi mendalam, data analisis, framework profesional, dan standar industri)'
+    };
+    const formulaDesc = formulaMap[formula] || 'Praktis & Terstruktur';
+
+    const fallbackPrompt = `Peran: Anda adalah seorang Ghostwriter Ebook Best-Seller Internasional, Master Copywriter, dan Konsultan Edukasi Digital Terbaik.
+Tugas Anda: Tulis naskah buku elektronik (eBook) LENGKAP, MENDALAM, DAGING SEMUA (High Value, tanpa basa-basi), dan sangat siap dibaca dari awal hingga akhir.
+
+[INFORMASI & TARGET PROYEK EBOOK]
+- Topik / Niche Utama: ${niche}
+- Target Pembaca Spesifik: ${audience || 'Pemula hingga tingkat menengah yang ingin transformasi nyata'}
+- Masalah / Pain Point Utama Pembaca: ${painPoint || 'Kurang pemahaman terstruktur, sering bingung mulai dari mana, butuh panduan praktis'}
+- Solusi & Janji Transformasi Ebook: ${promise || 'Mendapatkan blueprint komprehensif yang bisa langsung dieksekusi dengan hasil terbukti'}
+- Formula Penulisan yang Digunakan: ${formulaDesc}
+- Jumlah Bab: ${scale || 5} Bab Lengkap (Mulai dari Pengantar, Bab 1 s.d. Bab ${scale || 5}, hingga Penutup)
+- Profil / Sudut Pandang Penulis: ${author || 'Praktisi berpengalaman yang ramah, kredibel, dan solutif'}
+- Call to Action (CTA) di Akhir Ebook: ${cta || 'Terapkan strategi ini sekarang dan hubungi kami untuk langkah selanjutnya'}
+
+[STRUKTUR PENULISAN WAJIB DIIKUTI]
+Tulis seluruh naskah menggunakan format Markdown standar yang rapi dengan struktur berikut:
+
+# [Tulis Judul Ebook yang Sangat Menarik, Menjual, & Memikat]
+## [Tulis Subjudul Penjelas yang Menjanjikan Transformasi Cepat]
+
+### Kata Pengantar
+(Tulis kata pengantar yang menyentuh emosi pembaca, mengapa buku ini ditulis, dan gambaran besar isi buku)
+
+### Bab 1: [Judul Bab 1 yang Menarik]
+(Tulis isi bab secara lengkap, mendalam, sertakan poin-poin penting, studi kasus/contoh nyata, dan 3 langkah aksi praktis)
+
+### Bab 2: [Judul Bab 2]
+(Tulis isi bab secara tuntas dan mendalam...)
+
+(Lanjutkan menulis seluruh Bab sampai Bab ${scale || 5} secara berurutan dan lengkap)
+
+### Penutup & Langkah Aksi Berikutnya
+(Rangkuman inti, kata-kata penutup penyemangat, dan ajakan bertindak / Call To Action: ${cta || 'Mulai eksekusi sekarang'})
+
+[ATURAN PENULISAN]
+1. Tulis naskah SECARA LENGKAP dan SELESAI (bukan sekadar kerangka/rangkuman, tulis seluruh isi paragrafnya secara tuntas).
+2. Gunakan Bahasa Indonesia yang natural, mengalir, profesional, persuasif, dan mudah dipahami.
+3. Hindari kalimat klise atau basa-basi kosong. Berikan tips konkret, framework langkah-demi-langkah (Step 1, Step 2, Step 3), dan insight yang aplikatif.
+4. Gunakan heading (### untuk nama Bab, #### untuk subtopik), poin bullet (- ...), nomor (1. ...), dan format tebal (**kata kunci**) agar naskah sangat nyaman dibaca.
+
+Silakan mulai tulis naskah lengkapnya sekarang dari Judul hingga Penutup!`;
+
+    if (!apiKey && !openai) {
+        return res.json({ prompt: fallbackPrompt, title: niche, subtitle: promise });
+    }
+
+    try {
+        const aiPrompt = `
+        Anda adalah Master Copywriter & Prompt Engineer Legendaris kelas dunia.
+        Tugas Anda: Buat sebuah "Master Super-Prompt Ebook" dalam Bahasa Indonesia yang sangat mendalam dan siap disalin ke ChatGPT/Claude untuk menghasilkan naskah eBook Best-Seller berkualitas tinggi.
+        
+        Data Proyek:
+        - Topik/Niche: ${niche}
+        - Target Pembaca: ${audience || 'Target pembaca relevan'}
+        - Pain Point Utama: ${painPoint || 'Masalah utama pembaca'}
+        - Solusi/Janji Ebook: ${promise || 'Hasil nyata yang dijanjikan'}
+        - Formula Penulisan: ${formulaDesc}
+        - Skala/Jumlah Bab: ${scale || 5} Bab
+        - Profil Penulis: ${author || 'Praktisi ahli'}
+        - Call to Action: ${cta || 'Ajakan bertindak'}
+
+        Kembalikan HANYA teks prompt naskah lengkapnya saja yang siap di-copy dan langsung dijalankan di ChatGPT/Claude.
+        `;
+
+        let generatedPrompt;
+        if (isGemini) {
+            const rawText = await generateWithGemini(apiKey, aiPrompt, { temperature: 0.5 });
+            generatedPrompt = rawText.trim();
+        } else {
+            let activeOpenai = apiKey ? new OpenAI({ apiKey: apiKey }) : openai;
+            const response = await activeOpenai.chat.completions.create({
+                model: 'gpt-3.5-turbo',
+                messages: [{ role: 'user', content: aiPrompt }],
+                temperature: 0.5
+            });
+            generatedPrompt = response.choices[0].message.content.trim();
+        }
+
+        res.json({ prompt: generatedPrompt || fallbackPrompt, title: niche, subtitle: promise });
+    } catch (error) {
+        console.error('Super-Prompt AI Error:', error.message);
+        // Fallback to template prompt on error
+        res.json({ prompt: fallbackPrompt, title: niche, subtitle: promise });
+    }
+});
+
 // API Endpoint for saving ebook project
 app.post('/api/save-ebook', async (req, res) => {
     const { projectId, userId, title, niche, outline, chapters, canvasData, token } = req.body;

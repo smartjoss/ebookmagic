@@ -632,9 +632,14 @@ Penutup"></textarea>
                             </div>
                         </div>
 
-                        <button type="button" class="btn-primary w-full" id="btnGenerateSuperPrompt" onclick="if(window.generateSuperPromptAction) window.generateSuperPromptAction();" style="background: linear-gradient(135deg, #F59E0B, #D97706); padding: 16px; font-size: 15px; font-weight: 700; border-radius: 12px; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);">
-                            <i class="ph ph-lightning"></i> Racik Master Super-Prompt Ebook Sekarang
-                        </button>
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <button type="button" class="btn-primary" id="btnGenerateSuperPrompt" onclick="window.generateSuperPromptAction(false);" style="flex: 1; min-width: 220px; background: linear-gradient(135deg, #F59E0B, #D97706); padding: 16px; font-size: 15px; font-weight: 700; border-radius: 12px; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); justify-content: center; display: flex; align-items: center; gap: 8px;">
+                                <i class="ph ph-lightning"></i> ⚡ Racik Prompt (Instan)
+                            </button>
+                            <button type="button" class="btn-primary" id="btnGenerateSuperPromptAI" onclick="window.generateSuperPromptAction(true);" style="flex: 1; min-width: 220px; background: linear-gradient(135deg, #6C63FF, #8B5CF6); padding: 16px; font-size: 15px; font-weight: 700; border-radius: 12px; box-shadow: 0 4px 15px rgba(108, 99, 255, 0.3); justify-content: center; display: flex; align-items: center; gap: 8px;">
+                                <i class="ph ph-sparkle"></i> 🤖 Racik dengan AI Gemini
+                            </button>
+                        </div>
 
                         <!-- Box Tampilan Super-Prompt -->
                         <div id="spResultContainer" class="hidden" style="margin-top: 28px; animation: fadeIn 0.4s ease;">
@@ -922,6 +927,231 @@ Penutup"></textarea>
         </ul>
     </div>
     
-    <script src="/js/app.js?v=6.5"></script>
+    <script>
+    // ========================================================
+    // DIRECT INLINE SUPER-PROMPT STUDIO SCRIPT (CONTENT PROFIT AI MODEL)
+    // ========================================================
+    window.switchCreationMode = function(mode) {
+        var tabInternal = document.getElementById('tabModeInternal');
+        var tabSuper = document.getElementById('tabModeSuperPrompt');
+        var secInternal = document.getElementById('sectionModeInternal');
+        var secSuper = document.getElementById('sectionModeSuperPrompt');
+
+        if (mode === 'internal') {
+            if (tabInternal) {
+                tabInternal.classList.add('active');
+                tabInternal.style.background = 'rgba(108, 99, 255, 0.18)';
+                tabInternal.style.color = '#fff';
+                tabInternal.style.border = '2px solid var(--primary, #6C63FF)';
+                tabInternal.style.boxShadow = '0 4px 15px rgba(108,99,255,0.2)';
+            }
+            if (tabSuper) {
+                tabSuper.classList.remove('active');
+                tabSuper.style.background = 'rgba(0,0,0,0.2)';
+                tabSuper.style.color = 'var(--text-secondary, #94A3B8)';
+                tabSuper.style.border = '1px solid rgba(255,255,255,0.1)';
+                tabSuper.style.boxShadow = 'none';
+            }
+            if (secInternal) {
+                secInternal.classList.remove('hidden');
+                secInternal.style.display = 'block';
+            }
+            if (secSuper) {
+                secSuper.classList.add('hidden');
+                secSuper.style.display = 'none';
+            }
+        } else if (mode === 'superprompt') {
+            if (tabSuper) {
+                tabSuper.classList.add('active');
+                tabSuper.style.background = 'linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(236, 72, 153, 0.25))';
+                tabSuper.style.color = '#fff';
+                tabSuper.style.border = '2px solid #F59E0B';
+                tabSuper.style.boxShadow = '0 4px 15px rgba(245, 158, 11, 0.3)';
+            }
+            if (tabInternal) {
+                tabInternal.classList.remove('active');
+                tabInternal.style.background = 'rgba(0,0,0,0.2)';
+                tabInternal.style.color = 'var(--text-secondary, #94A3B8)';
+                tabInternal.style.border = '1px solid rgba(255,255,255,0.1)';
+                tabInternal.style.boxShadow = 'none';
+            }
+            if (secSuper) {
+                secSuper.classList.remove('hidden');
+                secSuper.style.display = 'block';
+            }
+            if (secInternal) {
+                secInternal.classList.add('hidden');
+                secInternal.style.display = 'none';
+            }
+        }
+    };
+
+    window.openCreationMode = function(mode) {
+        var gView = document.getElementById('generatorView');
+        var dView = document.getElementById('dashboardView');
+        var mView = document.getElementById('myEbooksView');
+        var cView = document.getElementById('chapterWriterView');
+        var eView = document.getElementById('editorView');
+        var tView = document.getElementById('templatesView');
+        var aView = document.getElementById('agencyView');
+        var afView = document.getElementById('affiliateView');
+
+        if (dView) dView.classList.add('hidden');
+        if (mView) mView.classList.add('hidden');
+        if (cView) cView.classList.add('hidden');
+        if (eView) eView.classList.add('hidden');
+        if (tView) tView.classList.add('hidden');
+        if (aView) aView.classList.add('hidden');
+        if (afView) afView.classList.add('hidden');
+
+        if (gView) {
+            gView.classList.remove('hidden');
+            gView.style.display = 'block';
+        }
+
+        window.switchCreationMode(mode || 'internal');
+
+        var navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(function(el) { el.classList.remove('active'); });
+        var targetNav = document.getElementById(mode === 'superprompt' ? 'navSuperPrompt' : 'navGenerator');
+        if (targetNav) targetNav.classList.add('active');
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.generateSuperPromptAction = async function(useAI) {
+        var nicheInput = document.getElementById('spNiche');
+        var niche = nicheInput ? nicheInput.value.trim() : '';
+        var audience = (document.getElementById('spAudience') ? document.getElementById('spAudience').value : '').trim();
+        var painPoint = (document.getElementById('spPainPoint') ? document.getElementById('spPainPoint').value : '').trim();
+        var promise = (document.getElementById('spPromise') ? document.getElementById('spPromise').value : '').trim();
+        var formula = (document.getElementById('spFormula') ? document.getElementById('spFormula').value : 'storytelling');
+        var scale = (document.getElementById('spScale') ? document.getElementById('spScale').value : '5');
+        var author = (document.getElementById('spAuthor') ? document.getElementById('spAuthor').value : '').trim();
+        var cta = (document.getElementById('spCTA') ? document.getElementById('spCTA').value : '').trim();
+
+        if (!niche) {
+            alert('⚠️ Mohon masukkan Topik / Niche eBook Anda terlebih dahulu.');
+            if (nicheInput) nicheInput.focus();
+            return;
+        }
+
+        var btnAI = document.getElementById('btnGenerateSuperPromptAI');
+        var spPromptOutput = document.getElementById('spPromptOutput');
+        var spResultContainer = document.getElementById('spResultContainer');
+        var spImportTitle = document.getElementById('spImportTitle');
+        var spImportSubtitle = document.getElementById('spImportSubtitle');
+
+        if (useAI) {
+            if (btnAI) {
+                btnAI.disabled = true;
+                btnAI.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Meracik dengan AI Gemini...';
+            }
+            try {
+                var apiKey = window.userApiKey || localStorage.getItem('ebookMagicApiKey') || '';
+                var res = await fetch('/api/generate-super-prompt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ niche: niche, audience: audience, painPoint: painPoint, promise: promise, formula: formula, scale: scale, author: author, cta: cta, apiKey: apiKey })
+                });
+                var data = await res.json();
+                if (data && data.prompt) {
+                    if (spPromptOutput) spPromptOutput.value = data.prompt;
+                    if (spImportTitle && (!spImportTitle.value || spImportTitle.value === niche)) spImportTitle.value = data.title || niche;
+                    if (spImportSubtitle && !spImportSubtitle.value) spImportSubtitle.value = data.subtitle || promise;
+                }
+            } catch (err) {
+                console.error('Super-Prompt AI Error:', err);
+                window.generateSuperPromptAction(false);
+                return;
+            } finally {
+                if (btnAI) {
+                    btnAI.disabled = false;
+                    btnAI.innerHTML = '<i class="ph ph-sparkle"></i> 🤖 Racik dengan AI Gemini';
+                }
+            }
+        } else {
+            var formulaMap = {
+                'storytelling': 'Storytelling & Hypnotic Copy (Kisah nyata yang emosional, menyentuh hati, memikat, dan menginspirasi pembaca untuk bertindak)',
+                'pas': 'Problem - Agitate - Solution / PAS Framework (Bedah masalah secara tajam hingga ke akar kepedihan, lalu berikan solusi praktis tuntas)',
+                'quickwin': 'Step-by-Step Blueprint & Quick-Wins (Panduan teknis berurutan langkah demi langkah yang langsung bisa dipraktekkan hari ini)',
+                'islamic': 'Nilai Islami & Berkah Bisnis (Pendekatan nilai syariah, mindset keberkahan, etika amanah, dan hasil nyata)',
+                'authority': 'B2B Authority & Masterclass (Materi mendalam, data analisis, framework profesional, dan standar industri)'
+            };
+
+            var formulaDesc = formulaMap[formula] || 'Praktis, Terstruktur & Berbobot';
+
+            var masterPrompt = 'Peran: Anda adalah seorang Ghostwriter Ebook Best-Seller Internasional, Master Copywriter, dan Konsultan Edukasi Digital Terbaik.\n' +
+'Tugas Anda: Tulis naskah buku elektronik (eBook) LENGKAP, MENDALAM, DAGING SEMUA (High Value, tanpa basa-basi), dan sangat siap dibaca dari awal hingga akhir.\n\n' +
+'[INFORMASI & TARGET PROYEK EBOOK]\n' +
+'- Topik / Niche Utama: ' + niche + '\n' +
+'- Target Pembaca Spesifik: ' + (audience || 'Pemula hingga tingkat menengah yang ingin transformasi nyata') + '\n' +
+'- Masalah / Pain Point Utama Pembaca: ' + (painPoint || 'Kurang pemahaman terstruktur, sering bingung mulai dari mana, butuh panduan praktis') + '\n' +
+'- Solusi & Janji Transformasi Ebook: ' + (promise || 'Mendapatkan blueprint komprehensif yang bisa langsung dieksekusi dengan hasil terbukti') + '\n' +
+'- Formula Penulisan yang Digunakan: ' + formulaDesc + '\n' +
+'- Jumlah Bab: ' + scale + ' Bab Lengkap (Mulai dari Pengantar, Bab 1 s.d. Bab ' + scale + ', hingga Penutup)\n' +
+'- Profil / Sudut Pandang Penulis: ' + (author || 'Praktisi berpengalaman yang ramah, kredibel, dan solutif') + '\n' +
+'- Call to Action (CTA) di Akhir Ebook: ' + (cta || 'Terapkan strategi ini sekarang dan hubungi kami untuk langkah selanjutnya') + '\n\n' +
+'[STRUKTUR PENULISAN WAJIB DIIKUTI]\n' +
+'Tulis seluruh naskah menggunakan format Markdown standar yang rapi dengan struktur berikut:\n\n' +
+'# [Tulis Judul Ebook yang Sangat Menarik, Menjual, & Memikat]\n' +
+'## [Tulis Subjudul Penjelas yang Menjanjikan Transformasi Cepat]\n\n' +
+'### Kata Pengantar\n' +
+'(Tulis kata pengantar yang menyentuh emosi pembaca, mengapa buku ini ditulis, dan gambaran besar isi buku)\n\n' +
+'### Bab 1: [Judul Bab 1 yang Menarik]\n' +
+'(Tulis isi bab secara lengkap, mendalam, sertakan poin-poin penting, studi kasus/contoh nyata, dan 3 langkah aksi praktis)\n\n' +
+'### Bab 2: [Judul Bab 2]\n' +
+'(Tulis isi bab secara tuntas dan mendalam...)\n\n' +
+'(Lanjutkan menulis seluruh Bab sampai Bab ' + scale + ' secara berurutan dan lengkap)\n\n' +
+'### Penutup & Langkah Aksi Berikutnya\n' +
+'(Rangkuman inti, kata-kata penutup penyemangat, dan ajakan bertindak / Call To Action: ' + (cta || 'Mulai eksekusi sekarang') + ')\n\n' +
+'[ATURAN PENULISAN]\n' +
+'1. Tulis naskah SECARA LENGKAP dan SELESAI (bukan sekadar kerangka/rangkuman, tulis seluruh isi paragrafnya secara tuntas).\n' +
+'2. Gunakan Bahasa Indonesia yang natural, mengalir, profesional, persuasif, dan mudah dipahami.\n' +
+'3. Hindari kalimat klise atau basa-basi kosong. Berikan tips konkret, framework langkah-demi-langkah (Step 1, Step 2, Step 3), dan insight yang aplikatif.\n' +
+'4. Gunakan heading (### untuk nama Bab, #### untuk subtopik), poin bullet (- ...), nomor (1. ...), dan format tebal (**kata kunci**) agar naskah sangat nyaman dibaca.\n\n' +
+'Silakan mulai tulis naskah lengkapnya sekarang dari Judul hingga Penutup!';
+
+            if (spPromptOutput) spPromptOutput.value = masterPrompt;
+            if (spImportTitle && !spImportTitle.value && niche) spImportTitle.value = niche;
+            if (spImportSubtitle && !spImportSubtitle.value && promise) spImportSubtitle.value = promise;
+        }
+
+        if (spResultContainer) {
+            spResultContainer.classList.remove('hidden');
+            spResultContainer.style.display = 'block';
+            spResultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    };
+
+    window.copySuperPromptAction = async function() {
+        var spPromptOutput = document.getElementById('spPromptOutput');
+        var btnCopy = document.getElementById('btnCopySuperPrompt');
+        if (!spPromptOutput || !spPromptOutput.value) {
+            alert('Prompt masih kosong. Silakan racik prompt terlebih dahulu.');
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(spPromptOutput.value);
+        } catch (e) {
+            spPromptOutput.select();
+            document.execCommand('copy');
+        }
+
+        if (btnCopy) {
+            var orig = btnCopy.innerHTML;
+            btnCopy.innerHTML = '<i class="ph ph-check-circle"></i> Tersalin!';
+            btnCopy.style.background = '#059669';
+            setTimeout(function() {
+                btnCopy.innerHTML = orig;
+                btnCopy.style.background = '#10B981';
+            }, 2500);
+        }
+        alert('✅ Master Super-Prompt berhasil disalin!\n\nSilakan klik tombol "Buka ChatGPT" atau "Buka Claude", lalu tempelkan prompt ini di sana.');
+    };
+    </script>
+    
+    <script src="/js/app.js?v=6.8"></script>
 </body>
 </html>

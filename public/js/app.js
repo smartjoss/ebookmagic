@@ -4152,8 +4152,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (tabModeInternal) tabModeInternal.addEventListener('click', () => switchCreationMode('internal'));
     if (tabModeSuperPrompt) tabModeSuperPrompt.addEventListener('click', () => switchCreationMode('superprompt'));
 
-    // --- Generate Master Super-Prompt Action ---
-    window.generateSuperPromptAction = function() {
+    // --- Generate Master Super-Prompt Action (Dual Mode: Instant & AI) ---
+    window.generateSuperPromptAction = async function(useAI = false) {
         const spNicheInput = document.getElementById('spNiche');
         const niche = spNicheInput ? spNicheInput.value.trim() : '';
         const audience = document.getElementById('spAudience')?.value?.trim() || '';
@@ -4170,17 +4170,53 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const formulaMap = {
-            'storytelling': 'Storytelling & Hypnotic Copy (Kisah nyata yang emosional, menyentuh hati, memikat, dan menginspirasi pembaca untuk bertindak)',
-            'pas': 'Problem - Agitate - Solution / PAS Framework (Bedah masalah secara tajam hingga ke akar kepedihan, lalu berikan solusi praktis tuntas)',
-            'quickwin': 'Step-by-Step Blueprint & Quick-Wins (Panduan teknis berurutan langkah demi langkah yang langsung bisa dipraktekkan hari ini)',
-            'islamic': 'Nilai Islami & Berkah Bisnis (Pendekatan nilai syariah, mindset keberkahan, etika amanah, dan hasil nyata)',
-            'authority': 'B2B Authority & Masterclass (Materi mendalam, data analisis, framework profesional, dan standar industri)'
-        };
+        const btnAI = document.getElementById('btnGenerateSuperPromptAI');
+        const spPromptOutput = document.getElementById('spPromptOutput');
+        const spResultContainer = document.getElementById('spResultContainer');
+        const spImportTitle = document.getElementById('spImportTitle');
+        const spImportSubtitle = document.getElementById('spImportSubtitle');
 
-        const formulaDesc = formulaMap[formula] || 'Praktis, Terstruktur & Berbobot';
+        if (useAI) {
+            if (btnAI) {
+                btnAI.disabled = true;
+                btnAI.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Meracik dengan AI Gemini...';
+            }
+            try {
+                const apiKey = window.userApiKey || localStorage.getItem('ebookMagicApiKey') || '';
+                const res = await fetch('/api/generate-super-prompt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ niche, audience, painPoint, promise, formula, scale, author, cta, apiKey })
+                });
+                const data = await res.json();
+                if (data.prompt) {
+                    if (spPromptOutput) spPromptOutput.value = data.prompt;
+                    if (spImportTitle && (!spImportTitle.value || spImportTitle.value === niche)) spImportTitle.value = data.title || niche;
+                    if (spImportSubtitle && !spImportSubtitle.value) spImportSubtitle.value = data.subtitle || promise;
+                }
+            } catch (err) {
+                console.error('Super-Prompt AI Error:', err);
+                // Fallback to instant prompt on error
+                window.generateSuperPromptAction(false);
+                return;
+            } finally {
+                if (btnAI) {
+                    btnAI.disabled = false;
+                    btnAI.innerHTML = '<i class="ph ph-sparkle"></i> 🤖 Racik dengan AI Gemini';
+                }
+            }
+        } else {
+            const formulaMap = {
+                'storytelling': 'Storytelling & Hypnotic Copy (Kisah nyata yang emosional, menyentuh hati, memikat, dan menginspirasi pembaca untuk bertindak)',
+                'pas': 'Problem - Agitate - Solution / PAS Framework (Bedah masalah secara tajam hingga ke akar kepedihan, lalu berikan solusi praktis tuntas)',
+                'quickwin': 'Step-by-Step Blueprint & Quick-Wins (Panduan teknis berurutan langkah demi langkah yang langsung bisa dipraktekkan hari ini)',
+                'islamic': 'Nilai Islami & Berkah Bisnis (Pendekatan nilai syariah, mindset keberkahan, etika amanah, dan hasil nyata)',
+                'authority': 'B2B Authority & Masterclass (Materi mendalam, data analisis, framework profesional, dan standar industri)'
+            };
 
-        const masterPrompt = `Peran: Anda adalah seorang Ghostwriter Ebook Best-Seller Internasional, Master Copywriter, dan Konsultan Edukasi Digital Terbaik.
+            const formulaDesc = formulaMap[formula] || 'Praktis, Terstruktur & Berbobot';
+
+            const masterPrompt = `Peran: Anda adalah seorang Ghostwriter Ebook Best-Seller Internasional, Master Copywriter, dan Konsultan Edukasi Digital Terbaik.
 Tugas Anda: Tulis naskah buku elektronik (eBook) LENGKAP, MENDALAM, DAGING SEMUA (High Value, tanpa basa-basi), dan sangat siap dibaca dari awal hingga akhir.
 
 [INFORMASI & TARGET PROYEK EBOOK]
@@ -4221,14 +4257,10 @@ Tulis seluruh naskah menggunakan format Markdown standar yang rapi dengan strukt
 
 Silakan mulai tulis naskah lengkapnya sekarang dari Judul hingga Penutup!`;
 
-        const spPromptOutput = document.getElementById('spPromptOutput');
-        const spResultContainer = document.getElementById('spResultContainer');
-        const spImportTitle = document.getElementById('spImportTitle');
-        const spImportSubtitle = document.getElementById('spImportSubtitle');
-
-        if (spPromptOutput) spPromptOutput.value = masterPrompt;
-        if (spImportTitle && !spImportTitle.value && niche) spImportTitle.value = niche;
-        if (spImportSubtitle && !spImportSubtitle.value && promise) spImportSubtitle.value = promise;
+            if (spPromptOutput) spPromptOutput.value = masterPrompt;
+            if (spImportTitle && !spImportTitle.value && niche) spImportTitle.value = niche;
+            if (spImportSubtitle && !spImportSubtitle.value && promise) spImportSubtitle.value = promise;
+        }
 
         if (spResultContainer) {
             spResultContainer.classList.remove('hidden');
@@ -4238,7 +4270,9 @@ Silakan mulai tulis naskah lengkapnya sekarang dari Judul hingga Penutup!`;
     };
 
     const btnGenerateSuperPrompt = document.getElementById('btnGenerateSuperPrompt');
-    if (btnGenerateSuperPrompt) btnGenerateSuperPrompt.addEventListener('click', window.generateSuperPromptAction);
+    if (btnGenerateSuperPrompt) btnGenerateSuperPrompt.addEventListener('click', () => window.generateSuperPromptAction(false));
+    const btnGenerateSuperPromptAI = document.getElementById('btnGenerateSuperPromptAI');
+    if (btnGenerateSuperPromptAI) btnGenerateSuperPromptAI.addEventListener('click', () => window.generateSuperPromptAction(true));
 
     // --- Copy Prompt to Clipboard Action ---
     window.copySuperPromptAction = async function() {
