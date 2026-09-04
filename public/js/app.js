@@ -950,7 +950,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dashboardView.classList.remove('hidden');
     });
 
-    const btnGenerateOutline = document.getElementById('btnGenerateOutline');
+    const btnGenerateOutline = document.getElementById('btnGenerateOutline') || document.getElementById('btnGenerateOutlineFromTitle');
     const outlineResults = document.getElementById('outlineResults');
     const outlineContent = document.getElementById('outlineContent');
     const loadingSkeleton = document.getElementById('loadingSkeleton');
@@ -1060,14 +1060,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnRefineCustom.classList.remove('hidden');
             }
             // Also show the normal AI outline button but change its label
-            btnGenerateOutline.disabled = false;
-            btnGenerateOutline.classList.add('hidden'); // Hide default, replaced by custom buttons
+            if (btnGenerateOutline) {
+                btnGenerateOutline.disabled = false;
+                btnGenerateOutline.classList.add('hidden'); // Hide default, replaced by custom buttons
+            }
         } else {
             // No custom outline — show only the AI generate button
             if (btnUseCustom) btnUseCustom.classList.add('hidden');
             if (btnRefineCustom) btnRefineCustom.classList.add('hidden');
-            btnGenerateOutline.disabled = false;
-            btnGenerateOutline.classList.remove('hidden');
+            if (btnGenerateOutline) {
+                btnGenerateOutline.disabled = false;
+                btnGenerateOutline.classList.remove('hidden');
+            }
         }
     }
 
@@ -1222,7 +1226,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         </button>
                     `;
                     // Insert after the generate outline button
-                    btnGenerateOutline.parentNode.insertBefore(customBtnsContainer, btnGenerateOutline.nextSibling);
+                    if (btnGenerateOutline && btnGenerateOutline.parentNode) {
+                        btnGenerateOutline.parentNode.insertBefore(customBtnsContainer, btnGenerateOutline.nextSibling);
+                    }
 
                     // --- USE CUSTOM OUTLINE DIRECTLY ---
                     document.getElementById('btnUseCustomOutline').addEventListener('click', () => {
@@ -1264,10 +1270,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         window.currentCTA = cta;
 
                         // Render outline results
-                        outlineResults.classList.remove('hidden');
-                        btnGenerateOutline.classList.add('hidden');
-                        document.getElementById('btnUseCustomOutline').classList.add('hidden');
-                        document.getElementById('btnRefineCustomOutline').classList.add('hidden');
+                        if (outlineResults) outlineResults.classList.remove('hidden');
+                        if (btnGenerateOutline) btnGenerateOutline.classList.add('hidden');
+                        const _btnU = document.getElementById('btnUseCustomOutline');
+                        if (_btnU) _btnU.classList.add('hidden');
+                        const _btnR = document.getElementById('btnRefineCustomOutline');
+                        if (_btnR) _btnR.classList.add('hidden');
 
                         // Update Stepper
                         document.querySelectorAll('.wizard-steps .step').forEach((el, index) => {
@@ -1287,7 +1295,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             html += `<li class="outline-item"><i class="ph ph-check-circle"></i><span>${escapeHtml(chapter)}</span></li>`;
                         });
                         html += '</ul>';
-                        outlineContent.innerHTML = html;
+                        if (outlineContent) outlineContent.innerHTML = html;
                     });
 
                     // --- REFINE CUSTOM OUTLINE WITH AI ---
@@ -1295,7 +1303,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Store the custom outline for the API to use
                         window._customOutlineForRefine = getCustomOutlineLines();
                         // Trigger the normal outline generation (which will pass the custom outline)
-                        btnGenerateOutline.click();
+                        if (btnGenerateOutline) btnGenerateOutline.click();
                     });
                 }
 
@@ -1321,128 +1329,132 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // AI Generation Logic (Outline)
-    btnGenerateOutline.addEventListener('click', async () => {
-        const apiKey = document.getElementById('inputApiKey').value.trim();
-        const niche = document.getElementById('inputNiche').value;
-        const audience = document.getElementById('inputAudience').value;
+    if (btnGenerateOutline) {
+        btnGenerateOutline.addEventListener('click', async () => {
+            const apiKey = document.getElementById('inputApiKey').value.trim();
+            const niche = document.getElementById('inputNiche').value;
+            const audience = document.getElementById('inputAudience').value;
 
-        if(!apiKey) {
-            alert('Silakan masukkan API Key (Gemini atau OpenAI) terlebih dahulu.');
-            return;
-        }
-
-        if(!niche || !audience) {
-            alert('Please enter both niche and target audience');
-            return;
-        }
-
-        // Show loading state
-        outlineResults.classList.remove('hidden');
-        // Do NOT hide titleResults so user can still see their selected prompt
-        btnGenerateOutline.classList.add('hidden'); // Just hide the generate button to avoid double clicks
-        // Also hide custom outline buttons during generation
-        const _btnUseCustom = document.getElementById('btnUseCustomOutline');
-        if (_btnUseCustom) _btnUseCustom.classList.add('hidden');
-        const _btnRefineCustom = document.getElementById('btnRefineCustomOutline');
-        if (_btnRefineCustom) _btnRefineCustom.classList.add('hidden');
-        
-        outlineContent.innerHTML = '';
-        loadingSkeleton.classList.remove('hidden');
-        
-        // Update Stepper to 'Daftar Isi'
-        document.querySelectorAll('.wizard-steps .step').forEach((el, index) => {
-            if (index === 0) el.classList.remove('active');
-            if (index === 1) el.classList.add('active');
-        });
-
-        try {
-            // Call API
-            window.userApiKey = apiKey; // Store globally
-            localStorage.setItem('ebookMagicApiKey', apiKey); // Save it
-
-            const type = document.getElementById('inputType') ? document.getElementById('inputType').value : 'praktis';
-            const authorProfile = document.getElementById('inputAuthorProfile') ? document.getElementById('inputAuthorProfile').value : '';
-            const cta = document.getElementById('inputCTA') ? document.getElementById('inputCTA').value : '';
-
-            window.currentEbookType = type;
-            window.currentAuthorProfile = authorProfile;
-            window.currentCTA = cta;
-
-            // Check if there's a custom outline to refine
-            const customOutline = window._customOutlineForRefine || null;
-            window._customOutlineForRefine = null; // Clear after use
-
-            const response = await fetch('/api/generate-outline', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ 
-                    niche, 
-                    audience, 
-                    type, 
-                    apiKey,
-                    selectedTitle: window.selectedEbookTitle,
-                    selectedSubtitle: window.selectedEbookSubtitle,
-                    authorProfile,
-                    cta,
-                    customOutline
-                })
-            });
-
-            const data = await response.json();
-            if (data.error) throw new Error(data.error);
-            
-            // Hide loading
-            loadingSkeleton.classList.add('hidden');
-            
-            // RESET EDITOR & CANVAS STATE FOR NEW EBOOK
-            window.chaptersContent = {};
-            if (typeof canvasPages !== 'undefined') {
-                canvasPages.length = 0; // Clear array
-                currentCanvasPage = 0;
-                if (typeof canvas !== 'undefined' && canvas) {
-                    canvas.clear();
-                }
+            if(!apiKey) {
+                alert('Silakan masukkan API Key (Gemini atau OpenAI) terlebih dahulu.');
+                return;
             }
 
-            // Store globally for chapter writer
-            window._isDirty = true;
-            window.currentOutlineData = data;
-            window.currentNiche = niche;
-            window.currentEbookType = type;
-            window.currentAudience = audience;
-            
-            // Render results
-            let html = `
-                <div style="margin-bottom: 16px;">
-                    <h4 style="color: var(--primary); margin-bottom: 4px;">${data.title}</h4>
-                    <p style="color: var(--text-secondary); font-size: 14px;">${data.subtitle}</p>
-                </div>
-                <ul class="outline-list">
-            `;
-            
-            data.outline.forEach(chapter => {
-                html += `
-                    <li class="outline-item">
-                        <i class="ph ph-check-circle"></i>
-                        <span>${chapter}</span>
-                    </li>
-                `;
-            });
-            
-            html += '</ul>';
-            outlineContent.innerHTML = html;
+            if(!niche || !audience) {
+                alert('Please enter both niche and target audience');
+                return;
+            }
 
-        } catch (error) {
-            console.error('Error generating outline:', error);
-            outlineContent.innerHTML = `<p style="color: #FF6B6B"><i class="ph-fill ph-warning-circle"></i> ${error.message || 'Gagal membuat daftar isi. Silakan coba lagi.'}</p>`;
-            btnGenerateOutline.classList.remove('hidden');
-            btnGenerateOutline.disabled = false;
-        } finally {
-            // Keep button hidden if success, show only if there was an error
-        }
-    });
+            // Show loading state
+            if (outlineResults) outlineResults.classList.remove('hidden');
+            // Do NOT hide titleResults so user can still see their selected prompt
+            btnGenerateOutline.classList.add('hidden'); // Just hide the generate button to avoid double clicks
+            // Also hide custom outline buttons during generation
+            const _btnUseCustom = document.getElementById('btnUseCustomOutline');
+            if (_btnUseCustom) _btnUseCustom.classList.add('hidden');
+            const _btnRefineCustom = document.getElementById('btnRefineCustomOutline');
+            if (_btnRefineCustom) _btnRefineCustom.classList.add('hidden');
+            
+            if (outlineContent) outlineContent.innerHTML = '';
+            if (loadingSkeleton) loadingSkeleton.classList.remove('hidden');
+            
+            // Update Stepper to 'Daftar Isi'
+            document.querySelectorAll('.wizard-steps .step').forEach((el, index) => {
+                if (index === 0) el.classList.remove('active');
+                if (index === 1) el.classList.add('active');
+            });
+
+            try {
+                // Call API
+                window.userApiKey = apiKey; // Store globally
+                localStorage.setItem('ebookMagicApiKey', apiKey); // Save it
+
+                const type = document.getElementById('inputType') ? document.getElementById('inputType').value : 'praktis';
+                const authorProfile = document.getElementById('inputAuthorProfile') ? document.getElementById('inputAuthorProfile').value : '';
+                const cta = document.getElementById('inputCTA') ? document.getElementById('inputCTA').value : '';
+
+                window.currentEbookType = type;
+                window.currentAuthorProfile = authorProfile;
+                window.currentCTA = cta;
+
+                // Check if there's a custom outline to refine
+                const customOutline = window._customOutlineForRefine || null;
+                window._customOutlineForRefine = null; // Clear after use
+
+                const response = await fetch('/api/generate-outline', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        niche, 
+                        audience, 
+                        type, 
+                        apiKey,
+                        selectedTitle: window.selectedEbookTitle,
+                        selectedSubtitle: window.selectedEbookSubtitle,
+                        authorProfile,
+                        cta,
+                        customOutline
+                    })
+                });
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                
+                // Hide loading
+                if (loadingSkeleton) loadingSkeleton.classList.add('hidden');
+                
+                // RESET EDITOR & CANVAS STATE FOR NEW EBOOK
+                window.chaptersContent = {};
+                if (typeof canvasPages !== 'undefined') {
+                    canvasPages.length = 0; // Clear array
+                    currentCanvasPage = 0;
+                    if (typeof canvas !== 'undefined' && canvas) {
+                        canvas.clear();
+                    }
+                }
+
+                // Store globally for chapter writer
+                window._isDirty = true;
+                window.currentOutlineData = data;
+                window.currentNiche = niche;
+                window.currentEbookType = type;
+                window.currentAudience = audience;
+                
+                // Render results
+                let html = `
+                    <div style="margin-bottom: 16px;">
+                        <h4 style="color: var(--primary); margin-bottom: 4px;">${data.title}</h4>
+                        <p style="color: var(--text-secondary); font-size: 14px;">${data.subtitle}</p>
+                    </div>
+                    <ul class="outline-list">
+                `;
+                
+                data.outline.forEach(chapter => {
+                    html += `
+                        <li class="outline-item">
+                            <i class="ph ph-check-circle"></i>
+                            <span>${chapter}</span>
+                        </li>
+                    `;
+                });
+                
+                html += '</ul>';
+                if (outlineContent) outlineContent.innerHTML = html;
+
+            } catch (error) {
+                console.error('Error generating outline:', error);
+                if (outlineContent) outlineContent.innerHTML = `<p style="color: #FF6B6B"><i class="ph-fill ph-warning-circle"></i> ${error.message || 'Gagal membuat daftar isi. Silakan coba lagi.'}</p>`;
+                if (btnGenerateOutline) {
+                    btnGenerateOutline.classList.remove('hidden');
+                    btnGenerateOutline.disabled = false;
+                }
+            } finally {
+                // Keep button hidden if success, show only if there was an error
+            }
+        });
+    }
 
     // --- CHAPTER WRITER LOGIC ---
     const btnProceedToChapters = document.getElementById('btnProceedToChapters');
@@ -1861,6 +1873,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tempDiv.childNodes.forEach(child => processNode(child));
         return elements;
     }
+    window.parseHtmlToElements = parseHtmlToElements;
 
     // --- SMART COPY ALL CHAPTERS TO CANVAS ---
     const btnCopyAllToCanvas = document.getElementById('btnCopyAllToCanvas');
@@ -4428,6 +4441,7 @@ Silakan mulai tulis naskah lengkapnya sekarang dari Judul hingga Penutup!`;
             chaptersContent
         };
     }
+    window.parseChatGPTMarkdown = parseChatGPTMarkdown;
 
     // --- Smart Import Action ---
     window.importSuperPromptAction = function() {
