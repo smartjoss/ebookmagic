@@ -4091,86 +4091,96 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // DUAL-METHOD: SUPER-PROMPT STUDIO LOGIC
     // ==========================================
-    const tabModeInternal = document.getElementById('tabModeInternal');
-    const tabModeSuperPrompt = document.getElementById('tabModeSuperPrompt');
-    const sectionModeInternal = document.getElementById('sectionModeInternal');
-    const sectionModeSuperPrompt = document.getElementById('sectionModeSuperPrompt');
-
     function switchCreationMode(mode) {
+        const tabModeInternal = document.getElementById('tabModeInternal');
+        const tabModeSuperPrompt = document.getElementById('tabModeSuperPrompt');
+        const sectionModeInternal = document.getElementById('sectionModeInternal');
+        const sectionModeSuperPrompt = document.getElementById('sectionModeSuperPrompt');
+
         if (mode === 'internal') {
             if (tabModeInternal) {
                 tabModeInternal.classList.add('active');
-                tabModeInternal.style.background = 'linear-gradient(135deg, #6C63FF, #4834d4)';
+                tabModeInternal.style.background = 'rgba(108, 99, 255, 0.18)';
                 tabModeInternal.style.color = '#fff';
-                tabModeInternal.style.boxShadow = '0 4px 15px rgba(108,99,255,0.3)';
+                tabModeInternal.style.border = '2px solid var(--primary, #6C63FF)';
+                tabModeInternal.style.boxShadow = '0 4px 15px rgba(108,99,255,0.2)';
             }
             if (tabModeSuperPrompt) {
                 tabModeSuperPrompt.classList.remove('active');
-                tabModeSuperPrompt.style.background = 'transparent';
-                tabModeSuperPrompt.style.color = 'var(--text-muted)';
+                tabModeSuperPrompt.style.background = 'rgba(0,0,0,0.2)';
+                tabModeSuperPrompt.style.color = 'var(--text-secondary, #94A3B8)';
+                tabModeSuperPrompt.style.border = '1px solid rgba(255,255,255,0.1)';
                 tabModeSuperPrompt.style.boxShadow = 'none';
             }
-            if (sectionModeInternal) sectionModeInternal.classList.remove('hidden');
-            if (sectionModeSuperPrompt) sectionModeSuperPrompt.classList.add('hidden');
+            if (sectionModeInternal) {
+                sectionModeInternal.classList.remove('hidden');
+                sectionModeInternal.style.display = 'block';
+            }
+            if (sectionModeSuperPrompt) {
+                sectionModeSuperPrompt.classList.add('hidden');
+                sectionModeSuperPrompt.style.display = 'none';
+            }
         } else if (mode === 'superprompt') {
             if (tabModeSuperPrompt) {
                 tabModeSuperPrompt.classList.add('active');
-                tabModeSuperPrompt.style.background = 'linear-gradient(135deg, #ec4899, #8b5cf6)';
+                tabModeSuperPrompt.style.background = 'linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(236, 72, 153, 0.25))';
                 tabModeSuperPrompt.style.color = '#fff';
-                tabModeSuperPrompt.style.boxShadow = '0 4px 15px rgba(236,72,153,0.3)';
+                tabModeSuperPrompt.style.border = '2px solid #F59E0B';
+                tabModeSuperPrompt.style.boxShadow = '0 4px 15px rgba(245, 158, 11, 0.3)';
             }
             if (tabModeInternal) {
                 tabModeInternal.classList.remove('active');
-                tabModeInternal.style.background = 'transparent';
-                tabModeInternal.style.color = 'var(--text-muted)';
+                tabModeInternal.style.background = 'rgba(0,0,0,0.2)';
+                tabModeInternal.style.color = 'var(--text-secondary, #94A3B8)';
+                tabModeInternal.style.border = '1px solid rgba(255,255,255,0.1)';
                 tabModeInternal.style.boxShadow = 'none';
             }
-            if (sectionModeSuperPrompt) sectionModeSuperPrompt.classList.remove('hidden');
-            if (sectionModeInternal) sectionModeInternal.classList.add('hidden');
+            if (sectionModeSuperPrompt) {
+                sectionModeSuperPrompt.classList.remove('hidden');
+                sectionModeSuperPrompt.style.display = 'block';
+            }
+            if (sectionModeInternal) {
+                sectionModeInternal.classList.add('hidden');
+                sectionModeInternal.style.display = 'none';
+            }
         }
     }
+    window.switchCreationMode = switchCreationMode;
 
-    if (tabModeInternal) {
-        tabModeInternal.addEventListener('click', () => switchCreationMode('internal'));
-    }
-    if (tabModeSuperPrompt) {
-        tabModeSuperPrompt.addEventListener('click', () => switchCreationMode('superprompt'));
-    }
+    const tabModeInternal = document.getElementById('tabModeInternal');
+    const tabModeSuperPrompt = document.getElementById('tabModeSuperPrompt');
+    if (tabModeInternal) tabModeInternal.addEventListener('click', () => switchCreationMode('internal'));
+    if (tabModeSuperPrompt) tabModeSuperPrompt.addEventListener('click', () => switchCreationMode('superprompt'));
 
-    // --- Generate Master Super-Prompt ---
-    const btnGenerateSuperPrompt = document.getElementById('btnGenerateSuperPrompt');
-    const spResultContainer = document.getElementById('spResultContainer');
-    const spPromptOutput = document.getElementById('spPromptOutput');
-    const btnCopySuperPrompt = document.getElementById('btnCopySuperPrompt');
+    // --- Generate Master Super-Prompt Action ---
+    window.generateSuperPromptAction = function() {
+        const spNicheInput = document.getElementById('spNiche');
+        const niche = spNicheInput ? spNicheInput.value.trim() : '';
+        const audience = document.getElementById('spAudience')?.value?.trim() || '';
+        const painPoint = document.getElementById('spPainPoint')?.value?.trim() || '';
+        const promise = document.getElementById('spPromise')?.value?.trim() || '';
+        const formula = document.getElementById('spFormula')?.value || 'storytelling';
+        const scale = document.getElementById('spScale')?.value || '5';
+        const author = document.getElementById('spAuthor')?.value?.trim() || '';
+        const cta = document.getElementById('spCTA')?.value?.trim() || '';
 
-    if (btnGenerateSuperPrompt) {
-        btnGenerateSuperPrompt.addEventListener('click', () => {
-            const niche = document.getElementById('spNiche')?.value?.trim() || '';
-            const audience = document.getElementById('spAudience')?.value?.trim() || '';
-            const painPoint = document.getElementById('spPainPoint')?.value?.trim() || '';
-            const promise = document.getElementById('spPromise')?.value?.trim() || '';
-            const formula = document.getElementById('spFormula')?.value || 'storytelling';
-            const scale = document.getElementById('spScale')?.value || '5';
-            const author = document.getElementById('spAuthor')?.value?.trim() || '';
-            const cta = document.getElementById('spCTA')?.value?.trim() || '';
+        if (!niche) {
+            alert('⚠️ Mohon masukkan Topik / Niche eBook Anda terlebih dahulu.');
+            if (spNicheInput) spNicheInput.focus();
+            return;
+        }
 
-            if (!niche) {
-                alert('Silakan masukkan Topik / Niche eBook Anda terlebih dahulu.');
-                document.getElementById('spNiche')?.focus();
-                return;
-            }
+        const formulaMap = {
+            'storytelling': 'Storytelling & Hypnotic Copy (Kisah nyata yang emosional, menyentuh hati, memikat, dan menginspirasi pembaca untuk bertindak)',
+            'pas': 'Problem - Agitate - Solution / PAS Framework (Bedah masalah secara tajam hingga ke akar kepedihan, lalu berikan solusi praktis tuntas)',
+            'quickwin': 'Step-by-Step Blueprint & Quick-Wins (Panduan teknis berurutan langkah demi langkah yang langsung bisa dipraktekkan hari ini)',
+            'islamic': 'Nilai Islami & Berkah Bisnis (Pendekatan nilai syariah, mindset keberkahan, etika amanah, dan hasil nyata)',
+            'authority': 'B2B Authority & Masterclass (Materi mendalam, data analisis, framework profesional, dan standar industri)'
+        };
 
-            const formulaMap = {
-                'storytelling': 'Storytelling & Hypnotic Copy (Kisah nyata yang emosional, memikat, dan menginspirasi pembaca untuk bertindak)',
-                'pas': 'Problem - Agitate - Solution / PAS Framework (Bedah masalah secara tajam hingga ke akar, lalu berikan solusi praktis tuntas)',
-                'quickwin': 'Step-by-Step Blueprint & Quick-Wins (Panduan teknis berurutan langkah demi langkah yang langsung bisa dipraktekkan hari ini)',
-                'islamic': 'Nilai Islami & Berkah Bisnis (Pendekatan nilai syariah, mindset keberkahan, etika amanah, dan hasil nyata)',
-                'framework': 'Framework & Cheatsheet (Format ringkas, padat, to-the-point, berbobot, dan sangat actionable)'
-            };
+        const formulaDesc = formulaMap[formula] || 'Praktis, Terstruktur & Berbobot';
 
-            const formulaDesc = formulaMap[formula] || 'Praktis, Terstruktur & Berbobot';
-
-            const masterPrompt = `Peran: Anda adalah seorang Ghostwriter Ebook Best-Seller Internasional, Master Copywriter, dan Konsultan Edukasi Digital Terbaik.
+        const masterPrompt = `Peran: Anda adalah seorang Ghostwriter Ebook Best-Seller Internasional, Master Copywriter, dan Konsultan Edukasi Digital Terbaik.
 Tugas Anda: Tulis naskah buku elektronik (eBook) LENGKAP, MENDALAM, DAGING SEMUA (High Value, tanpa basa-basi), dan sangat siap dibaca dari awal hingga akhir.
 
 [INFORMASI & TARGET PROYEK EBOOK]
@@ -4211,35 +4221,55 @@ Tulis seluruh naskah menggunakan format Markdown standar yang rapi dengan strukt
 
 Silakan mulai tulis naskah lengkapnya sekarang dari Judul hingga Penutup!`;
 
-            if (spPromptOutput) spPromptOutput.value = masterPrompt;
-            if (spResultContainer) {
-                spResultContainer.classList.remove('hidden');
-                spResultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        });
-    }
+        const spPromptOutput = document.getElementById('spPromptOutput');
+        const spResultContainer = document.getElementById('spResultContainer');
+        const spImportTitle = document.getElementById('spImportTitle');
+        const spImportSubtitle = document.getElementById('spImportSubtitle');
 
-    // --- Copy Prompt to Clipboard ---
-    if (btnCopySuperPrompt) {
-        btnCopySuperPrompt.addEventListener('click', async () => {
-            if (!spPromptOutput || !spPromptOutput.value) return;
-            try {
-                await navigator.clipboard.writeText(spPromptOutput.value);
-                const originalHtml = btnCopySuperPrompt.innerHTML;
-                btnCopySuperPrompt.innerHTML = '<i class="ph ph-check-circle"></i> ✅ Tersalin ke Clipboard!';
-                btnCopySuperPrompt.style.background = 'linear-gradient(135deg, #10B981, #059669)';
-                setTimeout(() => {
-                    btnCopySuperPrompt.innerHTML = originalHtml;
-                    btnCopySuperPrompt.style.background = '';
-                }, 2500);
-            } catch (err) {
-                // Fallback for clipboard
-                spPromptOutput.select();
-                document.execCommand('copy');
-                alert('✅ Prompt berhasil disalin ke clipboard!');
-            }
-        });
-    }
+        if (spPromptOutput) spPromptOutput.value = masterPrompt;
+        if (spImportTitle && !spImportTitle.value && niche) spImportTitle.value = niche;
+        if (spImportSubtitle && !spImportSubtitle.value && promise) spImportSubtitle.value = promise;
+
+        if (spResultContainer) {
+            spResultContainer.classList.remove('hidden');
+            spResultContainer.style.display = 'block';
+            spResultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    };
+
+    const btnGenerateSuperPrompt = document.getElementById('btnGenerateSuperPrompt');
+    if (btnGenerateSuperPrompt) btnGenerateSuperPrompt.addEventListener('click', window.generateSuperPromptAction);
+
+    // --- Copy Prompt to Clipboard Action ---
+    window.copySuperPromptAction = async function() {
+        const spPromptOutput = document.getElementById('spPromptOutput');
+        const btnCopySuperPrompt = document.getElementById('btnCopySuperPrompt');
+        if (!spPromptOutput || !spPromptOutput.value) {
+            alert('Prompt masih kosong. Silakan racik prompt terlebih dahulu.');
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(spPromptOutput.value);
+        } catch (e) {
+            spPromptOutput.select();
+            document.execCommand('copy');
+        }
+
+        if (btnCopySuperPrompt) {
+            const originalHtml = btnCopySuperPrompt.innerHTML;
+            btnCopySuperPrompt.innerHTML = '<i class="ph ph-check-circle"></i> Tersalin!';
+            btnCopySuperPrompt.style.background = '#059669';
+            setTimeout(() => {
+                btnCopySuperPrompt.innerHTML = originalHtml;
+                btnCopySuperPrompt.style.background = '#10B981';
+            }, 2500);
+        }
+        alert('✅ Master Super-Prompt berhasil disalin!\n\nSilakan klik tombol "Buka ChatGPT" atau "Buka Claude", lalu tempelkan prompt ini di sana.');
+    };
+
+    const btnCopySuperPrompt = document.getElementById('btnCopySuperPrompt');
+    if (btnCopySuperPrompt) btnCopySuperPrompt.addEventListener('click', window.copySuperPromptAction);
 
     // --- Convert Markdown to Clean HTML ---
     function convertMarkdownToCleanHtml(mdText) {
@@ -4315,7 +4345,7 @@ Silakan mulai tulis naskah lengkapnya sekarang dari Judul hingga Penutup!`;
 
         // Regex to detect Chapter headers
         // Matches: ### Kata Pengantar, ### Bab 1: ..., ### Penutup, **Bab 1: ...**, Bab 1: ..., etc.
-        const chapterHeaderRegex = /(?:^|\n)(?:#{1,4}\s+|\*{1,3})?(Kata\s+Pengantar|Bab\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Bagian\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Chapter\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Penutup[^\n\*\#]*|Kesimpulan[^\n\*\#]*)(?:\*{1,3})?/gi;
+        const chapterHeaderRegex = /(?:^|\n)(?:#{1,4}\s+|\*{1,3})?(Kata\s+Pengantar|Prakata|Pendahuluan|Bab\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Bagian\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Chapter\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Modul\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Penutup[^\n\*\#]*|Kesimpulan[^\n\*\#]*)(?:\*{1,3})?/gi;
 
         const matches = [];
         let match;
@@ -4337,14 +4367,14 @@ Silakan mulai tulis naskah lengkapnya sekarang dari Judul hingga Penutup!`;
                 let chBody = text.substring(startIdx, endIdx).trim();
 
                 // Strip the chapter title line from the beginning of body
-                chBody = chBody.replace(/^(?:#{1,4}\s+|\*{1,3})?(Kata\s+Pengantar|Bab\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Bagian\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Chapter\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Penutup[^\n\*\#]*|Kesimpulan[^\n\*\#]*)(?:\*{1,3})?\n*/i, '').trim();
+                chBody = chBody.replace(/^(?:#{1,4}\s+|\*{1,3})?(Kata\s+Pengantar|Prakata|Pendahuluan|Bab\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Bagian\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Chapter\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Modul\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Penutup[^\n\*\#]*|Kesimpulan[^\n\*\#]*)(?:\*{1,3})?\n*/i, '').trim();
 
                 const htmlContent = convertMarkdownToCleanHtml(chBody);
                 chapters.push(chTitle);
                 chaptersContent[chTitle] = htmlContent;
             }
         } else {
-            // If no chapter headers detected, create single chapter or split by double newlines
+            // If no chapter headers detected, create default single chapter
             const defaultChap = 'Bab 1: Isi Utama Ebook';
             chapters.push(defaultChap);
             chaptersContent[defaultChap] = convertMarkdownToCleanHtml(text);
@@ -4358,59 +4388,126 @@ Silakan mulai tulis naskah lengkapnya sekarang dari Judul hingga Penutup!`;
         };
     }
 
-    // --- Smart Import Button Action ---
+    // --- Smart Import Action ---
+    window.importSuperPromptAction = function() {
+        const importText = document.getElementById('spImportText')?.value;
+        const importTitle = document.getElementById('spImportTitle')?.value;
+        const importSubtitle = document.getElementById('spImportSubtitle')?.value;
+        const spNiche = document.getElementById('spNiche')?.value;
+        const spAuthor = document.getElementById('spAuthor')?.value;
+        const spCTA = document.getElementById('spCTA')?.value;
+        const spAudience = document.getElementById('spAudience')?.value;
+
+        if (!importText || importText.trim().length < 15) {
+            return alert('⚠️ Silakan tempelkan naskah teks hasil generate dari ChatGPT / Claude ke dalam kotak naskah di atas terlebih dahulu.');
+        }
+
+        const parsed = parseChatGPTMarkdown(importText, importTitle, importSubtitle);
+        if (!parsed || !parsed.chapters || parsed.chapters.length === 0) {
+            return alert('Gagal memproses naskah. Pastikan teks berisi konten atau format Bab yang jelas.');
+        }
+
+        // Set Global State
+        window.currentOutlineData = {
+            title: parsed.title,
+            subtitle: parsed.subtitle,
+            outline: parsed.chapters,
+            niche: spNiche || 'Bisnis & Edukasi',
+            type: 'super-prompt'
+        };
+        window.chaptersContent = parsed.chaptersContent;
+        window.currentNiche = spNiche || 'Bisnis & Edukasi';
+        window.currentAuthorProfile = spAuthor || '';
+        window.currentCTA = spCTA || '';
+        window.currentAudience = spAudience || '';
+
+        // Synchronize inputs in step1 form
+        const inputNiche = document.getElementById('inputNiche');
+        if (inputNiche && spNiche) inputNiche.value = spNiche;
+        const inputAudience = document.getElementById('inputAudience');
+        if (inputAudience && spAudience) inputAudience.value = spAudience;
+        const inputAuthorProfile = document.getElementById('inputAuthorProfile');
+        if (inputAuthorProfile && spAuthor) inputAuthorProfile.value = spAuthor;
+        const inputCTA = document.getElementById('inputCTA');
+        if (inputCTA && spCTA) inputCTA.value = spCTA;
+
+        // Direct transition to Chapter Writer View
+        const generatorView = document.getElementById('generatorView');
+        const chapterWriterView = document.getElementById('chapterWriterView');
+        const writerOutlineList = document.getElementById('writerOutlineList');
+        const currentChapterTitle = document.getElementById('currentChapterTitle');
+        const btnProceedToEditor = document.getElementById('btnProceedToEditor');
+        const btnCopyAllToCanvas = document.getElementById('btnCopyAllToCanvas');
+
+        if (generatorView) generatorView.classList.add('hidden');
+        if (chapterWriterView) chapterWriterView.classList.remove('hidden');
+
+        // Initialize Quill if needed
+        if (!quill && typeof Quill !== 'undefined') {
+            quill = new Quill('#quillEditor', {
+                theme: 'snow',
+                placeholder: 'Isi bab Anda akan tampil di sini...',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'align': [] }],
+                        [{ 'indent': '-1'}, { 'indent': '+1' }],
+                        ['link', 'image'],
+                        ['clean']
+                    ]
+                }
+            });
+        }
+
+        // Populate Sidebar Outline
+        if (writerOutlineList) {
+            writerOutlineList.innerHTML = '';
+            parsed.chapters.forEach((chapter, index) => {
+                const li = document.createElement('li');
+                li.innerText = chapter;
+                if (index === 0) {
+                    li.classList.add('active');
+                    activeChapterElement = li;
+                    if (currentChapterTitle) currentChapterTitle.innerText = chapter;
+                    if (quill) {
+                        if (window.chaptersContent && window.chaptersContent[chapter]) {
+                            quill.clipboard.dangerouslyPasteHTML(window.chaptersContent[chapter]);
+                        } else {
+                            quill.setText('');
+                        }
+                    }
+                }
+                li.addEventListener('click', () => {
+                    if (activeChapterElement && quill) {
+                        window.chaptersContent[activeChapterElement.innerText] = quill.root.innerHTML;
+                        activeChapterElement.classList.remove('active');
+                    }
+                    li.classList.add('active');
+                    activeChapterElement = li;
+                    if (currentChapterTitle) currentChapterTitle.innerText = chapter;
+                    if (quill) {
+                        if (window.chaptersContent && window.chaptersContent[chapter]) {
+                            quill.clipboard.dangerouslyPasteHTML(window.chaptersContent[chapter]);
+                        } else {
+                            quill.setText('');
+                        }
+                    }
+                });
+                writerOutlineList.appendChild(li);
+            });
+        }
+
+        if (btnProceedToEditor) btnProceedToEditor.classList.remove('hidden');
+        if (btnCopyAllToCanvas) btnCopyAllToCanvas.classList.remove('hidden');
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        alert(`🎉 Berhasil Mengimpor!\n\nSebanyak ${parsed.chapters.length} Bab telah berhasil dimasukkan ke dalam Editor Ebook Magic.\n\nAnda dapat mengedit tulisan tiap bab, menyalin ke Canvas Editor, memilih Template Desain, dan mengunduh PDF!`);
+    };
+
     const btnImportToDesigner = document.getElementById('btnImportToDesigner');
-    if (btnImportToDesigner) {
-        btnImportToDesigner.addEventListener('click', () => {
-            const importText = document.getElementById('spImportText')?.value;
-            const importTitle = document.getElementById('spImportTitle')?.value;
-            const importSubtitle = document.getElementById('spImportSubtitle')?.value;
-            const spNiche = document.getElementById('spNiche')?.value;
-            const spAuthor = document.getElementById('spAuthor')?.value;
-            const spCTA = document.getElementById('spCTA')?.value;
-            const spAudience = document.getElementById('spAudience')?.value;
-
-            if (!importText || importText.trim().length < 20) {
-                return alert('Silakan tempel (paste) naskah lengkap hasil generate dari ChatGPT / Claude terlebih dahulu ke dalam kotak naskah di atas.');
-            }
-
-            const parsed = parseChatGPTMarkdown(importText, importTitle, importSubtitle);
-            if (!parsed || parsed.chapters.length === 0) {
-                return alert('Gagal memproses naskah. Pastikan teks berisi konten atau format Bab yang jelas.');
-            }
-
-            // Populate global state
-            window.currentOutlineData = {
-                title: parsed.title,
-                subtitle: parsed.subtitle,
-                outline: parsed.chapters,
-                niche: spNiche || 'Bisnis & Produktivitas',
-                type: 'super-prompt'
-            };
-            window.chaptersContent = parsed.chaptersContent;
-            window.currentNiche = spNiche || 'Bisnis & Produktivitas';
-            window.currentAuthorProfile = spAuthor || '';
-            window.currentCTA = spCTA || '';
-            window.currentAudience = spAudience || '';
-
-            // Synchronize with form inputs for cover generation
-            const inputNiche = document.getElementById('inputNiche');
-            if (inputNiche && spNiche) inputNiche.value = spNiche;
-            const inputAudience = document.getElementById('inputAudience');
-            if (inputAudience && spAudience) inputAudience.value = spAudience;
-            const inputAuthorProfile = document.getElementById('inputAuthorProfile');
-            if (inputAuthorProfile && spAuthor) inputAuthorProfile.value = spAuthor;
-            const inputCTA = document.getElementById('inputCTA');
-            if (inputCTA && spCTA) inputCTA.value = spCTA;
-
-            // Trigger Transition to Chapter Writer View
-            btnProceedToChapters.click();
-
-            // Scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-
-            alert(`🎉 Berhasil Mengimpor!\n\nSebanyak ${parsed.chapters.length} Bab telah berhasil dimasukkan ke dalam Editor Ebook Magic.\n\nAnda dapat mengedit tulisan tiap bab di editor, menyalin seluruh bab ke Canvas Editor, memilih Template Desain, dan mengunduh PDF!`);
-        });
-    }
+    if (btnImportToDesigner) btnImportToDesigner.addEventListener('click', window.importSuperPromptAction);
 
 });
