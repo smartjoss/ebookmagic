@@ -669,6 +669,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const navDashboard = document.getElementById('navDashboard');
     const navMyEbooks = document.getElementById('navMyEbooks');
     const navGenerator = document.getElementById('navGenerator');
+    const navSuperPrompt = document.getElementById('navSuperPrompt');
     const navTemplates = document.getElementById('navTemplates');
 
 
@@ -730,8 +731,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     navGenerator.addEventListener('click', (e) => {
         e.preventDefault();
-        btnCreateNew.click(); // Reset state and go to generator
+        if (typeof window.openCreationMode === 'function') {
+            window.openCreationMode('internal');
+        } else {
+            btnCreateNew.click();
+        }
     });
+
+    if (navSuperPrompt) {
+        navSuperPrompt.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (typeof window.openCreationMode === 'function') {
+                window.openCreationMode('superprompt');
+            }
+        });
+    }
 
     const TEMPLATES_DATA = [
         { id: 'modern', name: 'Modern Minimalist', bg: '#ffffff', textColor: '#111827', accent: '#6C63FF', icon: 'ph-leaf', font: "'Outfit', sans-serif" },
@@ -898,7 +912,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- INNER NAVIGATION BUTTONS ---
-    btnCreateNew.addEventListener('click', () => {
+    window.openCreationMode = function(mode) {
         window.currentProjectId = null;
         window.currentOutlineData = null;
         window.currentNiche = null;
@@ -906,9 +920,17 @@ document.addEventListener('DOMContentLoaded', () => {
         canvasPages = [];
         currentCanvasPage = 0;
         resetGeneratorState();
-        setActiveNav(navGenerator);
         hideAllViews();
-        generatorView.classList.remove('hidden');
+        if (generatorView) generatorView.classList.remove('hidden');
+        if (typeof switchCreationMode === 'function') {
+            switchCreationMode(mode || 'internal');
+        }
+        setActiveNav(mode === 'superprompt' ? navSuperPrompt : navGenerator);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    btnCreateNew.addEventListener('click', () => {
+        window.openCreationMode('internal');
     });
 
     btnBack.addEventListener('click', () => {
