@@ -368,140 +368,280 @@
 
             <!-- AI Generator View (Hidden by default) -->
             <div class="generator-content hidden" id="generatorView">
-                <div class="generator-header">
+                <div class="generator-header" style="margin-bottom: 20px;">
                     <button class="btn-ghost" id="btnBack"><i class="ph ph-arrow-left"></i> Kembali</button>
-                    <h2>Buat eBook Baru dengan AI</h2>
+                    <h2>Pembuat eBook Magic AI</h2>
+                </div>
+
+                <!-- Mode Selector Tabs: Metode 1 vs Metode 2 -->
+                <div class="generator-mode-selector" style="display: flex; gap: 12px; margin-bottom: 24px;">
+                    <button type="button" id="tabModeInternal" class="btn-mode-tab active" style="flex: 1; padding: 14px 20px; border-radius: 12px; border: 2px solid var(--primary, #6C63FF); background: rgba(108, 99, 255, 0.18); color: white; font-weight: 700; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(108, 99, 255, 0.2);">
+                        <i class="ph ph-sparkle" style="font-size: 20px; color: var(--primary, #6C63FF);"></i>
+                        <span>Metode 1: AI Instan (Otomatis di Dalam)</span>
+                    </button>
+                    <button type="button" id="tabModeSuperPrompt" class="btn-mode-tab" style="flex: 1; padding: 14px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: var(--text-secondary, #94A3B8); font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s ease;">
+                        <i class="ph ph-lightning" style="font-size: 20px; color: #F59E0B;"></i>
+                        <span>Metode 2: Super-Prompt Studio (ChatGPT / Claude)</span>
+                    </button>
                 </div>
                 
-                <div class="generator-wizard glass">
-                    <div class="wizard-steps">
-                        <div class="step active">1. Topik</div>
-                        <div class="step">2. Daftar Isi</div>
-                        <div class="step">3. Konten</div>
-                        <div class="step">4. Desain</div>
-                    </div>
+                <!-- METODE 1: AI Instan (Wizard Asli) -->
+                <div id="sectionModeInternal">
+                    <div class="generator-wizard glass">
+                        <div class="wizard-steps">
+                            <div class="step active">1. Topik</div>
+                            <div class="step">2. Daftar Isi</div>
+                            <div class="step">3. Konten</div>
+                            <div class="step">4. Desain</div>
+                        </div>
 
-                    <div class="wizard-body">
+                        <div class="wizard-body">
 
-                        <div id="step1Form">
-                            <div class="form-group">
-                                <label>Apa Topik/Niche Utama Anda?</label>
-                                <input type="text" id="inputNiche" placeholder="contoh: Affiliate Marketing, Penurunan Berat Badan, dll">
-                            </div>
-                            <div class="form-group">
-                                <label>Siapa Target Pembaca Anda?</label>
-                                <input type="text" id="inputAudience" placeholder="contoh: Pemula, Ibu Rumah Tangga, Mahasiswa...">
-                            </div>
-                            <div class="form-group">
-                                <label>Apa Tujuan Utama Ebook Anda? (Tujuan Ebook)</label>
-                                <input type="text" id="inputGoal" placeholder="contoh: Menambah database email affiliate, promosi produk digital, dll">
-                            </div>
-                            <div class="form-group">
-                                <label>Jenis & Skala eBook?</label>
-                                <select id="inputType" style="width: 100%; padding: 16px; border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; font-size: 16px;">
-                                    <option value="praktis" style="color: black;">eBook Praktis / Lead Magnet (4-6 Bab | Fokus Solusi Cepat)</option>
-                                    <option value="panduan" style="color: black;">eBook Panduan Komprehensif (8-12 Bab | Materi Mendalam)</option>
-                                    <option value="masterclass" style="color: black;">eBook Masterclass / Buku Lengkap (15-20 Bab | Sangat Rinci)</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group" style="margin-top: 20px;">
-                                <label style="display: flex; justify-content: space-between;">
-                                    <span>Profil Penulis (Opsional)</span>
-                                    <span style="font-size: 12px; color: var(--text-secondary);">Meningkatkan Personal Branding</span>
-                                </label>
-                                <textarea id="inputAuthorProfile" rows="2" style="width: 100%; padding: 12px; border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; font-size: 14px; resize: vertical;" placeholder="contoh: Budi Santoso, praktisi bisnis dengan 5 tahun pengalaman."></textarea>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label style="display: flex; justify-content: space-between;">
-                                    <span>Call to Action / Penawaran (Opsional)</span>
-                                    <span style="font-size: 12px; color: var(--text-secondary);">Ditambahkan di akhir eBook</span>
-                                </label>
-                                <textarea id="inputCTA" rows="2" style="width: 100%; padding: 12px; border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; font-size: 14px; resize: vertical;" placeholder="contoh: Arahkan pembaca untuk join grup Telegram atau membeli produk X."></textarea>
-                            </div>
-
-                            <!-- Custom Outline Input (Collapsible) -->
-                            <div class="form-group" style="margin-top: 8px;">
-                                <div id="toggleCustomOutline" style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 12px 16px; background: rgba(108, 99, 255, 0.08); border: 1px dashed rgba(108, 99, 255, 0.3); border-radius: 12px; transition: all 0.3s ease;" onmouseover="this.style.borderColor='var(--primary)';this.style.background='rgba(108,99,255,0.12)'" onmouseout="this.style.borderColor='rgba(108,99,255,0.3)';this.style.background='rgba(108,99,255,0.08)'">
-                                    <i class="ph ph-list-checks" style="font-size: 20px; color: var(--primary);"></i>
-                                    <div style="flex: 1;">
-                                        <span style="font-weight: 600; font-size: 14px; color: var(--text-primary);">Sudah Punya Kerangka/Daftar Isi Sendiri?</span>
-                                        <span style="font-size: 12px; color: var(--text-secondary); display: block; margin-top: 2px;">Klik untuk memasukkan daftar isi Anda. AI akan memperbaiki atau Anda bisa pakai langsung.</span>
-                                    </div>
-                                    <i class="ph ph-caret-down" id="iconToggleOutline" style="font-size: 18px; color: var(--text-secondary); transition: transform 0.3s ease;"></i>
+                            <div id="step1Form">
+                                <div class="form-group">
+                                    <label>Apa Topik/Niche Utama Anda?</label>
+                                    <input type="text" id="inputNiche" placeholder="contoh: Affiliate Marketing, Penurunan Berat Badan, dll">
                                 </div>
-                                <div id="customOutlineSection" style="display: none; margin-top: 12px; animation: fadeIn 0.3s ease;">
-                                    <label style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                                        <span style="font-weight: 500;">Kerangka / Daftar Isi eBook Anda</span>
-                                        <span style="font-size: 12px; color: var(--text-secondary);">Satu bab per baris</span>
+                                <div class="form-group">
+                                    <label>Siapa Target Pembaca Anda?</label>
+                                    <input type="text" id="inputAudience" placeholder="contoh: Pemula, Ibu Rumah Tangga, Mahasiswa...">
+                                </div>
+                                <div class="form-group">
+                                    <label>Apa Tujuan Utama Ebook Anda? (Tujuan Ebook)</label>
+                                    <input type="text" id="inputGoal" placeholder="contoh: Menambah database email affiliate, promosi produk digital, dll">
+                                </div>
+                                <div class="form-group">
+                                    <label>Jenis & Skala eBook?</label>
+                                    <select id="inputType" style="width: 100%; padding: 16px; border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; font-size: 16px;">
+                                        <option value="praktis" style="color: black;">eBook Praktis / Lead Magnet (4-6 Bab | Fokus Solusi Cepat)</option>
+                                        <option value="panduan" style="color: black;">eBook Panduan Komprehensif (8-12 Bab | Materi Mendalam)</option>
+                                        <option value="masterclass" style="color: black;">eBook Masterclass / Buku Lengkap (15-20 Bab | Sangat Rinci)</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group" style="margin-top: 20px;">
+                                    <label style="display: flex; justify-content: space-between;">
+                                        <span>Profil Penulis (Opsional)</span>
+                                        <span style="font-size: 12px; color: var(--text-secondary);">Meningkatkan Personal Branding</span>
                                     </label>
-                                    <textarea id="inputCustomOutline" rows="6" style="width: 100%; padding: 12px; border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; font-size: 14px; resize: vertical; line-height: 1.8;" placeholder="Contoh:
+                                    <textarea id="inputAuthorProfile" rows="2" style="width: 100%; padding: 12px; border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; font-size: 14px; resize: vertical;" placeholder="contoh: Budi Santoso, praktisi bisnis dengan 5 tahun pengalaman."></textarea>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label style="display: flex; justify-content: space-between;">
+                                        <span>Call to Action / Penawaran (Opsional)</span>
+                                        <span style="font-size: 12px; color: var(--text-secondary);">Ditambahkan di akhir eBook</span>
+                                    </label>
+                                    <textarea id="inputCTA" rows="2" style="width: 100%; padding: 12px; border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; font-size: 14px; resize: vertical;" placeholder="contoh: Arahkan pembaca untuk join grup Telegram atau membeli produk X."></textarea>
+                                </div>
+
+                                <!-- Custom Outline Input (Collapsible) -->
+                                <div class="form-group" style="margin-top: 8px;">
+                                    <div id="toggleCustomOutline" style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 12px 16px; background: rgba(108, 99, 255, 0.08); border: 1px dashed rgba(108, 99, 255, 0.3); border-radius: 12px; transition: all 0.3s ease;" onmouseover="this.style.borderColor='var(--primary)';this.style.background='rgba(108,99,255,0.12)'" onmouseout="this.style.borderColor='rgba(108,99,255,0.3)';this.style.background='rgba(108,99,255,0.08)'">
+                                        <i class="ph ph-list-checks" style="font-size: 20px; color: var(--primary);"></i>
+                                        <div style="flex: 1;">
+                                            <span style="font-weight: 600; font-size: 14px; color: var(--text-primary);">Sudah Punya Kerangka/Daftar Isi Sendiri?</span>
+                                            <span style="font-size: 12px; color: var(--text-secondary); display: block; margin-top: 2px;">Klik untuk memasukkan daftar isi Anda. AI akan memperbaiki atau Anda bisa pakai langsung.</span>
+                                        </div>
+                                        <i class="ph ph-caret-down" id="iconToggleOutline" style="font-size: 18px; color: var(--text-secondary); transition: transform 0.3s ease;"></i>
+                                    </div>
+                                    <div id="customOutlineSection" style="display: none; margin-top: 12px; animation: fadeIn 0.3s ease;">
+                                        <label style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                            <span style="font-weight: 500;">Kerangka / Daftar Isi eBook Anda</span>
+                                            <span style="font-size: 12px; color: var(--text-secondary);">Satu bab per baris</span>
+                                        </label>
+                                        <textarea id="inputCustomOutline" rows="6" style="width: 100%; padding: 12px; border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; font-size: 14px; resize: vertical; line-height: 1.8;" placeholder="Contoh:
 Kata Pengantar
 Bab 1: Mengenal Dasar-dasar Affiliate Marketing
 Bab 2: Memilih Produk yang Tepat
 Bab 3: Strategi Promosi Tanpa Modal
 Bab 4: Optimasi dan Scaling
 Penutup"></textarea>
-                                    <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
-                                        <span style="font-size: 11px; padding: 4px 10px; background: rgba(108,99,255,0.1); border-radius: 20px; color: var(--primary);">
-                                            <i class="ph ph-info"></i> Tulis satu bab per baris. AI bisa memperbaiki format & menambah detail.
-                                        </span>
+                                        <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
+                                            <span style="font-size: 11px; padding: 4px 10px; background: rgba(108,99,255,0.1); border-radius: 20px; color: var(--primary);">
+                                                <i class="ph ph-info"></i> Tulis satu bab per baris. AI bisa memperbaiki format & menambah detail.
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
+
+                                <button class="btn-primary w-full" id="btnGenerateTitles">
+                                    <i class="ph ph-lightbulb"></i> Dapatkan Ide Judul Menarik (Hook)
+                                </button>
                             </div>
 
-                            <button class="btn-primary w-full" id="btnGenerateTitles">
-                                <i class="ph ph-lightbulb"></i> Dapatkan Ide Judul Menarik (Hook)
-                            </button>
-                        </div>
-
-                        <div id="titleResults" class="hidden" style="margin-top: 20px;">
-                            <h3 style="color: var(--primary); margin-bottom: 10px;">Pilih Judul Ebook Anda:</h3>
-                            <div id="titleOptionsGrid" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
-                                <!-- Cards injected here via JS -->
-                            </div>
-                            
-                            <div id="coverPromptBox" class="hidden" style="padding: 15px; background: rgba(108, 99, 255, 0.1); border: 1px dashed var(--primary); border-radius: 8px; margin-bottom: 15px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                    <span style="font-size: 13px; font-weight: 600; color: var(--primary);"><i class="ph ph-image"></i> Prompt AI Untuk Cover</span>
-                                    <button id="btnCopyCoverPrompt" class="btn-icon" style="background: white; border: 1px solid #ddd; padding: 4px; border-radius: 4px;" title="Salin Prompt"><i class="ph ph-copy"></i></button>
+                            <div id="titleResults" class="hidden" style="margin-top: 20px;">
+                                <h3 style="color: var(--primary); margin-bottom: 10px;">Pilih Judul Ebook Anda:</h3>
+                                <div id="titleOptionsGrid" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+                                    <!-- Cards injected here via JS -->
                                 </div>
-                                <p id="coverPromptText" style="font-family: monospace; font-size: 12px; color: var(--text-primary); margin: 0; user-select: all; margin-bottom: 15px;"></p>
                                 
-                                <div id="aiMarketingInsights" style="border-top: 1px solid rgba(108, 99, 255, 0.2); padding-top: 12px; display: flex; flex-direction: column; gap: 10px;">
-                                    <div>
-                                        <span style="font-size: 11px; font-weight: 600; color: var(--primary); text-transform: uppercase; display: block;"><i class="ph ph-anchor"></i> Hook Psikologis:</span>
-                                        <p id="aiMarketingHook" style="font-size: 12px; color: var(--text-primary); margin: 4px 0 0; line-height: 1.4;"></p>
+                                <div id="coverPromptBox" class="hidden" style="padding: 15px; background: rgba(108, 99, 255, 0.1); border: 1px dashed var(--primary); border-radius: 8px; margin-bottom: 15px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <span style="font-size: 13px; font-weight: 600; color: var(--primary);"><i class="ph ph-image"></i> Prompt AI Untuk Cover</span>
+                                        <button id="btnCopyCoverPrompt" class="btn-icon" style="background: white; border: 1px solid #ddd; padding: 4px; border-radius: 4px;" title="Salin Prompt"><i class="ph ph-copy"></i></button>
                                     </div>
-                                    <div>
-                                        <span style="font-size: 11px; font-weight: 600; color: var(--primary); text-transform: uppercase; display: block;"><i class="ph ph-map-pin"></i> Positioning Produk:</span>
-                                        <p id="aiMarketingPositioning" style="font-size: 12px; color: var(--text-primary); margin: 4px 0 0; line-height: 1.4;"></p>
-                                    </div>
-                                    <div>
-                                        <span style="font-size: 11px; font-weight: 600; color: var(--primary); text-transform: uppercase; display: block;"><i class="ph ph-user-focus"></i> Detail Target Pembaca:</span>
-                                        <p id="aiMarketingTarget" style="font-size: 12px; color: var(--text-primary); margin: 4px 0 0; line-height: 1.4;"></p>
+                                    <p id="coverPromptText" style="font-family: monospace; font-size: 12px; color: var(--text-primary); margin: 0; user-select: all; margin-bottom: 15px;"></p>
+                                    
+                                    <div id="aiMarketingInsights" style="border-top: 1px solid rgba(108, 99, 255, 0.2); padding-top: 12px; display: flex; flex-direction: column; gap: 10px;">
+                                        <div>
+                                            <span style="font-size: 11px; font-weight: 600; color: var(--primary); text-transform: uppercase; display: block;"><i class="ph ph-anchor"></i> Hook Psikologis:</span>
+                                            <p id="aiMarketingHook" style="font-size: 12px; color: var(--text-primary); margin: 4px 0 0; line-height: 1.4;"></p>
+                                        </div>
+                                        <div>
+                                            <span style="font-size: 11px; font-weight: 600; color: var(--primary); text-transform: uppercase; display: block;"><i class="ph ph-map-pin"></i> Positioning Produk:</span>
+                                            <p id="aiMarketingPositioning" style="font-size: 12px; color: var(--text-primary); margin: 4px 0 0; line-height: 1.4;"></p>
+                                        </div>
+                                        <div>
+                                            <span style="font-size: 11px; font-weight: 600; color: var(--primary); text-transform: uppercase; display: block;"><i class="ph ph-users"></i> Target Pembaca Ideal:</span>
+                                            <p id="aiMarketingTarget" style="font-size: 12px; color: var(--text-primary); margin: 4px 0 0; line-height: 1.4;"></p>
+                                        </div>
                                     </div>
                                 </div>
+
+                                <button class="btn-primary w-full" id="btnGenerateOutlineFromTitle" disabled>
+                                    Buat Kerangka Bab (Daftar Isi)
+                                </button>
                             </div>
 
-                            <button class="btn-primary w-full hidden" id="btnGenerateOutline" disabled>
-                                <i class="ph ph-sparkle"></i> Buat Daftar Isi Berdasarkan Judul Ini
-                            </button>
+                            <div id="outlineResults" class="hidden">
+                                <div class="outline-header">
+                                    <h3>Kerangka Bab Anda</h3>
+                                    <p>Tinjau dan sesuaikan struktur bab Anda</p>
+                                </div>
+                                <div class="outline-content" id="outlineContent"></div>
+                                <div class="wizard-actions mt-4" style="display: flex; gap: 10px;">
+                                    <button class="btn-ghost w-full" id="btnSaveOutlineOnly" style="border: 1px solid var(--primary); color: var(--primary);"><i class="ph ph-floppy-disk"></i> Simpan Konsep eBook</button>
+                                    <button class="btn-primary w-full" id="btnProceedToChapters">Lanjut Tulis Bab (AI)</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="wizard-results hidden" id="outlineResults">
-                        <h3>Hasil Daftar Isi Anda:</h3>
-                        <div class="skeleton-loader hidden" id="loadingSkeleton">
-                            <div class="skeleton-line"></div>
-                            <div class="skeleton-line"></div>
-                            <div class="skeleton-line"></div>
+                <!-- METODE 2: Super-Prompt Studio (ChatGPT / Claude / Gemini) -->
+                <div id="sectionModeSuperPrompt" class="hidden">
+                    <div class="glass" style="padding: 28px; border-radius: 16px; margin-bottom: 24px;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 16px;">
+                            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); display: flex; align-items: center; justify-content: center;">
+                                <i class="ph ph-lightning" style="font-size: 24px; color: #F59E0B;"></i>
+                            </div>
+                            <div>
+                                <h3 style="margin: 0; font-size: 18px; color: #fff;">Super-Prompt Ebook Studio (ChatGPT & Claude)</h3>
+                                <p style="margin: 4px 0 0; font-size: 13px; color: var(--text-secondary);">Racik prompt masterclass berkonversi tinggi, salin ke ChatGPT/Claude, lalu import hasilnya ke Ebook Magic untuk didesain dan diexport PDF.</p>
+                            </div>
                         </div>
-                        <div class="outline-content" id="outlineContent"></div>
-                        <div class="wizard-actions mt-4" style="display: flex; gap: 10px;">
-                            <button class="btn-ghost w-full" id="btnSaveOutlineOnly" style="border: 1px solid var(--primary); color: var(--primary);"><i class="ph ph-floppy-disk"></i> Simpan Konsep eBook</button>
-                            <button class="btn-primary w-full" id="btnProceedToChapters">Lanjut Tulis Bab (AI)</button>
+
+                        <!-- Form Input Super-Prompt -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label><i class="ph ph-book-bookmark"></i> Topik / Niche Ebook</label>
+                                <input type="text" id="spNiche" placeholder="contoh: Cara Bebas Hutang Riba, Bisnis Affiliate, Parenting..." style="width: 100%; padding: 14px; border-radius: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white;">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label><i class="ph ph-users"></i> Target Pembaca Ideal</label>
+                                <input type="text" id="spAudience" placeholder="contoh: Karyawan terlilit hutang, Ibu rumah tangga, Pemula bisnis..." style="width: 100%; padding: 14px; border-radius: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white;">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label><i class="ph ph-warning-circle"></i> Keresahan / Masalah Utama Pembaca (Pain Point)</label>
+                                <input type="text" id="spPainPoint" placeholder="contoh: Gaji selalu habis bayar bunga, bingung cara mulai, takut gagal..." style="width: 100%; padding: 14px; border-radius: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white;">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label><i class="ph ph-trophy"></i> Janji Transformasi / Solusi Utama Ebook</label>
+                                <input type="text" id="spPromise" placeholder="contoh: Metode lunas hutang dalam 90 hari tanpa gali lubang tutup lubang..." style="width: 100%; padding: 14px; border-radius: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white;">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label><i class="ph ph-paint-brush"></i> Formula & Gaya Bahasa Copywriting</label>
+                                <select id="spFormula" style="width: 100%; padding: 14px; border-radius: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; font-size: 14px;">
+                                    <option value="storytelling" style="color: black;">🔥 Hypnotic Storytelling (Kisah Emosional + Solusi Kuat)</option>
+                                    <option value="pas" style="color: black;">🎯 Problem - Agitate - Solve (Bedah Masalah Sampai Tuntas)</option>
+                                    <option value="quickwin" style="color: black;">⚡ Quick-Win Practical (Langkah Praktis & Aksi Langsung)</option>
+                                    <option value="islamic" style="color: black;">🕌 Islamic & Syariah (Bahasa Santun + Dalil/Hikmah Relevan)</option>
+                                    <option value="authority" style="color: black;">👑 B2B Authority & Masterclass (Materi Mendalam & Data Analisis)</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label><i class="ph ph-stack"></i> Skala & Jumlah Bab</label>
+                                <select id="spScale" style="width: 100%; padding: 14px; border-radius: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; font-size: 14px;">
+                                    <option value="5" style="color: black;">eBook Praktis / Lead Magnet (5 Bab | Ringkas & Padat)</option>
+                                    <option value="10" style="color: black;" selected>eBook Panduan Komprehensif (8-10 Bab | Sangat Lengkap)</option>
+                                    <option value="15" style="color: black;">eBook Masterclass / Buku Lengkap (15 Bab | Sangat Mendalam)</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label><i class="ph ph-user"></i> Profil Penulis (Opsional)</label>
+                                <input type="text" id="spAuthor" placeholder="contoh: Coach Ferri AD - Founder Kuadran Rezeki" style="width: 100%; padding: 14px; border-radius: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white;">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label><i class="ph ph-megaphone"></i> Call to Action / Penawaran di Akhir (Opsional)</label>
+                                <input type="text" id="spCTA" placeholder="contoh: Beli Ebook Lanjutan Kun Bebas Hutang via WhatsApp" style="width: 100%; padding: 14px; border-radius: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white;">
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn-primary w-full" id="btnGenerateSuperPrompt" style="background: linear-gradient(135deg, #F59E0B, #D97706); padding: 16px; font-size: 15px; font-weight: 700; border-radius: 12px; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);">
+                            <i class="ph ph-lightning"></i> Racik Master Super-Prompt Ebook Sekarang
+                        </button>
+
+                        <!-- Box Tampilan Super-Prompt -->
+                        <div id="spResultContainer" class="hidden" style="margin-top: 28px; animation: fadeIn 0.4s ease;">
+                            <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 14px; overflow: hidden;">
+                                <div style="background: rgba(245, 158, 11, 0.12); padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(245, 158, 11, 0.2); flex-wrap: wrap; gap: 10px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #10B981;"></span>
+                                        <span style="font-weight: 700; font-size: 13px; color: #F59E0B; text-transform: uppercase;"><i class="ph ph-code"></i> Master Super-Prompt Siap Pakai</span>
+                                    </div>
+                                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                        <button type="button" id="btnCopySuperPrompt" class="btn-primary" style="background: #10B981; padding: 6px 14px; font-size: 12px; border-radius: 6px; display: flex; align-items: center; gap: 5px;">
+                                            <i class="ph ph-copy"></i> Salin Prompt
+                                        </button>
+                                        <a href="https://chatgpt.com" target="_blank" rel="noopener noreferrer" class="btn-ghost" style="padding: 6px 12px; font-size: 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); color: #fff; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                                            <i class="ph ph-robot"></i> Buka ChatGPT <i class="ph ph-arrow-square-out"></i>
+                                        </a>
+                                        <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" class="btn-ghost" style="padding: 6px 12px; font-size: 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); color: #fff; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                                            <i class="ph ph-atom"></i> Buka Claude <i class="ph ph-arrow-square-out"></i>
+                                        </a>
+                                        <a href="https://aistudio.google.com" target="_blank" rel="noopener noreferrer" class="btn-ghost" style="padding: 6px 12px; font-size: 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); color: #fff; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                                            <i class="ph ph-sparkle"></i> Gemini <i class="ph ph-arrow-square-out"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div style="padding: 16px;">
+                                    <textarea id="spPromptOutput" rows="12" readonly style="width: 100%; background: transparent; border: none; color: #E2E8F0; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.7; resize: vertical; outline: none;"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Bagian Import Hasil Tulisan dari ChatGPT -->
+                            <div style="margin-top: 24px; padding: 24px; background: rgba(108, 99, 255, 0.08); border: 2px dashed rgba(108, 99, 255, 0.35); border-radius: 16px;">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                                    <div style="width: 32px; height: 32px; border-radius: 8px; background: var(--primary); display: flex; align-items: center; justify-content: center;">
+                                        <i class="ph ph-download-simple" style="font-size: 18px; color: #fff;"></i>
+                                    </div>
+                                    <div>
+                                        <h4 style="margin: 0; font-size: 16px; color: #fff;">Langkah 2: Tempel Hasil Tulisan dari ChatGPT / Claude ke Sini</h4>
+                                        <span style="font-size: 12px; color: var(--text-secondary);">Sistem akan otomatis membedah bab, memformat tampilan, dan memasukkannya ke Editor Desain Ebook Magic!</span>
+                                    </div>
+                                </div>
+
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label>Judul Utama Ebook</label>
+                                        <input type="text" id="spImportTitle" placeholder="contoh: Kun Bebas Hutang" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white;">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label>Subjudul Ebook (Opsional)</label>
+                                        <input type="text" id="spImportSubtitle" placeholder="contoh: Panduan Bebas Finansial Tanpa Riba" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white;">
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Tempel Seluruh Teks / Markdown Hasil Generate ChatGPT di Sini:</label>
+                                    <textarea id="spImportText" rows="10" placeholder="Tempel seluruh hasil generate dari ChatGPT / Claude di sini (termasuk judul bab, teks, dan poin-poin)..." style="width: 100%; padding: 14px; border-radius: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: white; font-size: 13px; line-height: 1.6; resize: vertical;"></textarea>
+                                </div>
+
+                                <button type="button" class="btn-primary w-full" id="btnImportToDesigner" style="padding: 16px; font-size: 15px; font-weight: 700; border-radius: 12px;">
+                                    <i class="ph ph-palette"></i> Import ke Editor Desain & Siap Export PDF <i class="ph ph-arrow-right"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

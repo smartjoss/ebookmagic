@@ -959,6 +959,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnRefineCustom = document.getElementById('btnRefineCustomOutline');
         if(btnRefineCustom) btnRefineCustom.classList.add('hidden');
         
+        // Reset Super-Prompt Studio elements
+        const spRes = document.getElementById('spResultContainer');
+        if(spRes) spRes.classList.add('hidden');
+        const spOut = document.getElementById('spPromptOutput');
+        if(spOut) spOut.value = '';
+        const spImpText = document.getElementById('spImportText');
+        if(spImpText) spImpText.value = '';
+        const spImpTitle = document.getElementById('spImportTitle');
+        if(spImpTitle) spImpTitle.value = '';
+        const spImpSub = document.getElementById('spImportSubtitle');
+        if(spImpSub) spImpSub.value = '';
+
         window.selectedEbookTitle = null;
         window.selectedEbookSubtitle = null;
         
@@ -4053,5 +4065,330 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof saveCanvasState === 'function') saveCanvasState();
         }
     });
+
+    // ==========================================
+    // DUAL-METHOD: SUPER-PROMPT STUDIO LOGIC
+    // ==========================================
+    const tabModeInternal = document.getElementById('tabModeInternal');
+    const tabModeSuperPrompt = document.getElementById('tabModeSuperPrompt');
+    const sectionModeInternal = document.getElementById('sectionModeInternal');
+    const sectionModeSuperPrompt = document.getElementById('sectionModeSuperPrompt');
+
+    function switchCreationMode(mode) {
+        if (mode === 'internal') {
+            if (tabModeInternal) {
+                tabModeInternal.classList.add('active');
+                tabModeInternal.style.background = 'linear-gradient(135deg, #6C63FF, #4834d4)';
+                tabModeInternal.style.color = '#fff';
+                tabModeInternal.style.boxShadow = '0 4px 15px rgba(108,99,255,0.3)';
+            }
+            if (tabModeSuperPrompt) {
+                tabModeSuperPrompt.classList.remove('active');
+                tabModeSuperPrompt.style.background = 'transparent';
+                tabModeSuperPrompt.style.color = 'var(--text-muted)';
+                tabModeSuperPrompt.style.boxShadow = 'none';
+            }
+            if (sectionModeInternal) sectionModeInternal.classList.remove('hidden');
+            if (sectionModeSuperPrompt) sectionModeSuperPrompt.classList.add('hidden');
+        } else if (mode === 'superprompt') {
+            if (tabModeSuperPrompt) {
+                tabModeSuperPrompt.classList.add('active');
+                tabModeSuperPrompt.style.background = 'linear-gradient(135deg, #ec4899, #8b5cf6)';
+                tabModeSuperPrompt.style.color = '#fff';
+                tabModeSuperPrompt.style.boxShadow = '0 4px 15px rgba(236,72,153,0.3)';
+            }
+            if (tabModeInternal) {
+                tabModeInternal.classList.remove('active');
+                tabModeInternal.style.background = 'transparent';
+                tabModeInternal.style.color = 'var(--text-muted)';
+                tabModeInternal.style.boxShadow = 'none';
+            }
+            if (sectionModeSuperPrompt) sectionModeSuperPrompt.classList.remove('hidden');
+            if (sectionModeInternal) sectionModeInternal.classList.add('hidden');
+        }
+    }
+
+    if (tabModeInternal) {
+        tabModeInternal.addEventListener('click', () => switchCreationMode('internal'));
+    }
+    if (tabModeSuperPrompt) {
+        tabModeSuperPrompt.addEventListener('click', () => switchCreationMode('superprompt'));
+    }
+
+    // --- Generate Master Super-Prompt ---
+    const btnGenerateSuperPrompt = document.getElementById('btnGenerateSuperPrompt');
+    const spResultContainer = document.getElementById('spResultContainer');
+    const spPromptOutput = document.getElementById('spPromptOutput');
+    const btnCopySuperPrompt = document.getElementById('btnCopySuperPrompt');
+
+    if (btnGenerateSuperPrompt) {
+        btnGenerateSuperPrompt.addEventListener('click', () => {
+            const niche = document.getElementById('spNiche')?.value?.trim() || '';
+            const audience = document.getElementById('spAudience')?.value?.trim() || '';
+            const painPoint = document.getElementById('spPainPoint')?.value?.trim() || '';
+            const promise = document.getElementById('spPromise')?.value?.trim() || '';
+            const formula = document.getElementById('spFormula')?.value || 'storytelling';
+            const scale = document.getElementById('spScale')?.value || '5';
+            const author = document.getElementById('spAuthor')?.value?.trim() || '';
+            const cta = document.getElementById('spCTA')?.value?.trim() || '';
+
+            if (!niche) {
+                alert('Silakan masukkan Topik / Niche eBook Anda terlebih dahulu.');
+                document.getElementById('spNiche')?.focus();
+                return;
+            }
+
+            const formulaMap = {
+                'storytelling': 'Storytelling & Hypnotic Copy (Kisah nyata yang emosional, memikat, dan menginspirasi pembaca untuk bertindak)',
+                'pas': 'Problem - Agitate - Solution / PAS Framework (Bedah masalah secara tajam hingga ke akar, lalu berikan solusi praktis tuntas)',
+                'quickwin': 'Step-by-Step Blueprint & Quick-Wins (Panduan teknis berurutan langkah demi langkah yang langsung bisa dipraktekkan hari ini)',
+                'islamic': 'Nilai Islami & Berkah Bisnis (Pendekatan nilai syariah, mindset keberkahan, etika amanah, dan hasil nyata)',
+                'framework': 'Framework & Cheatsheet (Format ringkas, padat, to-the-point, berbobot, dan sangat actionable)'
+            };
+
+            const formulaDesc = formulaMap[formula] || 'Praktis, Terstruktur & Berbobot';
+
+            const masterPrompt = `Peran: Anda adalah seorang Ghostwriter Ebook Best-Seller Internasional, Master Copywriter, dan Konsultan Edukasi Digital Terbaik.
+Tugas Anda: Tulis naskah buku elektronik (eBook) LENGKAP, MENDALAM, DAGING SEMUA (High Value, tanpa basa-basi), dan sangat siap dibaca dari awal hingga akhir.
+
+[INFORMASI & TARGET PROYEK EBOOK]
+- Topik / Niche Utama: ${niche}
+- Target Pembaca Spesifik: ${audience || 'Pemula hingga tingkat menengah yang ingin transformasi nyata'}
+- Masalah / Pain Point Utama Pembaca: ${painPoint || 'Kurang pemahaman terstruktur, sering bingung mulai dari mana, butuh panduan praktis'}
+- Solusi & Janji Transformasi Ebook: ${promise || 'Mendapatkan blueprint komprehensif yang bisa langsung dieksekusi dengan hasil terbukti'}
+- Formula Penulisan yang Digunakan: ${formulaDesc}
+- Jumlah Bab: ${scale} Bab Lengkap (Mulai dari Pengantar, Bab 1 s.d. Bab ${scale}, hingga Penutup)
+- Profil / Sudut Pandang Penulis: ${author || 'Praktisi berpengalaman yang ramah, kredibel, dan solutif'}
+- Call to Action (CTA) di Akhir Ebook: ${cta || 'Terapkan strategi ini sekarang dan hubungi kami untuk langkah selanjutnya'}
+
+[STRUKTUR PENULISAN WAJIB DIIKUTI]
+Tulis seluruh naskah menggunakan format Markdown standar yang rapi dengan struktur berikut:
+
+# [Tulis Judul Ebook yang Sangat Menarik, Menjual, & Memikat]
+## [Tulis Subjudul Penjelas yang Menjanjikan Transformasi Cepat]
+
+### Kata Pengantar
+(Tulis kata pengantar yang menyentuh emosi pembaca, mengapa buku ini ditulis, dan gambaran besar isi buku)
+
+### Bab 1: [Judul Bab 1 yang Menarik]
+(Tulis isi bab secara lengkap, mendalam, sertakan poin-poin penting, studi kasus/contoh nyata, dan 3 langkah aksi praktis)
+
+### Bab 2: [Judul Bab 2]
+(Tulis isi bab secara tuntas dan mendalam...)
+
+(Lanjutkan menulis seluruh Bab sampai Bab ${scale} secara berurutan dan lengkap)
+
+### Penutup & Langkah Aksi Berikutnya
+(Rangkuman inti, kata-kata penutup penyemangat, dan ajakan bertindak / Call To Action: ${cta || 'Mulai eksekusi sekarang'})
+
+[ATURAN PENULISAN]
+1. Tulis naskah SECARA LENGKAP dan SELESAI (bukan sekadar kerangka/rangkuman, tulis seluruh isi paragrafnya secara tuntas).
+2. Gunakan Bahasa Indonesia yang natural, mengalir, profesional, persuasif, dan mudah dipahami.
+3. Hindari kalimat klise atau basa-basi kosong. Berikan tips konkret, framework langkah-demi-langkah (Step 1, Step 2, Step 3), dan insight yang aplikatif.
+4. Gunakan heading (### untuk nama Bab, #### untuk subtopik), poin bullet (- ...), nomor (1. ...), dan format tebal (**kata kunci**) agar naskah sangat nyaman dibaca.
+
+Silakan mulai tulis naskah lengkapnya sekarang dari Judul hingga Penutup!`;
+
+            if (spPromptOutput) spPromptOutput.value = masterPrompt;
+            if (spResultContainer) {
+                spResultContainer.classList.remove('hidden');
+                spResultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    }
+
+    // --- Copy Prompt to Clipboard ---
+    if (btnCopySuperPrompt) {
+        btnCopySuperPrompt.addEventListener('click', async () => {
+            if (!spPromptOutput || !spPromptOutput.value) return;
+            try {
+                await navigator.clipboard.writeText(spPromptOutput.value);
+                const originalHtml = btnCopySuperPrompt.innerHTML;
+                btnCopySuperPrompt.innerHTML = '<i class="ph ph-check-circle"></i> ✅ Tersalin ke Clipboard!';
+                btnCopySuperPrompt.style.background = 'linear-gradient(135deg, #10B981, #059669)';
+                setTimeout(() => {
+                    btnCopySuperPrompt.innerHTML = originalHtml;
+                    btnCopySuperPrompt.style.background = '';
+                }, 2500);
+            } catch (err) {
+                // Fallback for clipboard
+                spPromptOutput.select();
+                document.execCommand('copy');
+                alert('✅ Prompt berhasil disalin ke clipboard!');
+            }
+        });
+    }
+
+    // --- Convert Markdown to Clean HTML ---
+    function convertMarkdownToCleanHtml(mdText) {
+        if (!mdText) return '';
+        let html = mdText.trim();
+
+        // Escape HTML special tags
+        html = html.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+        // Headings
+        html = html.replace(/^#### (.*?)$/gm, '<h4>$1</h4>');
+        html = html.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
+        html = html.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
+        html = html.replace(/^# (.*?)$/gm, '<h1>$1</h1>');
+
+        // Bold & Italic
+        html = html.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        html = html.replace(/___(.*?)___/g, '<strong><em>$1</em></strong>');
+        html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
+        html = html.replace(/_(.*?)_/g, '<em>$1</em>');
+
+        // Blockquotes
+        html = html.replace(/^> (.*?)$/gm, '<blockquote>$1</blockquote>');
+
+        // Horizontal Rules
+        html = html.replace(/^---$/gm, '<hr/>');
+
+        // Lists (unordered)
+        html = html.replace(/^[\*\-\+] (.*?)$/gm, '<li>$1</li>');
+        html = html.replace(/(<li>[\s\S]*?<\/li>)/g, function(match) {
+            return '<ul>' + match + '</ul>';
+        });
+        html = html.replace(/<\/ul>\s*<ul>/g, '');
+
+        // Paragraphs
+        const blocks = html.split(/\n\n+/);
+        html = blocks.map(block => {
+            block = block.trim();
+            if (!block) return '';
+            if (/^<(h[1-6]|ul|ol|blockquote|hr|p)/i.test(block)) {
+                return block;
+            }
+            return `<p>${block.replace(/\n/g, '<br/>')}</p>`;
+        }).filter(Boolean).join('\n');
+
+        return html;
+    }
+
+    // --- Parse ChatGPT Markdown into Ebook Structure ---
+    function parseChatGPTMarkdown(rawText, userTitle, userSubtitle) {
+        if (!rawText || !rawText.trim()) return null;
+
+        let text = rawText.trim();
+        let title = userTitle ? userTitle.trim() : '';
+        let subtitle = userSubtitle ? userSubtitle.trim() : '';
+
+        // Extract # Title if present
+        const h1Match = text.match(/^#\s+(.+)$/m);
+        if (h1Match && !title) {
+            title = h1Match[1].replace(/[\*\_\[\]]/g, '').trim();
+        }
+
+        // Extract ## Subtitle if present
+        const h2Match = text.match(/^##\s+(.+)$/m);
+        if (h2Match && !subtitle) {
+            subtitle = h2Match[1].replace(/[\*\_\[\]]/g, '').trim();
+        }
+
+        if (!title) title = 'Ebook Hasil Racikan Super-Prompt';
+        if (!subtitle) subtitle = 'Panduan Komprehensif Berdasarkan Blueprint AI';
+
+        // Regex to detect Chapter headers
+        // Matches: ### Kata Pengantar, ### Bab 1: ..., ### Penutup, **Bab 1: ...**, Bab 1: ..., etc.
+        const chapterHeaderRegex = /(?:^|\n)(?:#{1,4}\s+|\*{1,3})?(Kata\s+Pengantar|Bab\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Bagian\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Chapter\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Penutup[^\n\*\#]*|Kesimpulan[^\n\*\#]*)(?:\*{1,3})?/gi;
+
+        const matches = [];
+        let match;
+        while ((match = chapterHeaderRegex.exec(text)) !== null) {
+            matches.push({
+                header: match[1].trim(),
+                index: match.index
+            });
+        }
+
+        const chapters = [];
+        const chaptersContent = {};
+
+        if (matches.length > 0) {
+            for (let i = 0; i < matches.length; i++) {
+                let chTitle = matches[i].header.replace(/^[#\*\_\-\s]+|[#\*\_\-\s]+$/g, '').trim();
+                const startIdx = matches[i].index;
+                const endIdx = (i < matches.length - 1) ? matches[i + 1].index : text.length;
+                let chBody = text.substring(startIdx, endIdx).trim();
+
+                // Strip the chapter title line from the beginning of body
+                chBody = chBody.replace(/^(?:#{1,4}\s+|\*{1,3})?(Kata\s+Pengantar|Bab\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Bagian\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Chapter\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Penutup[^\n\*\#]*|Kesimpulan[^\n\*\#]*)(?:\*{1,3})?\n*/i, '').trim();
+
+                const htmlContent = convertMarkdownToCleanHtml(chBody);
+                chapters.push(chTitle);
+                chaptersContent[chTitle] = htmlContent;
+            }
+        } else {
+            // If no chapter headers detected, create single chapter or split by double newlines
+            const defaultChap = 'Bab 1: Isi Utama Ebook';
+            chapters.push(defaultChap);
+            chaptersContent[defaultChap] = convertMarkdownToCleanHtml(text);
+        }
+
+        return {
+            title,
+            subtitle,
+            chapters,
+            chaptersContent
+        };
+    }
+
+    // --- Smart Import Button Action ---
+    const btnImportToDesigner = document.getElementById('btnImportToDesigner');
+    if (btnImportToDesigner) {
+        btnImportToDesigner.addEventListener('click', () => {
+            const importText = document.getElementById('spImportText')?.value;
+            const importTitle = document.getElementById('spImportTitle')?.value;
+            const importSubtitle = document.getElementById('spImportSubtitle')?.value;
+            const spNiche = document.getElementById('spNiche')?.value;
+            const spAuthor = document.getElementById('spAuthor')?.value;
+            const spCTA = document.getElementById('spCTA')?.value;
+            const spAudience = document.getElementById('spAudience')?.value;
+
+            if (!importText || importText.trim().length < 20) {
+                return alert('Silakan tempel (paste) naskah lengkap hasil generate dari ChatGPT / Claude terlebih dahulu ke dalam kotak naskah di atas.');
+            }
+
+            const parsed = parseChatGPTMarkdown(importText, importTitle, importSubtitle);
+            if (!parsed || parsed.chapters.length === 0) {
+                return alert('Gagal memproses naskah. Pastikan teks berisi konten atau format Bab yang jelas.');
+            }
+
+            // Populate global state
+            window.currentOutlineData = {
+                title: parsed.title,
+                subtitle: parsed.subtitle,
+                outline: parsed.chapters,
+                niche: spNiche || 'Bisnis & Produktivitas',
+                type: 'super-prompt'
+            };
+            window.chaptersContent = parsed.chaptersContent;
+            window.currentNiche = spNiche || 'Bisnis & Produktivitas';
+            window.currentAuthorProfile = spAuthor || '';
+            window.currentCTA = spCTA || '';
+            window.currentAudience = spAudience || '';
+
+            // Synchronize with form inputs for cover generation
+            const inputNiche = document.getElementById('inputNiche');
+            if (inputNiche && spNiche) inputNiche.value = spNiche;
+            const inputAudience = document.getElementById('inputAudience');
+            if (inputAudience && spAudience) inputAudience.value = spAudience;
+            const inputAuthorProfile = document.getElementById('inputAuthorProfile');
+            if (inputAuthorProfile && spAuthor) inputAuthorProfile.value = spAuthor;
+            const inputCTA = document.getElementById('inputCTA');
+            if (inputCTA && spCTA) inputCTA.value = spCTA;
+
+            // Trigger Transition to Chapter Writer View
+            btnProceedToChapters.click();
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            alert(`🎉 Berhasil Mengimpor!\n\nSebanyak ${parsed.chapters.length} Bab telah berhasil dimasukkan ke dalam Editor Ebook Magic.\n\nAnda dapat mengedit tulisan tiap bab di editor, menyalin seluruh bab ke Canvas Editor, memilih Template Desain, dan mengunduh PDF!`);
+        });
+    }
 
 });
