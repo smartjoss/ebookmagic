@@ -353,7 +353,47 @@ app.get('/api/user/profile', async (req, res) => {
             }).then().catch(e => console.error("Error saving profile:", e));
         }
 
+        // Lampirkan API Key yang tersimpan di akun (user_metadata / profile)
+        finalProfile.api_key = user.user_metadata?.api_key || (profile && profile.api_key) || null;
+
         res.json({ success: true, profile: finalProfile });
+    } catch (error) {
+        res.status(400).json({ success: false, error: error.message });
+    }
+});
+
+// 1.1 Save User API Key to Database Account permanently
+app.post('/api/user/save-api-key', async (req, res) => {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+    const { apiKey } = req.body;
+
+    if (!supabase) return res.status(500).json({ error: 'Database is not connected.' });
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+        const userSupabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+            global: { headers: { Authorization: `Bearer ${token}` } }
+        });
+
+        const { data: { user }, error: userError } = await userSupabase.auth.getUser();
+        if (userError || !user) throw new Error('Pengguna tidak ditemukan');
+
+        const cleanKey = (apiKey || '').trim();
+
+        // Simpan ke user_metadata Supabase Auth agar permanen per akun di semua perangkat
+        await userSupabase.auth.updateUser({
+            data: { api_key: cleanKey }
+        });
+
+        // Coba simpan juga ke user_profiles jika tabel memiliki kolom api_key
+        try {
+            await userSupabase.from('user_profiles').update({ api_key: cleanKey }).eq('id', user.id);
+        } catch (e) {
+            // Abaikan jika kolom di tabel belum ada, user_metadata sudah cukup
+        }
+
+        res.json({ success: true, message: 'API Key berhasil disimpan permanen ke akun Anda.' });
     } catch (error) {
         res.status(400).json({ success: false, error: error.message });
     }

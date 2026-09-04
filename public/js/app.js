@@ -240,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Tombol Simpan API Key Manual
         const btnSaveApiKey = document.getElementById('btnSaveApiKey');
         if (btnSaveApiKey) {
-            btnSaveApiKey.addEventListener('click', () => {
+            btnSaveApiKey.addEventListener('click', async () => {
                 const val = inputApiKey.value.trim();
                 inputApiKey.value = val;
                 if (!val) {
@@ -254,6 +254,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 inputApiKey.style.borderColor = '#10B981';
                 btnSaveApiKey.style.background = '#10B981';
                 btnSaveApiKey.innerHTML = '<i class="ph ph-check"></i> Disimpan';
+
+                // Simpan permanen ke akun database agar otomatis terhubung setiap kali login
+                if (window.currentUser && window.currentUser.token) {
+                    try {
+                        await authenticatedFetch('/api/user/save-api-key', {
+                            method: 'POST',
+                            body: JSON.stringify({ apiKey: val })
+                        });
+                    } catch (e) {
+                        console.warn('Gagal sinkron API key ke server:', e);
+                    }
+                }
+
                 setTimeout(() => {
                     apiKeyStatus.style.display = 'none';
                     inputApiKey.style.borderColor = '#ddd';
@@ -3694,6 +3707,31 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (navAgency) navAgency.classList.remove('hidden');
                 } else {
                     if (navAgency) navAgency.classList.add('hidden');
+                }
+
+                // Auto-sync API Key dari profil database akun
+                if (data.profile.api_key) {
+                    const cleanKey = data.profile.api_key.trim();
+                    window.userApiKey = cleanKey;
+                    localStorage.setItem('ebookMagicApiKey', cleanKey);
+                    const inputApiKey = document.getElementById('inputApiKey');
+                    if (inputApiKey) {
+                        inputApiKey.value = cleanKey;
+                    }
+                    const apiKeyStatus = document.getElementById('apiKeyStatus');
+                    if (apiKeyStatus) {
+                        apiKeyStatus.style.display = 'inline-block';
+                        apiKeyStatus.innerHTML = '<i class="ph-fill ph-check-circle"></i> Terhubung';
+                        setTimeout(() => {
+                            apiKeyStatus.style.display = 'none';
+                        }, 2500);
+                    }
+                } else if (window.userApiKey) {
+                    // Jika di database belum tersimpan tapi di browser lokal ada, sinkronkan ke database
+                    authenticatedFetch('/api/user/save-api-key', {
+                        method: 'POST',
+                        body: JSON.stringify({ apiKey: window.userApiKey })
+                    }).catch(() => {});
                 }
             }
         } catch (err) {
