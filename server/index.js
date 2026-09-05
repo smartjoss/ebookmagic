@@ -919,103 +919,209 @@ app.post('/api/generate-image-prompt', async (req, res) => {
     }
 });
 
-// API Endpoint for generating Master Super-Prompt via AI
-app.post('/api/generate-super-prompt', async (req, res) => {
-    const { niche, audience, painPoint, promise, formula, scale, author, cta } = req.body;
-    const apiKey = (req.body.apiKey || '').trim();
-    const isGemini = apiKey && (apiKey.startsWith('AIza') || apiKey.startsWith('AQ') || !apiKey.startsWith('sk-'));
+// Helper to build 12-parameter Master Super-Prompt
+function buildMasterSuperPrompt(params) {
+    const {
+        niche = 'Bisnis Online, Digital Marketing & Jualan',
+        format = 'Lead Magnet Gratis (List Building Database & Trust)',
+        title = 'Blueprint Content Profit',
+        subtitle = 'Panduan Praktis Mengubah Follower Menjadi Pembeli Setia',
+        audience = 'Pemula gaptek, pebisnis online, reseller & kreator',
+        author = 'Praktisi & Konsultan Ahli',
+        painPoint = 'Sering kehabisan ide konten dan sepi penjualan',
+        chapterCount = '5',
+        cta = 'Gabung ke Grup Komunitas WhatsApp VIP & Dapatkan Mentoring Gratis',
+        offerLink = '',
+        chapterOutline = '',
+        tone = 'Santai Hangat & Mudah Dipahami Pemula'
+    } = params;
 
-    const formulaMap = {
-        'storytelling': 'Storytelling & Hypnotic Copy (Kisah nyata emosional, menggugah rasa, memikat, dan menginspirasi pembaca untuk bertindak)',
-        'pas': 'Problem - Agitate - Solution / PAS Framework (Bedah masalah secara tajam hingga ke akar kepedihan, lalu berikan solusi praktis tuntas)',
-        'quickwin': 'Step-by-Step Blueprint & Quick-Wins (Panduan teknis berurutan langkah demi langkah yang langsung bisa dipraktekkan)',
-        'islamic': 'Nilai Islami & Berkah Bisnis (Pendekatan nilai syariah, mindset keberkahan, etika amanah, dan hasil nyata)',
-        'authority': 'B2B Authority & Masterclass (Materi mendalam, data analisis, framework profesional, dan standar industri)'
-    };
-    const formulaDesc = formulaMap[formula] || 'Praktis & Terstruktur';
+    let outlineSection = '';
+    if (chapterOutline && chapterOutline.trim()) {
+        outlineSection = `[KERANGKA & RINCIAN BAB YANG WAJIB DIURAIKAN SECARA PRESISI]\n${chapterOutline.trim()}\n`;
+    } else {
+        const count = parseInt(chapterCount, 10) || 5;
+        const defaultChapters = [];
+        for (let i = 1; i <= count; i++) {
+            defaultChapters.push(`Bab ${i}: Pembahasan Mendalam Bagian ${i}`);
+        }
+        outlineSection = `[ESTIMASI JUMLAH BAB]\nTotal ${count} Bab Inti + Kata Pengantar + Bab Penutup & Langkah Aksi.\n`;
+    }
 
-    const fallbackPrompt = `Peran: Anda adalah seorang Ghostwriter Ebook Best-Seller Internasional, Master Copywriter, dan Konsultan Edukasi Digital Terbaik.
-Tugas Anda: Tulis naskah buku elektronik (eBook) LENGKAP, MENDALAM, DAGING SEMUA (High Value, tanpa basa-basi), dan sangat siap dibaca dari awal hingga akhir.
+    const ctaCombined = offerLink ? `${cta} (Akses link: ${offerLink})` : cta;
 
-[INFORMASI & TARGET PROYEK EBOOK]
-- Topik / Niche Utama: ${niche}
-- Target Pembaca Spesifik: ${audience || 'Pemula hingga tingkat menengah yang ingin transformasi nyata'}
-- Masalah / Pain Point Utama Pembaca: ${painPoint || 'Kurang pemahaman terstruktur, sering bingung mulai dari mana, butuh panduan praktis'}
-- Solusi & Janji Transformasi Ebook: ${promise || 'Mendapatkan blueprint komprehensif yang bisa langsung dieksekusi dengan hasil terbukti'}
-- Formula Penulisan yang Digunakan: ${formulaDesc}
-- Jumlah Bab: ${scale || 5} Bab Lengkap (Mulai dari Pengantar, Bab 1 s.d. Bab ${scale || 5}, hingga Penutup)
-- Profil / Sudut Pandang Penulis: ${author || 'Praktisi berpengalaman yang ramah, kredibel, dan solutif'}
-- Call to Action (CTA) di Akhir Ebook: ${cta || 'Terapkan strategi ini sekarang dan hubungi kami untuk langkah selanjutnya'}
+    return `Peran: Anda adalah seorang Ghostwriter Ebook Best-Seller Internasional, Master Copywriter, dan Arsitek Lead Magnet Berkonversi Tinggi.
+Tugas Anda: Tulis naskah lengkap buku elektronik / Lead Magnet (Daging Semua, High-Value, Zero Fluff, Terstruktur & Sangat Mengalir) siap diterbitkan ke format PDF / Google Docs / Canva berdasarkan 12 Parameter Briefing berikut:
 
-[STRUKTUR PENULISAN WAJIB DIIKUTI]
-Tulis seluruh naskah menggunakan format Markdown standar yang rapi dengan struktur berikut:
+============================================================
+[12 PARAMETER BRIEFING EBOOK & LEAD MAGNET]
+============================================================
+1. 🏷️ Kategori / Niche: ${niche}
+2. 🎯 Format & Tujuan Utama: ${format}
+3. 🔥 Judul Ebook (Hook Magnetik): ${title}
+4. 💡 Sub-Judul / Janji Manfaat: ${subtitle}
+5. 🎯 Target Pembaca / Audiens: ${audience}
+6. ✍️ Profil Penulis & Branding: ${author}
+7. ⚠️ Masalah Frustasi Terbesar (Pain Point): ${painPoint}
+8. 🔢 Jumlah Bab Inti Pembahasan: ${chapterCount} Bab
+9. 📢 Call to Action (CTA) di Bab Penutup: ${cta}
+10. 🔗 Link Penawaran / Next Step Offer: ${offerLink || 'Akan disematkan penulis'}
+11. 📚 Kerangka Poin-Poin Bab:
+${chapterOutline ? chapterOutline.trim() : 'Tuliskan secara komprehensif dari Bab 1 hingga Bab ' + chapterCount}
+12. 💬 Gaya Bahasa (Tone of Voice): ${tone}
 
-# [Tulis Judul Ebook yang Sangat Menarik, Menjual, & Memikat]
-## [Tulis Subjudul Penjelas yang Menjanjikan Transformasi Cepat]
+============================================================
+[STRUKTUR PENULISAN NASKAH WAJIB (MARKDOWN STANDAR)]
+============================================================
+Tuliskan seluruh naskah menggunakan format Markdown standar yang rapi persis seperti hierarki berikut:
+
+# ${title}
+## ${subtitle}
 
 ### Kata Pengantar
-(Tulis kata pengantar yang menyentuh emosi pembaca, mengapa buku ini ditulis, dan gambaran besar isi buku)
+(Tulis pengantar emosional yang menyentuh masalah pembaca, memperkenalkan ${author}, dan memberi gambaran peta transformasi di dalam ebook ini.)
 
-### Bab 1: [Judul Bab 1 yang Menarik]
-(Tulis isi bab secara lengkap, mendalam, sertakan poin-poin penting, studi kasus/contoh nyata, dan 3 langkah aksi praktis)
+${outlineSection}
+(Uraikan setiap Bab secara utuh dan tuntas. Setiap Bab diawali dengan heading ### Bab [Nomor]: [Judul Bab]. Berikan studi kasus nyata, contoh aplikatif, dan poin aksi konkret step-by-step.)
 
-### Bab 2: [Judul Bab 2]
-(Tulis isi bab secara tuntas dan mendalam...)
+### Bab Penutup & Langkah Aksi Berikutnya
+(Rangkum seluruh materi, berikan dorongan aksi emosional, dan tutup dengan Call To Action tegas: "${ctaCombined}")
 
-(Lanjutkan menulis seluruh Bab sampai Bab ${scale || 5} secara berurutan dan lengkap)
+============================================================
+[ATURAN EMAS PENULISAN]
+============================================================
+1. TULIS SECARA LENGKAP & SELESAI: Jangan pernah memberikan ringkasan singkat atau "lanjutkan sendiri". Tulis setiap paragraf naskah secara matang dan padat daging.
+2. Gaya bahasa WAJIB mengikuti tone: "${tone}". Natural, bersahabat, mengalir enak dibaca, dan tidak terdengar kaku seperti robot AI.
+3. Gunakan variasi visual Markdown: heading (### untuk nama bab, #### untuk subtopik), bullet list (-), nomor urut (1.), dan **cetak tebal** pada kata-kata kunci penting agar nyaman dibaca.
+4. Pastikan solusi menjawab langsung keresahan utama: "${painPoint}".
 
-### Penutup & Langkah Aksi Berikutnya
-(Rangkuman inti, kata-kata penutup penyemangat, dan ajakan bertindak / Call To Action: ${cta || 'Mulai eksekusi sekarang'})
+Silakan mulai tuliskan naskah lengkapnya sekarang dari Judul hingga Bab Penutup!`;
+}
 
-[ATURAN PENULISAN]
-1. Tulis naskah SECARA LENGKAP dan SELESAI (bukan sekadar kerangka/rangkuman, tulis seluruh isi paragrafnya secara tuntas).
-2. Gunakan Bahasa Indonesia yang natural, mengalir, profesional, persuasif, dan mudah dipahami.
-3. Hindari kalimat klise atau basa-basi kosong. Berikan tips konkret, framework langkah-demi-langkah (Step 1, Step 2, Step 3), dan insight yang aplikatif.
-4. Gunakan heading (### untuk nama Bab, #### untuk subtopik), poin bullet (- ...), nomor (1. ...), dan format tebal (**kata kunci**) agar naskah sangat nyaman dibaca.
+// API Endpoint for generating Master Super-Prompt
+app.post('/api/generate-super-prompt', async (req, res) => {
+    try {
+        const masterPrompt = buildMasterSuperPrompt(req.body);
+        const { title = '', subtitle = '' } = req.body;
+        res.json({
+            prompt: masterPrompt,
+            title: title || 'Blueprint Ebook Best-Seller',
+            subtitle: subtitle || 'Panduan Komprehensif Berbasis 12 Parameter Briefing'
+        });
+    } catch (error) {
+        console.error('Super-Prompt generation error:', error.message);
+        res.status(500).json({ error: 'Gagal meracik Super-Prompt: ' + error.message });
+    }
+});
 
-Silakan mulai tulis naskah lengkapnya sekarang dari Judul hingga Penutup!`;
+// API Endpoint for Generating Full Manuscript Directly in Ebook Magic
+app.post('/api/generate-full-manuscript', async (req, res) => {
+    const {
+        niche = 'Bisnis Online & Digital Marketing',
+        format = 'Lead Magnet Gratis',
+        title = 'Blueprint Ebook Best-Seller',
+        subtitle = 'Panduan Langkah demi Langkah Menghasilkan Penjualan',
+        audience = 'Pemula, pebisnis online & kreator',
+        author = 'Praktisi Digital Marketing',
+        painPoint = 'Bingung cara mulai dan sepi penjualan',
+        chapterCount = '5',
+        cta = 'Hubungi kami via WhatsApp untuk bimbingan langsung',
+        offerLink = '',
+        chapterOutline = '',
+        tone = 'Santai Hangat & Mudah Dipahami Pemula'
+    } = req.body;
 
+    const apiKey = (req.body.apiKey || '').trim();
+    const isGemini = apiKey && (apiKey.startsWith('AIza') || apiKey.startsWith('AQ') || !apiKey.startsWith('sk-'));
+    const totalChapters = parseInt(chapterCount, 10) || 5;
+    const ctaCombined = offerLink ? `${cta} (Link: ${offerLink})` : cta;
+
+    // Fallback Mock if no API key provided
     if (!apiKey && !openai) {
-        return res.json({ prompt: fallbackPrompt, title: niche, subtitle: promise });
+        let outlineList = [];
+        if (chapterOutline && chapterOutline.trim()) {
+            outlineList = chapterOutline.trim().split('\n').map(l => l.trim()).filter(Boolean);
+        }
+        if (outlineList.length === 0) {
+            outlineList = [
+                `Bab 1: Mindset & Fondasi Utama ${niche}`,
+                `Bab 2: Membedah Masalah ${painPoint}`,
+                `Bab 3: Blueprint Solusi Praktis Langkah Demi Langkah`,
+                `Bab 4: Studi Kasus Nyata & Implementasi Cepat`,
+                `Bab 5: Strategi Scaling & Action Plan Siap Praktik`
+            ];
+        }
+
+        const mockManuscript = `# ${title}
+## ${subtitle}
+
+### Kata Pengantar
+Selamat datang di buku panduan **${title}**. Buku ini dirancang khusus untuk Anda—${audience}—yang selama ini merasakan betapa frustasinya menghadapi masalah ${painPoint}.
+
+Nama saya **${author}**, dan melalui naskah ini saya ingin membagikan metode terstruktur yang terbukti berhasil. Bacalah setiap bab dengan teliti dan langsung praktikkan setiap rekomendasi yang diberikan.
+
+${outlineList.map((ch, idx) => `### ${ch.startsWith('Bab') ? ch : 'Bab ' + (idx + 1) + ': ' + ch}
+Di bagian ini, kita akan membahas secara mendalam pilar penting dalam ${niche}. Banyak orang gagal karena melewatkan fondasi dasar ini.
+
+#### 1. Pemahaman Kunci
+Untuk mengatasi ${painPoint}, langkah pertama adalah merubah pola pikir dan menyelaraskan strategi kerja Anda. Fokus pada tindakan nyata yang mendatangkan dampak terbesar.
+
+#### 2. Langkah Praktik Hari Ini
+- **Langkah 1:** Identifikasi titik kebocoran utama pada proses Anda saat ini.
+- **Langkah 2:** Terapkan formula percepatan yang telah kami susun secara konsisten.
+- **Langkah 3:** Pantau kemajuan Anda setiap hari dan lakukan evaluasi mingguan.
+
+> **Catatan Penting:** Keberhasilan tidak ditentukan oleh seberapa banyak teori yang Anda baca, melainkan seberapa cepat Anda mengeksekusi apa yang Anda pelajari.
+`).join('\n\n')}
+
+### Bab Penutup & Langkah Aksi Berikutnya
+Terima kasih telah membaca buku ini hingga selesai. Perjalanan Anda untuk menaklukkan ${painPoint} baru saja dimulai. Jadikan panduan ini sebagai kompas harian Anda.
+
+**Langkah Selanjutnya Untuk Anda:**
+${ctaCombined}
+`;
+
+        return setTimeout(() => {
+            res.json({
+                title,
+                subtitle,
+                manuscript: mockManuscript
+            });
+        }, 2500);
     }
 
     try {
-        const aiPrompt = `
-        Anda adalah Master Copywriter & Prompt Engineer Legendaris kelas dunia.
-        Tugas Anda: Buat sebuah "Master Super-Prompt Ebook" dalam Bahasa Indonesia yang sangat mendalam dan siap disalin ke ChatGPT/Claude untuk menghasilkan naskah eBook Best-Seller berkualitas tinggi.
-        
-        Data Proyek:
-        - Topik/Niche: ${niche}
-        - Target Pembaca: ${audience || 'Target pembaca relevan'}
-        - Pain Point Utama: ${painPoint || 'Masalah utama pembaca'}
-        - Solusi/Janji Ebook: ${promise || 'Hasil nyata yang dijanjikan'}
-        - Formula Penulisan: ${formulaDesc}
-        - Skala/Jumlah Bab: ${scale || 5} Bab
-        - Profil Penulis: ${author || 'Praktisi ahli'}
-        - Call to Action: ${cta || 'Ajakan bertindak'}
+        const masterPrompt = buildMasterSuperPrompt(req.body);
+        const systemPrompt = `Anda adalah Ghostwriter Best-Seller & Arsitek Ebook Indonesia paling berpengalaman. Tuliskan naskah lengkap eBook dalam format Markdown standar (# Judul, ## Subjudul, ### Kata Pengantar, ### Bab 1, ### Bab 2, dst, ### Bab Penutup & Langkah Aksi). Jangan pernah memotong tulisan. Tulis secara tuntas, padat daging, inspiratif, dan sangat bernilai tinggi.`;
 
-        Kembalikan HANYA teks prompt naskah lengkapnya saja yang siap di-copy dan langsung dijalankan di ChatGPT/Claude.
-        `;
-
-        let generatedPrompt;
+        let manuscript;
         if (isGemini) {
-            const rawText = await generateWithGemini(apiKey, aiPrompt, { temperature: 0.5 });
-            generatedPrompt = rawText.trim();
+            const rawText = await generateWithGemini(apiKey, `${systemPrompt}\n\n${masterPrompt}`, { temperature: 0.5 });
+            manuscript = rawText.trim();
         } else {
             let activeOpenai = apiKey ? new OpenAI({ apiKey: apiKey }) : openai;
             const response = await activeOpenai.chat.completions.create({
-                model: 'gpt-3.5-turbo',
-                messages: [{ role: 'user', content: aiPrompt }],
+                model: 'gpt-4o-mini',
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: masterPrompt }
+                ],
                 temperature: 0.5
             });
-            generatedPrompt = response.choices[0].message.content.trim();
+            manuscript = response.choices[0].message.content.trim();
         }
 
-        res.json({ prompt: generatedPrompt || fallbackPrompt, title: niche, subtitle: promise });
+        // Clean any code block fences if returned
+        manuscript = manuscript.replace(/^```markdown\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
+
+        res.json({
+            title,
+            subtitle,
+            manuscript
+        });
     } catch (error) {
-        console.error('Super-Prompt AI Error:', error.message);
-        // Fallback to template prompt on error
-        res.json({ prompt: fallbackPrompt, title: niche, subtitle: promise });
+        console.error('Generate Full Manuscript Error:', error.message);
+        res.status(500).json({ error: 'Kesalahan AI saat generate naskah: ' + error.message });
     }
 });
 

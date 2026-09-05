@@ -4172,114 +4172,214 @@ document.addEventListener('DOMContentLoaded', () => {
     if (tabModeInternal) tabModeInternal.addEventListener('click', () => switchCreationMode('internal'));
     if (tabModeSuperPrompt) tabModeSuperPrompt.addEventListener('click', () => switchCreationMode('superprompt'));
 
-    // --- Generate Master Super-Prompt Action (Dual Mode: Instant & AI) ---
-    window.generateSuperPromptAction = async function(useAI = false) {
-        const spNicheInput = document.getElementById('spNiche');
-        const niche = spNicheInput ? spNicheInput.value.trim() : '';
-        const audience = document.getElementById('spAudience')?.value?.trim() || '';
-        const painPoint = document.getElementById('spPainPoint')?.value?.trim() || '';
-        const promise = document.getElementById('spPromise')?.value?.trim() || '';
-        const formula = document.getElementById('spFormula')?.value || 'storytelling';
-        const scale = document.getElementById('spScale')?.value || '5';
-        const author = document.getElementById('spAuthor')?.value?.trim() || '';
-        const cta = document.getElementById('spCTA')?.value?.trim() || '';
+    // --- 12-Parameter Ebook & Lead Magnet Architect (Mode 2) ---
+    window.handleSpNicheChange = window.handleSpNicheChange || function() {
+        const sel = document.getElementById('spNiche');
+        const customInput = document.getElementById('spNicheCustom');
+        if (!sel || !customInput) return;
+        if (sel.value === 'custom') {
+            customInput.classList.remove('hidden');
+            customInput.focus();
+        } else {
+            customInput.classList.add('hidden');
+        }
+    };
 
-        if (!niche) {
-            alert('⚠️ Mohon masukkan Topik / Niche eBook Anda terlebih dahulu.');
-            if (spNicheInput) spNicheInput.focus();
+    window.getSpBriefingData = window.getSpBriefingData || function() {
+        const nicheSel = document.getElementById('spNiche');
+        let nicheVal = nicheSel ? nicheSel.value : '';
+        if (nicheVal === 'custom') {
+            const customVal = document.getElementById('spNicheCustom')?.value?.trim();
+            nicheVal = customVal || 'Bisnis & Pemasaran Online';
+        }
+        const format = document.getElementById('spFormat')?.value || 'Lead Magnet Gratis';
+        const title = document.getElementById('spTitle')?.value?.trim() || '';
+        const subtitle = document.getElementById('spSubtitle')?.value?.trim() || '';
+        const audience = document.getElementById('spAudience')?.value?.trim() || '';
+        const author = document.getElementById('spAuthor')?.value?.trim() || '';
+        const painPoint = document.getElementById('spPainPoint')?.value?.trim() || '';
+        const chapterCount = document.getElementById('spChapterCount')?.value || '5';
+        const cta = document.getElementById('spCTA')?.value?.trim() || '';
+        const offerLink = document.getElementById('spOfferLink')?.value?.trim() || '';
+        const chapterOutline = document.getElementById('spChapterOutline')?.value?.trim() || '';
+        const tone = document.getElementById('spTone')?.value || 'Santai Hangat & Mudah Dipahami Pemula';
+
+        return {
+            niche: nicheVal,
+            format,
+            title,
+            subtitle,
+            audience,
+            author,
+            painPoint,
+            chapterCount,
+            cta,
+            offerLink,
+            chapterOutline,
+            tone
+        };
+    };
+
+    window.generateMagneticTitlesAI = window.generateMagneticTitlesAI || async function() {
+        const data = window.getSpBriefingData();
+        const btn = document.getElementById('btnSpGenTitle');
+        const suggestionsBox = document.getElementById('spTitleSuggestions');
+        if (!data.niche) {
+            alert('⚠️ Mohon pilih atau masukkan Kategori / Niche terlebih dahulu.');
             return;
         }
 
-        const btnAI = document.getElementById('btnGenerateSuperPromptAI');
+        const origText = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Meracik Judul AI...';
+        }
+
+        try {
+            const apiKey = window.userApiKey || localStorage.getItem('ebookMagicApiKey') || '';
+            const res = await fetch('/api/generate-titles', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    niche: data.niche,
+                    audience: data.audience || 'Target pembaca potensial',
+                    goal: data.painPoint || 'Meningkatkan penjualan dan konversi',
+                    apiKey
+                })
+            });
+            const json = await res.json();
+            const titles = json.titles || [];
+
+            if (suggestionsBox && titles.length > 0) {
+                suggestionsBox.innerHTML = '<div style="font-size: 12px; font-weight: 700; color: #F59E0B; margin-bottom: 8px; text-transform: uppercase;">✨ Klik salah satu ide judul berikut untuk langsung menggunakannya:</div>';
+                const listContainer = document.createElement('div');
+                listContainer.style.display = 'flex';
+                listContainer.style.flexDirection = 'column';
+                listContainer.style.gap = '8px';
+
+                titles.forEach((item) => {
+                    const card = document.createElement('div');
+                    card.style.cssText = 'padding: 10px 14px; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(245,158,11,0.25); cursor: pointer; transition: all 0.2s ease;';
+                    card.innerHTML = `<div style="font-size: 13.5px; font-weight: 700; color: #fff;">🔥 ${item.title}</div>` +
+                                     (item.subtitle ? `<div style="font-size: 12px; color: #CBD5E1; margin-top: 3px;">${item.subtitle}</div>` : '') +
+                                     (item.hook ? `<div style="font-size: 11px; color: #94A3B8; margin-top: 4px; font-style: italic;">💡 ${item.hook}</div>` : '');
+                    card.onmouseover = () => { card.style.borderColor = '#F59E0B'; card.style.background = 'rgba(245,158,11,0.12)'; };
+                    card.onmouseout = () => { card.style.borderColor = 'rgba(245,158,11,0.25)'; card.style.background = 'rgba(0,0,0,0.3)'; };
+                    card.onclick = () => {
+                        const titleInput = document.getElementById('spTitle');
+                        const subtitleInput = document.getElementById('spSubtitle');
+                        if (titleInput) titleInput.value = item.title;
+                        if (subtitleInput && item.subtitle) subtitleInput.value = item.subtitle;
+                        suggestionsBox.classList.add('hidden');
+                    };
+                    listContainer.appendChild(card);
+                });
+                suggestionsBox.appendChild(listContainer);
+                suggestionsBox.classList.remove('hidden');
+            }
+        } catch (err) {
+            console.error('Magnetic Title Error:', err);
+            alert('Gagal menghasilkan judul via AI. Silakan coba lagi atau masukkan judul secara manual.');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origText || '<i class="ph ph-sparkle"></i> ✨ Buat Ide Judul Ebook Magnetik (AI)';
+            }
+        }
+    };
+
+    window.generateCustomOutlineAI = window.generateCustomOutlineAI || async function() {
+        const data = window.getSpBriefingData();
+        const btn = document.getElementById('btnSpGenOutline');
+        const outlineArea = document.getElementById('spChapterOutline');
+
+        const origText = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Menyusun Kerangka AI...';
+        }
+
+        try {
+            const apiKey = window.userApiKey || localStorage.getItem('ebookMagicApiKey') || '';
+            const count = parseInt(data.chapterCount, 10) || 5;
+            const typeVal = count <= 5 ? 'ebook' : (count <= 10 ? 'panduan' : 'masterclass');
+
+            const res = await fetch('/api/generate-outline', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    niche: data.niche,
+                    audience: data.audience || 'Pembaca umum',
+                    type: typeVal,
+                    selectedTitle: data.title || 'Panduan Ebook',
+                    selectedSubtitle: data.subtitle || '',
+                    authorProfile: data.author || '',
+                    cta: data.cta || '',
+                    apiKey
+                })
+            });
+            const json = await res.json();
+            const outlineArr = json.outline || [];
+
+            if (outlineArea && outlineArr.length > 0) {
+                outlineArea.value = outlineArr.map((item, idx) => {
+                    return item.startsWith('Bab') ? item : (`Bab ${idx + 1}: ${item}`);
+                }).join('\n');
+            }
+        } catch (err) {
+            console.error('Outline generation error:', err);
+            if (outlineArea) {
+                const c = parseInt(data.chapterCount, 10) || 5;
+                const def = [];
+                for (let i = 1; i <= c; i++) {
+                    def.push(`Bab ${i}: Pembahasan Strategis Bagian ${i}`);
+                }
+                outlineArea.value = def.join('\n');
+            }
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origText || '<i class="ph ph-sparkle"></i> ✨ Buatkan Draf Outline Bab (AI)';
+            }
+        }
+    };
+
+    // --- Generate Master Super-Prompt Action ---
+    window.generateSuperPromptAction = async function() {
+        const data = window.getSpBriefingData();
+        const btn = document.getElementById('btnGenerateSuperPrompt');
         const spPromptOutput = document.getElementById('spPromptOutput');
         const spResultContainer = document.getElementById('spResultContainer');
         const spImportTitle = document.getElementById('spImportTitle');
         const spImportSubtitle = document.getElementById('spImportSubtitle');
 
-        if (useAI) {
-            if (btnAI) {
-                btnAI.disabled = true;
-                btnAI.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Meracik dengan AI Gemini...';
+        const origText = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Meracik Master Super-Prompt...';
+        }
+
+        try {
+            const apiKey = window.userApiKey || localStorage.getItem('ebookMagicApiKey') || '';
+            const res = await fetch('/api/generate-super-prompt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...data, apiKey })
+            });
+            const json = await res.json();
+            if (json && json.prompt) {
+                if (spPromptOutput) spPromptOutput.value = json.prompt;
+                if (spImportTitle) spImportTitle.value = data.title || json.title || 'Blueprint Ebook';
+                if (spImportSubtitle) spImportSubtitle.value = data.subtitle || json.subtitle || '';
             }
-            try {
-                const apiKey = window.userApiKey || localStorage.getItem('ebookMagicApiKey') || '';
-                const res = await fetch('/api/generate-super-prompt', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ niche, audience, painPoint, promise, formula, scale, author, cta, apiKey })
-                });
-                const data = await res.json();
-                if (data.prompt) {
-                    if (spPromptOutput) spPromptOutput.value = data.prompt;
-                    if (spImportTitle && (!spImportTitle.value || spImportTitle.value === niche)) spImportTitle.value = data.title || niche;
-                    if (spImportSubtitle && !spImportSubtitle.value) spImportSubtitle.value = data.subtitle || promise;
-                }
-            } catch (err) {
-                console.error('Super-Prompt AI Error:', err);
-                // Fallback to instant prompt on error
-                window.generateSuperPromptAction(false);
-                return;
-            } finally {
-                if (btnAI) {
-                    btnAI.disabled = false;
-                    btnAI.innerHTML = '<i class="ph ph-sparkle"></i> 🤖 Racik dengan AI Gemini';
-                }
+        } catch (err) {
+            console.error('Super-Prompt generation error:', err);
+            alert('Gagal meracik prompt. Periksa koneksi internet Anda.');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origText || '<i class="ph ph-robot"></i> 🚀 Generate Super-Prompt untuk ChatGPT';
             }
-        } else {
-            const formulaMap = {
-                'storytelling': 'Storytelling & Hypnotic Copy (Kisah nyata yang emosional, menyentuh hati, memikat, dan menginspirasi pembaca untuk bertindak)',
-                'pas': 'Problem - Agitate - Solution / PAS Framework (Bedah masalah secara tajam hingga ke akar kepedihan, lalu berikan solusi praktis tuntas)',
-                'quickwin': 'Step-by-Step Blueprint & Quick-Wins (Panduan teknis berurutan langkah demi langkah yang langsung bisa dipraktekkan hari ini)',
-                'islamic': 'Nilai Islami & Berkah Bisnis (Pendekatan nilai syariah, mindset keberkahan, etika amanah, dan hasil nyata)',
-                'authority': 'B2B Authority & Masterclass (Materi mendalam, data analisis, framework profesional, dan standar industri)'
-            };
-
-            const formulaDesc = formulaMap[formula] || 'Praktis, Terstruktur & Berbobot';
-
-            const masterPrompt = `Peran: Anda adalah seorang Ghostwriter Ebook Best-Seller Internasional, Master Copywriter, dan Konsultan Edukasi Digital Terbaik.
-Tugas Anda: Tulis naskah buku elektronik (eBook) LENGKAP, MENDALAM, DAGING SEMUA (High Value, tanpa basa-basi), dan sangat siap dibaca dari awal hingga akhir.
-
-[INFORMASI & TARGET PROYEK EBOOK]
-- Topik / Niche Utama: ${niche}
-- Target Pembaca Spesifik: ${audience || 'Pemula hingga tingkat menengah yang ingin transformasi nyata'}
-- Masalah / Pain Point Utama Pembaca: ${painPoint || 'Kurang pemahaman terstruktur, sering bingung mulai dari mana, butuh panduan praktis'}
-- Solusi & Janji Transformasi Ebook: ${promise || 'Mendapatkan blueprint komprehensif yang bisa langsung dieksekusi dengan hasil terbukti'}
-- Formula Penulisan yang Digunakan: ${formulaDesc}
-- Jumlah Bab: ${scale} Bab Lengkap (Mulai dari Pengantar, Bab 1 s.d. Bab ${scale}, hingga Penutup)
-- Profil / Sudut Pandang Penulis: ${author || 'Praktisi berpengalaman yang ramah, kredibel, dan solutif'}
-- Call to Action (CTA) di Akhir Ebook: ${cta || 'Terapkan strategi ini sekarang dan hubungi kami untuk langkah selanjutnya'}
-
-[STRUKTUR PENULISAN WAJIB DIIKUTI]
-Tulis seluruh naskah menggunakan format Markdown standar yang rapi dengan struktur berikut:
-
-# [Tulis Judul Ebook yang Sangat Menarik, Menjual, & Memikat]
-## [Tulis Subjudul Penjelas yang Menjanjikan Transformasi Cepat]
-
-### Kata Pengantar
-(Tulis kata pengantar yang menyentuh emosi pembaca, mengapa buku ini ditulis, dan gambaran besar isi buku)
-
-### Bab 1: [Judul Bab 1 yang Menarik]
-(Tulis isi bab secara lengkap, mendalam, sertakan poin-poin penting, studi kasus/contoh nyata, dan 3 langkah aksi praktis)
-
-### Bab 2: [Judul Bab 2]
-(Tulis isi bab secara tuntas dan mendalam...)
-
-(Lanjutkan menulis seluruh Bab sampai Bab ${scale} secara berurutan dan lengkap)
-
-### Penutup & Langkah Aksi Berikutnya
-(Rangkuman inti, kata-kata penutup penyemangat, dan ajakan bertindak / Call To Action: ${cta || 'Mulai eksekusi sekarang'})
-
-[ATURAN PENULISAN]
-1. Tulis naskah SECARA LENGKAP dan SELESAI (bukan sekadar kerangka/rangkuman, tulis seluruh isi paragrafnya secara tuntas).
-2. Gunakan Bahasa Indonesia yang natural, mengalir, profesional, persuasif, dan mudah dipahami.
-3. Hindari kalimat klise atau basa-basi kosong. Berikan tips konkret, framework langkah-demi-langkah (Step 1, Step 2, Step 3), dan insight yang aplikatif.
-4. Gunakan heading (### untuk nama Bab, #### untuk subtopik), poin bullet (- ...), nomor (1. ...), dan format tebal (**kata kunci**) agar naskah sangat nyaman dibaca.
-
-Silakan mulai tulis naskah lengkapnya sekarang dari Judul hingga Penutup!`;
-
-            if (spPromptOutput) spPromptOutput.value = masterPrompt;
-            if (spImportTitle && !spImportTitle.value && niche) spImportTitle.value = niche;
-            if (spImportSubtitle && !spImportSubtitle.value && promise) spImportSubtitle.value = promise;
         }
 
         if (spResultContainer) {
@@ -4289,10 +4389,144 @@ Silakan mulai tulis naskah lengkapnya sekarang dari Judul hingga Penutup!`;
         }
     };
 
+    // --- Generate Full Manuscript Directly Action ---
+    window.generateManuscriptDirectlyAction = async function() {
+        const data = window.getSpBriefingData();
+        if (!data.title && !data.niche) {
+            alert('⚠️ Mohon tentukan Judul Ebook atau Kategori Niche Anda terlebih dahulu.');
+            return;
+        }
+
+        const btnDirect = document.getElementById('btnGenerateManuscriptDirect');
+        const progressBox = document.getElementById('spDirectGenProgress');
+        const statusText = document.getElementById('spDirectGenStatusText');
+
+        if (btnDirect) btnDirect.disabled = true;
+        if (progressBox) {
+            progressBox.classList.remove('hidden');
+            progressBox.style.display = 'block';
+        }
+        if (statusText) statusText.innerText = 'AI sedang menyusun seluruh naskah ebook berdasarkan 12 parameter briefing... Mohon tunggu sebentar.';
+
+        try {
+            const apiKey = window.userApiKey || localStorage.getItem('ebookMagicApiKey') || '';
+            const res = await fetch('/api/generate-full-manuscript', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...data, apiKey })
+            });
+            const json = await res.json();
+
+            if (!json || !json.manuscript) {
+                throw new Error(json.error || 'Naskah kosong');
+            }
+
+            if (statusText) statusText.innerText = '✅ Naskah selesai disusun! Sedang memformat bab ke dalam editor...';
+
+            const finalTitle = json.title || data.title || 'Blueprint Ebook';
+            const finalSubtitle = json.subtitle || data.subtitle || '';
+
+            // Parse markdown into chapters
+            let parsed = typeof window.parseChatGPTMarkdown === 'function' 
+                ? window.parseChatGPTMarkdown(json.manuscript, finalTitle, finalSubtitle)
+                : null;
+
+            if (!parsed || !parsed.chapters || parsed.chapters.length === 0) {
+                parsed = {
+                    title: finalTitle,
+                    subtitle: finalSubtitle,
+                    chapters: ['Bab 1: Isi Utama'],
+                    chaptersContent: { 'Bab 1: Isi Utama': json.manuscript }
+                };
+            }
+
+            window.currentOutlineData = {
+                title: parsed.title,
+                subtitle: parsed.subtitle,
+                outline: parsed.chapters,
+                niche: data.niche,
+                type: 'direct-manuscript'
+            };
+            window.chaptersContent = parsed.chaptersContent;
+            window.currentNiche = data.niche;
+            window.currentAuthorProfile = data.author;
+            window.currentCTA = data.cta;
+            window.currentAudience = data.audience;
+
+            // Transition directly to chapter writer view
+            const generatorView = document.getElementById('generatorView');
+            const chapterWriterView = document.getElementById('chapterWriterView');
+            const writerOutlineList = document.getElementById('writerOutlineList');
+
+            if (generatorView) generatorView.classList.add('hidden');
+            if (chapterWriterView) chapterWriterView.classList.remove('hidden');
+
+            if (!quill && typeof Quill !== 'undefined') {
+                quill = new Quill('#quillEditor', {
+                    theme: 'snow',
+                    placeholder: 'Isi bab Anda akan tampil di sini...',
+                    modules: {
+                        toolbar: [
+                            [{ 'header': [1, 2, 3, false] }],
+                            ['bold', 'italic', 'underline', 'strike'],
+                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                            [{ 'align': [] }],
+                            ['link', 'image'],
+                            ['clean']
+                        ]
+                    }
+                });
+            }
+
+            if (writerOutlineList) {
+                writerOutlineList.innerHTML = '';
+                parsed.chapters.forEach((chap, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'writer-outline-item';
+                    if (index === 0) li.classList.add('active');
+                    li.dataset.chapter = chap;
+                    li.innerHTML = '<span class="status-icon"><i class="ph ph-check-circle" style="color: #10B981;"></i></span> ' +
+                                   `<span class="chap-title" style="flex:1;">${chap}</span>`;
+                    li.onclick = () => {
+                        document.querySelectorAll('.writer-outline-item').forEach(el => el.classList.remove('active'));
+                        li.classList.add('active');
+                        const chapTitleEl = document.getElementById('currentChapterTitle');
+                        if (chapTitleEl) chapTitleEl.innerText = chap;
+                        if (quill) {
+                            quill.root.innerHTML = window.chaptersContent[chap] || '';
+                        }
+                    };
+                    writerOutlineList.appendChild(li);
+                });
+
+                const firstChap = parsed.chapters[0];
+                const chapTitleEl = document.getElementById('currentChapterTitle');
+                if (chapTitleEl) chapTitleEl.innerText = firstChap;
+                if (quill) {
+                    quill.root.innerHTML = window.chaptersContent[firstChap] || '';
+                }
+            }
+
+            const btnProceedToEditor = document.getElementById('btnProceedToEditor');
+            const btnCopyAllToCanvas = document.getElementById('btnCopyAllToCanvas');
+            if (btnProceedToEditor) btnProceedToEditor.classList.remove('hidden');
+            if (btnCopyAllToCanvas) btnCopyAllToCanvas.classList.remove('hidden');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        } catch (err) {
+            console.error('Direct Manuscript Generation Error:', err);
+            alert('Terjadi kendala saat generate naskah: ' + (err.message || err));
+        } finally {
+            if (btnDirect) btnDirect.disabled = false;
+            if (progressBox) progressBox.classList.add('hidden');
+        }
+    };
+
     const btnGenerateSuperPrompt = document.getElementById('btnGenerateSuperPrompt');
-    if (btnGenerateSuperPrompt) btnGenerateSuperPrompt.addEventListener('click', () => window.generateSuperPromptAction(false));
-    const btnGenerateSuperPromptAI = document.getElementById('btnGenerateSuperPromptAI');
-    if (btnGenerateSuperPromptAI) btnGenerateSuperPromptAI.addEventListener('click', () => window.generateSuperPromptAction(true));
+    if (btnGenerateSuperPrompt) btnGenerateSuperPrompt.addEventListener('click', () => window.generateSuperPromptAction());
+    const btnGenerateManuscriptDirect = document.getElementById('btnGenerateManuscriptDirect');
+    if (btnGenerateManuscriptDirect) btnGenerateManuscriptDirect.addEventListener('click', () => window.generateManuscriptDirectlyAction());
 
     // --- Copy Prompt to Clipboard Action ---
     window.copySuperPromptAction = async function() {

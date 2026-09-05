@@ -247,15 +247,15 @@
                                     <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(245, 158, 11, 0.2); display: flex; align-items: center; justify-content: center;">
                                         <i class="ph ph-lightning" style="font-size: 26px; color: #F59E0B;"></i>
                                     </div>
-                                    <span style="font-size: 11px; font-weight: 700; background: rgba(245,158,11,0.25); color: #FBBF24; padding: 4px 12px; border-radius: 20px; letter-spacing: 0.5px;">METODE 2 (BARU)</span>
+                                    <span style="font-size: 11px; font-weight: 700; background: rgba(245,158,11,0.25); color: #FBBF24; padding: 4px 12px; border-radius: 20px; letter-spacing: 0.5px;">📖 EBOOK & LEAD MAGNET CREATOR</span>
                                 </div>
-                                <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px; color: var(--text-primary);">⚡ Super-Prompt Studio (ChatGPT)</h3>
+                                <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px; color: var(--text-primary);">⚡ Ebook & Lead Magnet Architect</h3>
                                 <p style="color: var(--text-secondary); font-size: 13px; line-height: 1.6; margin-bottom: 20px;">
-                                    Model Content Profit AI: Racik Master Prompt dengan formula psikologis (PAS, Storytelling, Quick-Wins), generate naskah tebal & daging di ChatGPT/Claude, lalu impor ke desainer PDF kami.
+                                    Model Content Profit AI: Rancang Ebook / Lead Magnet dengan 12 parameter briefing presisi, racik Master Super-Prompt ChatGPT atau generate naskah per bab lengkap langsung di sini!
                                 </p>
                             </div>
                             <button type="button" style="width: 100%; justify-content: center; gap: 8px; background: linear-gradient(135deg, #F59E0B, #EC4899); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25);">
-                                Buka Super-Prompt Studio <i class="ph ph-arrow-right"></i>
+                                Buka Ebook Architect <i class="ph ph-arrow-right"></i>
                             </button>
                         </div>
                     </div>
@@ -457,7 +457,7 @@
                     </button>
                     <button type="button" id="tabModeSuperPrompt" class="btn-mode-tab" onclick="if(window.switchCreationMode) window.switchCreationMode('superprompt');" style="flex: 1; padding: 14px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: var(--text-secondary, #94A3B8); font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s ease;">
                         <i class="ph ph-lightning" style="font-size: 20px; color: #F59E0B;"></i>
-                        <span>Metode 2: Super-Prompt Studio (ChatGPT / Claude)</span>
+                        <span>Metode 2: Ebook & Lead Magnet Architect</span>
                     </button>
                 </div>
                 
@@ -595,107 +595,235 @@ Penutup"></textarea>
                     </div>
                 </div>
 
-                <!-- METODE 2: Super-Prompt Studio (ChatGPT / Claude / Gemini) -->
+                <!-- METODE 2: Ebook & Lead Magnet Architect (Content Profit AI Model) -->
                 <div id="sectionModeSuperPrompt" class="hidden">
                     <div class="glass" style="padding: 28px; border-radius: 16px; margin-bottom: 24px;">
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 16px;">
-                            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); display: flex; align-items: center; justify-content: center;">
-                                <i class="ph ph-lightning" style="font-size: 24px; color: #F59E0B;"></i>
-                            </div>
-                            <div>
-                                <h3 style="margin: 0; font-size: 18px; color: #fff;">Super-Prompt Ebook Studio (ChatGPT & Claude)</h3>
-                                <p style="margin: 4px 0 0; font-size: 13px; color: var(--text-secondary);">Racik prompt masterclass berkonversi tinggi, salin ke ChatGPT/Claude, lalu import hasilnya ke Ebook Magic untuk didesain dan diexport PDF.</p>
-                            </div>
-                        </div>
-
-                        <!-- Form Input Super-Prompt -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label><i class="ph ph-book-bookmark"></i> Topik / Niche Ebook</label>
-                                <input type="text" id="spNiche" placeholder="contoh: Cara Bebas Hutang Riba, Bisnis Affiliate, Parenting..." style="width: 100%; padding: 14px; border-radius: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white;">
-                            </div>
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label><i class="ph ph-users"></i> Target Pembaca Ideal</label>
-                                <input type="text" id="spAudience" placeholder="contoh: Karyawan terlilit hutang, Ibu rumah tangga, Pemula bisnis..." style="width: 100%; padding: 14px; border-radius: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white;">
-                            </div>
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label><i class="ph ph-warning-circle"></i> Keresahan / Masalah Utama Pembaca (Pain Point)</label>
-                                <input type="text" id="spPainPoint" placeholder="contoh: Gaji selalu habis bayar bunga, bingung cara mulai, takut gagal..." style="width: 100%; padding: 14px; border-radius: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white;">
-                            </div>
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label><i class="ph ph-trophy"></i> Janji Transformasi / Solusi Utama Ebook</label>
-                                <input type="text" id="spPromise" placeholder="contoh: Metode lunas hutang dalam 90 hari tanpa gali lubang tutup lubang..." style="width: 100%; padding: 14px; border-radius: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white;">
-                            </div>
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label><i class="ph ph-paint-brush"></i> Formula & Gaya Bahasa Copywriting</label>
-                                <select id="spFormula" style="width: 100%; padding: 14px; border-radius: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; font-size: 14px;">
-                                    <option value="storytelling" style="color: black;">🔥 Hypnotic Storytelling (Kisah Emosional + Solusi Kuat)</option>
-                                    <option value="pas" style="color: black;">🎯 Problem - Agitate - Solve (Bedah Masalah Sampai Tuntas)</option>
-                                    <option value="quickwin" style="color: black;">⚡ Quick-Win Practical (Langkah Praktis & Aksi Langsung)</option>
-                                    <option value="islamic" style="color: black;">🕌 Islamic & Syariah (Bahasa Santun + Dalil/Hikmah Relevan)</option>
-                                    <option value="authority" style="color: black;">👑 B2B Authority & Masterclass (Materi Mendalam & Data Analisis)</option>
-                                </select>
-                            </div>
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label><i class="ph ph-stack"></i> Skala & Jumlah Bab</label>
-                                <select id="spScale" style="width: 100%; padding: 14px; border-radius: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; font-size: 14px;">
-                                    <option value="5" style="color: black;">eBook Praktis / Lead Magnet (5 Bab | Ringkas & Padat)</option>
-                                    <option value="10" style="color: black;" selected>eBook Panduan Komprehensif (8-10 Bab | Sangat Lengkap)</option>
-                                    <option value="15" style="color: black;">eBook Masterclass / Buku Lengkap (15 Bab | Sangat Mendalam)</option>
-                                </select>
-                            </div>
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label><i class="ph ph-user"></i> Profil Penulis (Opsional)</label>
-                                <input type="text" id="spAuthor" placeholder="contoh: Coach Ferri AD - Founder Kuadran Rezeki" style="width: 100%; padding: 14px; border-radius: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white;">
-                            </div>
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label><i class="ph ph-megaphone"></i> Call to Action / Penawaran di Akhir (Opsional)</label>
-                                <input type="text" id="spCTA" placeholder="contoh: Beli Ebook Lanjutan Kun Bebas Hutang via WhatsApp" style="width: 100%; padding: 14px; border-radius: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white;">
+                        
+                        <!-- Header Banner -->
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 20px; flex-wrap: wrap; gap: 16px;">
+                            <div style="display: flex; align-items: flex-start; gap: 14px;">
+                                <div style="width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(236, 72, 153, 0.15)); border: 1px solid rgba(245, 158, 11, 0.35); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2);">
+                                    <i class="ph ph-book-open-text" style="font-size: 28px; color: #F59E0B;"></i>
+                                </div>
+                                <div>
+                                    <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: #FBBF24; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                                        📖 Ebook & Lead Magnet Creator
+                                    </div>
+                                    <h3 style="margin: 0; font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -0.3px;">Best-Selling Ebook & Lead Magnet Architect & Prompt Generator</h3>
+                                    <p style="margin: 6px 0 0; font-size: 13.5px; color: var(--text-secondary); line-height: 1.6; max-width: 820px;">
+                                        Rancang Ebook atau Lead Magnet berkualitas tinggi dengan 12 parameter briefing presisi, racik Master Super-Prompt untuk ChatGPT / Claude, atau generate naskah per bab lengkap langsung di sini siap diterbitkan ke Canva/Google Docs/PDF!
+                                    </p>
+                                </div>
                             </div>
                         </div>
 
-                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                            <button type="button" class="btn-primary" id="btnGenerateSuperPrompt" onclick="window.generateSuperPromptAction(false);" style="flex: 1; min-width: 220px; background: linear-gradient(135deg, #F59E0B, #D97706); padding: 16px; font-size: 15px; font-weight: 700; border-radius: 12px; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); justify-content: center; display: flex; align-items: center; gap: 8px;">
-                                <i class="ph ph-lightning"></i> ⚡ Racik Prompt (Instan)
+                        <!-- 12 Parameter Briefing Section Title -->
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px; padding: 10px 16px; background: rgba(255,255,255,0.03); border-radius: 10px; border-left: 4px solid #F59E0B;">
+                            <i class="ph ph-sliders-horizontal" style="font-size: 18px; color: #F59E0B;"></i>
+                            <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.5px;">Parameter Briefing Ebook & Lead Magnet</h4>
+                        </div>
+
+                        <!-- Form Input 12 Parameter -->
+                        <div style="display: flex; flex-direction: column; gap: 18px;">
+                            
+                            <!-- Row 1: Kategori & Format -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label style="font-weight: 600; font-size: 13px; color: #E2E8F0; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                                        🏷️ Kategori / Niche Ebook:
+                                    </label>
+                                    <select id="spNiche" onchange="window.handleSpNicheChange();" style="width: 100%; padding: 13px 14px; border-radius: 10px; background: rgba(0,0,0,0.25); border: 1px solid var(--border); color: white; font-size: 13.5px;">
+                                        <option value="💼 Bisnis Online, Digital Marketing & Jualan" style="color: black;" selected>💼 Bisnis Online, Digital Marketing & Jualan</option>
+                                        <option value="💰 Keuangan Pribadi, Investasi & Bebas Hutang" style="color: black;">💰 Keuangan Pribadi, Investasi & Bebas Hutang</option>
+                                        <option value="🧠 Pengembangan Diri, Mindset & Produktivitas" style="color: black;">🧠 Pengembangan Diri, Mindset & Produktivitas</option>
+                                        <option value="🌿 Kesehatan, Diet, Kebugaran & Wellness" style="color: black;">🌿 Kesehatan, Diet, Kebugaran & Wellness</option>
+                                        <option value="🕌 Spiritual, Religi & Hikmah Islami" style="color: black;">🕌 Spiritual, Religi & Hikmah Islami</option>
+                                        <option value="👨‍👩‍👧 Parenting, Keluarga & Hubungan (Relationship)" style="color: black;">👨‍👩‍👧 Parenting, Keluarga & Hubungan (Relationship)</option>
+                                        <option value="💻 Teknologi, AI, Tools Digital & Desain Grafis" style="color: black;">💻 Teknologi, AI, Tools Digital & Desain Grafis</option>
+                                        <option value="🍳 Kuliner, Resep & Bisnis Makanan/Minuman" style="color: black;">🍳 Kuliner, Resep & Bisnis Makanan/Minuman</option>
+                                        <option value="✈️ Traveling, Gaya Hidup & Hobi" style="color: black;">✈️ Traveling, Gaya Hidup & Hobi</option>
+                                        <option value="🎓 Edukasi, Kursus Online & Akademik" style="color: black;">🎓 Edukasi, Kursus Online & Akademik</option>
+                                        <option value="custom" style="color: black;">✏️ Custom (Ketik Kategori Sendiri...)</option>
+                                    </select>
+                                    <input type="text" id="spNicheCustom" class="hidden" placeholder="Ketik topik atau niche spesifik Anda di sini..." style="width: 100%; margin-top: 8px; padding: 12px 14px; border-radius: 10px; background: rgba(0,0,0,0.3); border: 1px solid #F59E0B; color: white; font-size: 13px;">
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label style="font-weight: 600; font-size: 13px; color: #E2E8F0; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                                        🎯 Format & Tujuan Utama Ebook:
+                                    </label>
+                                    <select id="spFormat" style="width: 100%; padding: 13px 14px; border-radius: 10px; background: rgba(0,0,0,0.25); border: 1px solid var(--border); color: white; font-size: 13.5px;">
+                                        <option value="🎁 Lead Magnet Gratis (List Building Database & Trust)" style="color: black;" selected>🎁 Lead Magnet Gratis (List Building Database & Trust)</option>
+                                        <option value="💵 Ebook Komersial Berbayar (Direct Selling & High-Profit)" style="color: black;">💵 Ebook Komersial Berbayar (Direct Selling & High-Profit)</option>
+                                        <option value="📘 Panduan Tutorial Teknis / How-To Practical" style="color: black;">📘 Panduan Tutorial Teknis / How-To Practical</option>
+                                        <option value="📜 Mini-Book Solutif (Ringkas, Solusi Cepat & Padat Daging)" style="color: black;">📜 Mini-Book Solutif (Ringkas, Solusi Cepat & Padat Daging)</option>
+                                        <option value="🚀 Workbook / Lembar Kerja Interaktif (Action Oriented)" style="color: black;">🚀 Workbook / Lembar Kerja Interaktif (Action Oriented)</option>
+                                        <option value="👑 Ebook Authority & Thought Leadership (Membangun Reputasi Ahli)" style="color: black;">👑 Ebook Authority & Thought Leadership (Membangun Reputasi Ahli)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Row 2: Judul Ebook (Magnetic Title Hook) with AI Button -->
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                                    <label style="font-weight: 600; font-size: 13px; color: #E2E8F0; margin-bottom: 0; display: flex; align-items: center; gap: 6px;">
+                                        🔥 Judul Ebook (Magnetic Title Hook):
+                                    </label>
+                                    <button type="button" class="btn-ghost" id="btnSpGenTitle" onclick="window.generateMagneticTitlesAI();" style="padding: 5px 12px; font-size: 12px; font-weight: 700; border-radius: 8px; border: 1px solid rgba(245,158,11,0.5); color: #FBBF24; background: rgba(245,158,11,0.12); cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s ease;">
+                                        <i class="ph ph-sparkle"></i> ✨ Buat Ide Judul Ebook Magnetik (AI)
+                                    </button>
+                                </div>
+                                <input type="text" id="spTitle" placeholder="Contoh: Blueprint Content Profit: Cara Hasilkan Omset Ratusan Juta dari Konten Organik Tanpa Iklan" style="width: 100%; padding: 13px 14px; border-radius: 10px; background: rgba(0,0,0,0.25); border: 1px solid var(--border); color: white; font-size: 13.5px;">
+                                <div id="spTitleSuggestions" class="hidden" style="margin-top: 10px; padding: 12px; border-radius: 10px; background: rgba(245,158,11,0.08); border: 1px dashed rgba(245,158,11,0.35);"></div>
+                            </div>
+
+                            <!-- Row 3: Sub-Judul -->
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="font-weight: 600; font-size: 13px; color: #E2E8F0; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                                    💡 Sub-Judul / Janji Manfaat Cepat (Quick Win Promise):
+                                </label>
+                                <input type="text" id="spSubtitle" placeholder="Contoh: Panduan Praktis 7 Hari Mengubah Follower Menjadi Pembeli Setia dengan Copywriting Hipnotis" style="width: 100%; padding: 13px 14px; border-radius: 10px; background: rgba(0,0,0,0.25); border: 1px solid var(--border); color: white; font-size: 13.5px;">
+                            </div>
+
+                            <!-- Row 4: Target Pembaca & Penulis -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label style="font-weight: 600; font-size: 13px; color: #E2E8F0; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                                        🎯 Target Pembaca / Profil Audiens:
+                                    </label>
+                                    <input type="text" id="spAudience" placeholder="Contoh: Pemula gaptek, pebisnis online pemula, reseller, affiliate & konten kreator" style="width: 100%; padding: 13px 14px; border-radius: 10px; background: rgba(0,0,0,0.25); border: 1px solid var(--border); color: white; font-size: 13.5px;">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label style="font-weight: 600; font-size: 13px; color: #E2E8F0; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                                        ✍️ Penulis & Personal Branding (Author Bio):
+                                    </label>
+                                    <input type="text" id="spAuthor" placeholder="Contoh: Coach Dedi - Praktisi Digital Marketing & Founder Komunitas Bisnis" style="width: 100%; padding: 13px 14px; border-radius: 10px; background: rgba(0,0,0,0.25); border: 1px solid var(--border); color: white; font-size: 13.5px;">
+                                </div>
+                            </div>
+
+                            <!-- Row 5: Masalah Frustasi & Jumlah Bab -->
+                            <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 16px;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label style="font-weight: 600; font-size: 13px; color: #E2E8F0; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                                        ⚠️ Masalah Frustasi Terbesar yang Diselesaikan:
+                                    </label>
+                                    <input type="text" id="spPainPoint" placeholder="Contoh: Sering kehabisan ide konten, postingan sepi penonton, dan bingung cara closing" style="width: 100%; padding: 13px 14px; border-radius: 10px; background: rgba(0,0,0,0.25); border: 1px solid var(--border); color: white; font-size: 13.5px;">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label style="font-weight: 600; font-size: 13px; color: #E2E8F0; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                                        🔢 Jumlah Bab Inti Pembahasan:
+                                    </label>
+                                    <select id="spChapterCount" style="width: 100%; padding: 13px 14px; border-radius: 10px; background: rgba(0,0,0,0.25); border: 1px solid var(--border); color: white; font-size: 13.5px;">
+                                        <option value="3" style="color: black;">3 Bab (Mini Guide / Quick-Start)</option>
+                                        <option value="5" style="color: black;" selected>5 Bab (Standar Ideal Lead Magnet & Ebook Populer)</option>
+                                        <option value="7" style="color: black;">7 Bab (Comprehensive Blueprint)</option>
+                                        <option value="10" style="color: black;">10 Bab (Complete Masterclass Book)</option>
+                                        <option value="12" style="color: black;">12 Bab (In-Depth Authority Book)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Row 6: CTA & Link Penawaran -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label style="font-weight: 600; font-size: 13px; color: #E2E8F0; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                                        📢 Call to Action (CTA) di Bab Penutup:
+                                    </label>
+                                    <input type="text" id="spCTA" placeholder="Contoh: Gabung ke Grup Komunitas WhatsApp VIP & Dapatkan Mentoring Gratis" style="width: 100%; padding: 13px 14px; border-radius: 10px; background: rgba(0,0,0,0.25); border: 1px solid var(--border); color: white; font-size: 13.5px;">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label style="font-weight: 600; font-size: 13px; color: #E2E8F0; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                                        🔗 Link Penawaran / Next Step Offer:
+                                    </label>
+                                    <input type="text" id="spOfferLink" placeholder="Contoh: https://domainanda.com/vip atau wa.me/628123456789" style="width: 100%; padding: 13px 14px; border-radius: 10px; background: rgba(0,0,0,0.25); border: 1px solid var(--border); color: white; font-size: 13.5px;">
+                                </div>
+                            </div>
+
+                            <!-- Row 7: Custom Chapter Outline with AI Button & Hint -->
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                                    <label style="font-weight: 600; font-size: 13px; color: #E2E8F0; margin-bottom: 0; display: flex; align-items: center; gap: 6px;">
+                                        📚 Poin-Poin / Rincian Bab Ebook (Custom Chapter Outline):
+                                    </label>
+                                    <button type="button" class="btn-ghost" id="btnSpGenOutline" onclick="window.generateCustomOutlineAI();" style="padding: 5px 12px; font-size: 12px; font-weight: 700; border-radius: 8px; border: 1px solid rgba(108,99,255,0.5); color: #A78BFA; background: rgba(108,99,255,0.12); cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s ease;">
+                                        <i class="ph ph-sparkle"></i> ✨ Buatkan Draf Outline Bab (AI)
+                                    </button>
+                                </div>
+                                <textarea id="spChapterOutline" rows="6" placeholder="Contoh:&#10;Bab 1: Mindset & Fondasi Traffic Organik Tanpa Iklan&#10;Bab 2: Riset Konten Viral & Formula Headline Hipnotis&#10;Bab 3: Anatomi Hook 3 Detik Pertama yang Bikin Nonton Sampai Habis&#10;Bab 4: Strategi Soft Selling & Konversi dari Story ke DM WhatsApp&#10;Bab 5: Studi Kasus & Action Plan 7 Hari Langsung Praktik" style="width: 100%; padding: 14px; border-radius: 10px; background: rgba(0,0,0,0.25); border: 1px solid var(--border); color: white; font-size: 13.5px; line-height: 1.6; resize: vertical;"></textarea>
+                                <p style="font-size: 12px; color: #94A3B8; margin: 8px 0 0; display: flex; align-items: center; gap: 6px; line-height: 1.5;">
+                                    <i class="ph ph-lightbulb" style="color: #F59E0B; font-size: 15px; flex-shrink: 0;"></i>
+                                    <span>💡 <strong>Catatan:</strong> Anda memiliki kontrol penuh atas daftar bab. AI di ChatGPT akan secara presisi menguraikan naskah lengkap per bab sesuai poin-poin yang Anda tuliskan di atas.</span>
+                                </p>
+                            </div>
+
+                            <!-- Row 8: Gaya Bahasa Penulisan -->
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="font-weight: 600; font-size: 13px; color: #E2E8F0; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                                    💬 Gaya Bahasa Penulisan Ebook (Tone of Voice):
+                                </label>
+                                <select id="spTone" style="width: 100%; padding: 13px 14px; border-radius: 10px; background: rgba(0,0,0,0.25); border: 1px solid var(--border); color: white; font-size: 13.5px;">
+                                    <option value="Santai Hangat & Mudah Dipahami Pemula" style="color: black;" selected>Santai Hangat & Mudah Dipahami Pemula</option>
+                                    <option value="Berenergi, Menggebu & Memotivasi Aksi Cepat" style="color: black;">Berenergi, Menggebu & Memotivasi Aksi Cepat</option>
+                                    <option value="To the Point, Praktis & Padat Daging" style="color: black;">To the Point, Praktis & Padat Daging</option>
+                                    <option value="Profesional, Kredibel & Otoritatif (B2B)" style="color: black;">Profesional, Kredibel & Otoritatif (B2B)</option>
+                                    <option value="Storytelling Emosional & Reflektif" style="color: black;">Storytelling Emosional & Reflektif</option>
+                                    <option value="Santun, Bijak & Bernuansa Islami/Religius" style="color: black;">Santun, Bijak & Bernuansa Islami/Religius</option>
+                                </select>
+                            </div>
+
+                        </div>
+
+                        <!-- Dua Tombol Aksi Utama -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 28px;">
+                            <button type="button" class="btn-primary" id="btnGenerateManuscriptDirect" onclick="window.generateManuscriptDirectlyAction();" style="padding: 16px; font-size: 15px; font-weight: 700; border-radius: 12px; background: linear-gradient(135deg, #10B981, #059669); box-shadow: 0 4px 18px rgba(16, 185, 129, 0.35); justify-content: center; display: flex; align-items: center; gap: 8px; border: none; cursor: pointer; transition: all 0.2s ease;">
+                                <i class="ph ph-lightning" style="font-size: 20px;"></i> ⚡ Generate Naskah Langsung di Sini (AI)
                             </button>
-                            <button type="button" class="btn-primary" id="btnGenerateSuperPromptAI" onclick="window.generateSuperPromptAction(true);" style="flex: 1; min-width: 220px; background: linear-gradient(135deg, #6C63FF, #8B5CF6); padding: 16px; font-size: 15px; font-weight: 700; border-radius: 12px; box-shadow: 0 4px 15px rgba(108, 99, 255, 0.3); justify-content: center; display: flex; align-items: center; gap: 8px;">
-                                <i class="ph ph-sparkle"></i> 🤖 Racik dengan AI Gemini
+                            <button type="button" class="btn-primary" id="btnGenerateSuperPrompt" onclick="window.generateSuperPromptAction();" style="padding: 16px; font-size: 15px; font-weight: 700; border-radius: 12px; background: linear-gradient(135deg, #F59E0B, #D97706); box-shadow: 0 4px 18px rgba(245, 158, 11, 0.35); justify-content: center; display: flex; align-items: center; gap: 8px; border: none; cursor: pointer; transition: all 0.2s ease;">
+                                <i class="ph ph-robot" style="font-size: 20px;"></i> 🚀 Generate Super-Prompt untuk ChatGPT
                             </button>
+                        </div>
+
+                        <!-- Progress Banner (hidden by default) -->
+                        <div id="spDirectGenProgress" class="hidden" style="margin-top: 20px; padding: 18px; border-radius: 12px; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.35); text-align: center; color: #6EE7B7;">
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 700; font-size: 14px;">
+                                <i class="ph ph-spinner ph-spin" style="font-size: 22px;"></i>
+                                <span id="spDirectGenStatusText">AI sedang menyusun seluruh naskah ebook berdasarkan 12 parameter briefing... Mohon tunggu sebentar.</span>
+                            </div>
                         </div>
 
                         <!-- Box Tampilan Super-Prompt -->
                         <div id="spResultContainer" class="hidden" style="margin-top: 28px; animation: fadeIn 0.4s ease;">
-                            <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 14px; overflow: hidden;">
-                                <div style="background: rgba(245, 158, 11, 0.12); padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(245, 158, 11, 0.2); flex-wrap: wrap; gap: 10px;">
+                            <div style="background: rgba(0,0,0,0.45); border: 1px solid rgba(245, 158, 11, 0.45); border-radius: 14px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                                <div style="background: rgba(245, 158, 11, 0.14); padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(245, 158, 11, 0.25); flex-wrap: wrap; gap: 10px;">
                                     <div style="display: flex; align-items: center; gap: 8px;">
                                         <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #10B981;"></span>
                                         <span style="font-weight: 700; font-size: 13px; color: #F59E0B; text-transform: uppercase;"><i class="ph ph-code"></i> Master Super-Prompt Siap Pakai</span>
                                     </div>
                                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                        <button type="button" id="btnCopySuperPrompt" onclick="if(window.copySuperPromptAction) window.copySuperPromptAction();" class="btn-primary" style="background: #10B981; padding: 6px 14px; font-size: 12px; border-radius: 6px; display: flex; align-items: center; gap: 5px;">
+                                        <button type="button" id="btnCopySuperPrompt" onclick="if(window.copySuperPromptAction) window.copySuperPromptAction();" class="btn-primary" style="background: #10B981; padding: 7px 15px; font-size: 12.5px; font-weight: 700; border-radius: 8px; display: flex; align-items: center; gap: 6px;">
                                             <i class="ph ph-copy"></i> Salin Prompt
                                         </button>
-                                        <a href="https://chatgpt.com" target="_blank" rel="noopener noreferrer" class="btn-ghost" style="padding: 6px 12px; font-size: 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); color: #fff; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                                        <a href="https://chatgpt.com" target="_blank" rel="noopener noreferrer" class="btn-ghost" style="padding: 7px 13px; font-size: 12.5px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); color: #fff; text-decoration: none; display: flex; align-items: center; gap: 5px;">
                                             <i class="ph ph-robot"></i> Buka ChatGPT <i class="ph ph-arrow-square-out"></i>
                                         </a>
-                                        <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" class="btn-ghost" style="padding: 6px 12px; font-size: 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); color: #fff; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                                        <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" class="btn-ghost" style="padding: 7px 13px; font-size: 12.5px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); color: #fff; text-decoration: none; display: flex; align-items: center; gap: 5px;">
                                             <i class="ph ph-atom"></i> Buka Claude <i class="ph ph-arrow-square-out"></i>
                                         </a>
-                                        <a href="https://aistudio.google.com" target="_blank" rel="noopener noreferrer" class="btn-ghost" style="padding: 6px 12px; font-size: 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); color: #fff; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                                        <a href="https://aistudio.google.com" target="_blank" rel="noopener noreferrer" class="btn-ghost" style="padding: 7px 13px; font-size: 12.5px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); color: #fff; text-decoration: none; display: flex; align-items: center; gap: 5px;">
                                             <i class="ph ph-sparkle"></i> Gemini <i class="ph ph-arrow-square-out"></i>
                                         </a>
                                     </div>
                                 </div>
                                 <div style="padding: 16px;">
-                                    <textarea id="spPromptOutput" rows="12" readonly style="width: 100%; background: transparent; border: none; color: #E2E8F0; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.7; resize: vertical; outline: none;"></textarea>
+                                    <textarea id="spPromptOutput" rows="13" readonly style="width: 100%; background: transparent; border: none; color: #E2E8F0; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.7; resize: vertical; outline: none;"></textarea>
                                 </div>
                             </div>
 
                             <!-- Bagian Import Hasil Tulisan dari ChatGPT -->
                             <div style="margin-top: 24px; padding: 24px; background: rgba(108, 99, 255, 0.08); border: 2px dashed rgba(108, 99, 255, 0.35); border-radius: 16px;">
-                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                                    <div style="width: 32px; height: 32px; border-radius: 8px; background: var(--primary); display: flex; align-items: center; justify-content: center;">
-                                        <i class="ph ph-download-simple" style="font-size: 18px; color: #fff;"></i>
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+                                    <div style="width: 34px; height: 34px; border-radius: 8px; background: var(--primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <i class="ph ph-download-simple" style="font-size: 20px; color: #fff;"></i>
                                     </div>
                                     <div>
                                         <h4 style="margin: 0; font-size: 16px; color: #fff;">Langkah 2: Tempel Hasil Tulisan dari ChatGPT / Claude ke Sini</h4>
@@ -706,11 +834,11 @@ Penutup"></textarea>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                                     <div class="form-group" style="margin-bottom: 0;">
                                         <label>Judul Utama Ebook</label>
-                                        <input type="text" id="spImportTitle" placeholder="contoh: Kun Bebas Hutang" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white;">
+                                        <input type="text" id="spImportTitle" placeholder="contoh: Blueprint Content Profit" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white;">
                                     </div>
                                     <div class="form-group" style="margin-bottom: 0;">
                                         <label>Subjudul Ebook (Opsional)</label>
-                                        <input type="text" id="spImportSubtitle" placeholder="contoh: Panduan Bebas Finansial Tanpa Riba" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white;">
+                                        <input type="text" id="spImportSubtitle" placeholder="contoh: Panduan Praktis 7 Hari Mengubah Follower Menjadi Pembeli Setia" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white;">
                                     </div>
                                 </div>
 
@@ -724,6 +852,7 @@ Penutup"></textarea>
                                 </button>
                             </div>
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -1129,108 +1258,353 @@ Penutup"></textarea>
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    window.generateSuperPromptAction = async function(useAI) {
-        var nicheInput = document.getElementById('spNiche');
-        var niche = nicheInput ? nicheInput.value.trim() : '';
-        var audience = (document.getElementById('spAudience') ? document.getElementById('spAudience').value : '').trim();
-        var painPoint = (document.getElementById('spPainPoint') ? document.getElementById('spPainPoint').value : '').trim();
-        var promise = (document.getElementById('spPromise') ? document.getElementById('spPromise').value : '').trim();
-        var formula = (document.getElementById('spFormula') ? document.getElementById('spFormula').value : 'storytelling');
-        var scale = (document.getElementById('spScale') ? document.getElementById('spScale').value : '5');
-        var author = (document.getElementById('spAuthor') ? document.getElementById('spAuthor').value : '').trim();
-        var cta = (document.getElementById('spCTA') ? document.getElementById('spCTA').value : '').trim();
+    window.handleSpNicheChange = function() {
+        var sel = document.getElementById('spNiche');
+        var customInput = document.getElementById('spNicheCustom');
+        if (!sel || !customInput) return;
+        if (sel.value === 'custom') {
+            customInput.classList.remove('hidden');
+            customInput.focus();
+        } else {
+            customInput.classList.add('hidden');
+        }
+    };
 
-        if (!niche) {
-            alert('⚠️ Mohon masukkan Topik / Niche eBook Anda terlebih dahulu.');
-            if (nicheInput) nicheInput.focus();
+    window.getSpBriefingData = function() {
+        var nicheSel = document.getElementById('spNiche');
+        var nicheVal = nicheSel ? nicheSel.value : '';
+        if (nicheVal === 'custom') {
+            var customVal = document.getElementById('spNicheCustom') ? document.getElementById('spNicheCustom').value.trim() : '';
+            nicheVal = customVal || 'Bisnis & Pemasaran Online';
+        }
+        var format = document.getElementById('spFormat') ? document.getElementById('spFormat').value : 'Lead Magnet Gratis';
+        var title = document.getElementById('spTitle') ? document.getElementById('spTitle').value.trim() : '';
+        var subtitle = document.getElementById('spSubtitle') ? document.getElementById('spSubtitle').value.trim() : '';
+        var audience = document.getElementById('spAudience') ? document.getElementById('spAudience').value.trim() : '';
+        var author = document.getElementById('spAuthor') ? document.getElementById('spAuthor').value.trim() : '';
+        var painPoint = document.getElementById('spPainPoint') ? document.getElementById('spPainPoint').value.trim() : '';
+        var chapterCount = document.getElementById('spChapterCount') ? document.getElementById('spChapterCount').value : '5';
+        var cta = document.getElementById('spCTA') ? document.getElementById('spCTA').value.trim() : '';
+        var offerLink = document.getElementById('spOfferLink') ? document.getElementById('spOfferLink').value.trim() : '';
+        var chapterOutline = document.getElementById('spChapterOutline') ? document.getElementById('spChapterOutline').value.trim() : '';
+        var tone = document.getElementById('spTone') ? document.getElementById('spTone').value : 'Santai Hangat & Mudah Dipahami Pemula';
+
+        return {
+            niche: nicheVal,
+            format: format,
+            title: title,
+            subtitle: subtitle,
+            audience: audience,
+            author: author,
+            painPoint: painPoint,
+            chapterCount: chapterCount,
+            cta: cta,
+            offerLink: offerLink,
+            chapterOutline: chapterOutline,
+            tone: tone
+        };
+    };
+
+    window.generateMagneticTitlesAI = async function() {
+        var data = window.getSpBriefingData();
+        var btn = document.getElementById('btnSpGenTitle');
+        var suggestionsBox = document.getElementById('spTitleSuggestions');
+        if (!data.niche) {
+            alert('⚠️ Mohon pilih atau masukkan Kategori / Niche terlebih dahulu.');
             return;
         }
 
-        var btnAI = document.getElementById('btnGenerateSuperPromptAI');
+        var origText = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Meracik Judul AI...';
+        }
+
+        try {
+            var apiKey = window.userApiKey || localStorage.getItem('ebookMagicApiKey') || '';
+            var res = await fetch('/api/generate-titles', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    niche: data.niche,
+                    audience: data.audience || 'Target pembaca potensial',
+                    goal: data.painPoint || 'Meningkatkan penjualan dan konversi',
+                    apiKey: apiKey
+                })
+            });
+            var json = await res.json();
+            var titles = json.titles || [];
+
+            if (suggestionsBox && titles.length > 0) {
+                suggestionsBox.innerHTML = '<div style="font-size: 12px; font-weight: 700; color: #F59E0B; margin-bottom: 8px; text-transform: uppercase;">✨ Klik salah satu ide judul berikut untuk langsung menggunakannya:</div>';
+                var listContainer = document.createElement('div');
+                listContainer.style.display = 'flex';
+                listContainer.style.flexDirection = 'column';
+                listContainer.style.gap = '8px';
+
+                titles.forEach(function(item) {
+                    var card = document.createElement('div');
+                    card.style.cssText = 'padding: 10px 14px; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(245,158,11,0.25); cursor: pointer; transition: all 0.2s ease;';
+                    card.innerHTML = '<div style="font-size: 13.5px; font-weight: 700; color: #fff;">🔥 ' + item.title + '</div>' +
+                                     (item.subtitle ? '<div style="font-size: 12px; color: #CBD5E1; margin-top: 3px;">' + item.subtitle + '</div>' : '') +
+                                     (item.hook ? '<div style="font-size: 11px; color: #94A3B8; margin-top: 4px; font-style: italic;">💡 ' + item.hook + '</div>' : '');
+                    card.onmouseover = function() { card.style.borderColor = '#F59E0B'; card.style.background = 'rgba(245,158,11,0.12)'; };
+                    card.onmouseout = function() { card.style.borderColor = 'rgba(245,158,11,0.25)'; card.style.background = 'rgba(0,0,0,0.3)'; };
+                    card.onclick = function() {
+                        var titleInput = document.getElementById('spTitle');
+                        var subtitleInput = document.getElementById('spSubtitle');
+                        if (titleInput) titleInput.value = item.title;
+                        if (subtitleInput && item.subtitle) subtitleInput.value = item.subtitle;
+                        suggestionsBox.classList.add('hidden');
+                    };
+                    listContainer.appendChild(card);
+                });
+                suggestionsBox.appendChild(listContainer);
+                suggestionsBox.classList.remove('hidden');
+            }
+        } catch (err) {
+            console.error('Magnetic Title Error:', err);
+            alert('Gagal menghasilkan judul via AI. Silakan coba lagi atau masukkan judul secara manual.');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origText || '<i class="ph ph-sparkle"></i> ✨ Buat Ide Judul Ebook Magnetik (AI)';
+            }
+        }
+    };
+
+    window.generateCustomOutlineAI = async function() {
+        var data = window.getSpBriefingData();
+        var btn = document.getElementById('btnSpGenOutline');
+        var outlineArea = document.getElementById('spChapterOutline');
+
+        var origText = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Menyusun Kerangka AI...';
+        }
+
+        try {
+            var apiKey = window.userApiKey || localStorage.getItem('ebookMagicApiKey') || '';
+            var count = parseInt(data.chapterCount, 10) || 5;
+            var typeVal = count <= 5 ? 'ebook' : (count <= 10 ? 'panduan' : 'masterclass');
+
+            var res = await fetch('/api/generate-outline', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    niche: data.niche,
+                    audience: data.audience || 'Pembaca umum',
+                    type: typeVal,
+                    selectedTitle: data.title || 'Panduan Ebook',
+                    selectedSubtitle: data.subtitle || '',
+                    authorProfile: data.author || '',
+                    cta: data.cta || '',
+                    apiKey: apiKey
+                })
+            });
+            var json = await res.json();
+            var outlineArr = json.outline || [];
+
+            if (outlineArea && outlineArr.length > 0) {
+                outlineArea.value = outlineArr.map(function(item, idx) {
+                    return item.startsWith('Bab') ? item : ('Bab ' + (idx + 1) + ': ' + item);
+                }).join('\n');
+            }
+        } catch (err) {
+            console.error('Outline generation error:', err);
+            // Fallback outline
+            if (outlineArea) {
+                var c = parseInt(data.chapterCount, 10) || 5;
+                var def = [];
+                for (var i = 1; i <= c; i++) {
+                    def.push('Bab ' + i + ': Pembahasan Strategis Bagian ' + i);
+                }
+                outlineArea.value = def.join('\n');
+            }
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origText || '<i class="ph ph-sparkle"></i> ✨ Buatkan Draf Outline Bab (AI)';
+            }
+        }
+    };
+
+    window.generateSuperPromptAction = async function() {
+        var data = window.getSpBriefingData();
+        var btn = document.getElementById('btnGenerateSuperPrompt');
         var spPromptOutput = document.getElementById('spPromptOutput');
         var spResultContainer = document.getElementById('spResultContainer');
         var spImportTitle = document.getElementById('spImportTitle');
         var spImportSubtitle = document.getElementById('spImportSubtitle');
 
-        if (useAI) {
-            if (btnAI) {
-                btnAI.disabled = true;
-                btnAI.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Meracik dengan AI Gemini...';
+        var origText = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Meracik Master Super-Prompt...';
+        }
+
+        try {
+            var apiKey = window.userApiKey || localStorage.getItem('ebookMagicApiKey') || '';
+            var res = await fetch('/api/generate-super-prompt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(Object.assign({}, data, { apiKey: apiKey }))
+            });
+            var json = await res.json();
+            if (json && json.prompt) {
+                if (spPromptOutput) spPromptOutput.value = json.prompt;
+                if (spImportTitle) spImportTitle.value = data.title || json.title || 'Blueprint Ebook';
+                if (spImportSubtitle) spImportSubtitle.value = data.subtitle || json.subtitle || '';
             }
-            try {
-                var apiKey = window.userApiKey || localStorage.getItem('ebookMagicApiKey') || '';
-                var res = await fetch('/api/generate-super-prompt', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ niche: niche, audience: audience, painPoint: painPoint, promise: promise, formula: formula, scale: scale, author: author, cta: cta, apiKey: apiKey })
-                });
-                var data = await res.json();
-                if (data && data.prompt) {
-                    if (spPromptOutput) spPromptOutput.value = data.prompt;
-                    if (spImportTitle && (!spImportTitle.value || spImportTitle.value === niche)) spImportTitle.value = data.title || niche;
-                    if (spImportSubtitle && !spImportSubtitle.value) spImportSubtitle.value = data.subtitle || promise;
-                }
-            } catch (err) {
-                console.error('Super-Prompt AI Error:', err);
-                window.generateSuperPromptAction(false);
-                return;
-            } finally {
-                if (btnAI) {
-                    btnAI.disabled = false;
-                    btnAI.innerHTML = '<i class="ph ph-sparkle"></i> 🤖 Racik dengan AI Gemini';
-                }
+        } catch (err) {
+            console.error('Super-Prompt generation error:', err);
+            alert('Gagal meracik prompt. Periksa koneksi internet Anda.');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origText || '<i class="ph ph-robot"></i> 🚀 Generate Super-Prompt untuk ChatGPT';
             }
-        } else {
-            var formulaMap = {
-                'storytelling': 'Storytelling & Hypnotic Copy (Kisah nyata yang emosional, menyentuh hati, memikat, dan menginspirasi pembaca untuk bertindak)',
-                'pas': 'Problem - Agitate - Solution / PAS Framework (Bedah masalah secara tajam hingga ke akar kepedihan, lalu berikan solusi praktis tuntas)',
-                'quickwin': 'Step-by-Step Blueprint & Quick-Wins (Panduan teknis berurutan langkah demi langkah yang langsung bisa dipraktekkan hari ini)',
-                'islamic': 'Nilai Islami & Berkah Bisnis (Pendekatan nilai syariah, mindset keberkahan, etika amanah, dan hasil nyata)',
-                'authority': 'B2B Authority & Masterclass (Materi mendalam, data analisis, framework profesional, dan standar industri)'
-            };
-
-            var formulaDesc = formulaMap[formula] || 'Praktis, Terstruktur & Berbobot';
-
-            var masterPrompt = 'Peran: Anda adalah seorang Ghostwriter Ebook Best-Seller Internasional, Master Copywriter, dan Konsultan Edukasi Digital Terbaik.\n' +
-'Tugas Anda: Tulis naskah buku elektronik (eBook) LENGKAP, MENDALAM, DAGING SEMUA (High Value, tanpa basa-basi), dan sangat siap dibaca dari awal hingga akhir.\n\n' +
-'[INFORMASI & TARGET PROYEK EBOOK]\n' +
-'- Topik / Niche Utama: ' + niche + '\n' +
-'- Target Pembaca Spesifik: ' + (audience || 'Pemula hingga tingkat menengah yang ingin transformasi nyata') + '\n' +
-'- Masalah / Pain Point Utama Pembaca: ' + (painPoint || 'Kurang pemahaman terstruktur, sering bingung mulai dari mana, butuh panduan praktis') + '\n' +
-'- Solusi & Janji Transformasi Ebook: ' + (promise || 'Mendapatkan blueprint komprehensif yang bisa langsung dieksekusi dengan hasil terbukti') + '\n' +
-'- Formula Penulisan yang Digunakan: ' + formulaDesc + '\n' +
-'- Jumlah Bab: ' + scale + ' Bab Lengkap (Mulai dari Pengantar, Bab 1 s.d. Bab ' + scale + ', hingga Penutup)\n' +
-'- Profil / Sudut Pandang Penulis: ' + (author || 'Praktisi berpengalaman yang ramah, kredibel, dan solutif') + '\n' +
-'- Call to Action (CTA) di Akhir Ebook: ' + (cta || 'Terapkan strategi ini sekarang dan hubungi kami untuk langkah selanjutnya') + '\n\n' +
-'[STRUKTUR PENULISAN WAJIB DIIKUTI]\n' +
-'Tulis seluruh naskah menggunakan format Markdown standar yang rapi dengan struktur berikut:\n\n' +
-'# [Tulis Judul Ebook yang Sangat Menarik, Menjual, & Memikat]\n' +
-'## [Tulis Subjudul Penjelas yang Menjanjikan Transformasi Cepat]\n\n' +
-'### Kata Pengantar\n' +
-'(Tulis kata pengantar yang menyentuh emosi pembaca, mengapa buku ini ditulis, dan gambaran besar isi buku)\n\n' +
-'### Bab 1: [Judul Bab 1 yang Menarik]\n' +
-'(Tulis isi bab secara lengkap, mendalam, sertakan poin-poin penting, studi kasus/contoh nyata, dan 3 langkah aksi praktis)\n\n' +
-'### Bab 2: [Judul Bab 2]\n' +
-'(Tulis isi bab secara tuntas dan mendalam...)\n\n' +
-'(Lanjutkan menulis seluruh Bab sampai Bab ' + scale + ' secara berurutan dan lengkap)\n\n' +
-'### Penutup & Langkah Aksi Berikutnya\n' +
-'(Rangkuman inti, kata-kata penutup penyemangat, dan ajakan bertindak / Call To Action: ' + (cta || 'Mulai eksekusi sekarang') + ')\n\n' +
-'[ATURAN PENULISAN]\n' +
-'1. Tulis naskah SECARA LENGKAP dan SELESAI (bukan sekadar kerangka/rangkuman, tulis seluruh isi paragrafnya secara tuntas).\n' +
-'2. Gunakan Bahasa Indonesia yang natural, mengalir, profesional, persuasif, dan mudah dipahami.\n' +
-'3. Hindari kalimat klise atau basa-basi kosong. Berikan tips konkret, framework langkah-demi-langkah (Step 1, Step 2, Step 3), dan insight yang aplikatif.\n' +
-'4. Gunakan heading (### untuk nama Bab, #### untuk subtopik), poin bullet (- ...), nomor (1. ...), dan format tebal (**kata kunci**) agar naskah sangat nyaman dibaca.\n\n' +
-'Silakan mulai tulis naskah lengkapnya sekarang dari Judul hingga Penutup!';
-
-            if (spPromptOutput) spPromptOutput.value = masterPrompt;
-            if (spImportTitle && !spImportTitle.value && niche) spImportTitle.value = niche;
-            if (spImportSubtitle && !spImportSubtitle.value && promise) spImportSubtitle.value = promise;
         }
 
         if (spResultContainer) {
             spResultContainer.classList.remove('hidden');
             spResultContainer.style.display = 'block';
             spResultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    };
+
+    window.generateManuscriptDirectlyAction = async function() {
+        var data = window.getSpBriefingData();
+        if (!data.title && !data.niche) {
+            alert('⚠️ Mohon tentukan Judul Ebook atau Kategori Niche Anda terlebih dahulu.');
+            return;
+        }
+
+        var btnDirect = document.getElementById('btnGenerateManuscriptDirect');
+        var progressBox = document.getElementById('spDirectGenProgress');
+        var statusText = document.getElementById('spDirectGenStatusText');
+
+        if (btnDirect) btnDirect.disabled = true;
+        if (progressBox) {
+            progressBox.classList.remove('hidden');
+            progressBox.style.display = 'block';
+        }
+        if (statusText) statusText.innerText = 'AI sedang menyusun seluruh naskah ebook berdasarkan 12 parameter briefing... Mohon tunggu sebentar.';
+
+        try {
+            var apiKey = window.userApiKey || localStorage.getItem('ebookMagicApiKey') || '';
+            var res = await fetch('/api/generate-full-manuscript', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(Object.assign({}, data, { apiKey: apiKey }))
+            });
+            var json = await res.json();
+
+            if (!json || !json.manuscript) {
+                throw new Error(json.error || 'Naskah kosong');
+            }
+
+            if (statusText) statusText.innerText = '✅ Naskah selesai disusun! Sedang memformat bab ke dalam editor...';
+
+            var finalTitle = json.title || data.title || 'Blueprint Ebook';
+            var finalSubtitle = json.subtitle || data.subtitle || '';
+
+            // Parse markdown into chapters
+            var parsed = typeof window.parseChatGPTMarkdown === 'function' 
+                ? window.parseChatGPTMarkdown(json.manuscript, finalTitle, finalSubtitle)
+                : null;
+
+            if (!parsed || !parsed.chapters || parsed.chapters.length === 0) {
+                // Manual fallback parse
+                parsed = {
+                    title: finalTitle,
+                    subtitle: finalSubtitle,
+                    chapters: ['Bab 1: Isi Utama'],
+                    chaptersContent: { 'Bab 1: Isi Utama': json.manuscript }
+                };
+            }
+
+            window.currentOutlineData = {
+                title: parsed.title,
+                subtitle: parsed.subtitle,
+                outline: parsed.chapters,
+                niche: data.niche,
+                type: 'direct-manuscript'
+            };
+            window.chaptersContent = parsed.chaptersContent;
+            window.currentNiche = data.niche;
+            window.currentAuthorProfile = data.author;
+            window.currentCTA = data.cta;
+            window.currentAudience = data.audience;
+
+            // Transition directly to chapter writer view
+            var generatorView = document.getElementById('generatorView');
+            var chapterWriterView = document.getElementById('chapterWriterView');
+            var writerOutlineList = document.getElementById('writerOutlineList');
+
+            if (generatorView) generatorView.classList.add('hidden');
+            if (chapterWriterView) chapterWriterView.classList.remove('hidden');
+
+            if (!window.quill && typeof Quill !== 'undefined') {
+                window.quill = new Quill('#quillEditor', {
+                    theme: 'snow',
+                    placeholder: 'Isi bab Anda akan tampil di sini...',
+                    modules: {
+                        toolbar: [
+                            [{ 'header': [1, 2, 3, false] }],
+                            ['bold', 'italic', 'underline', 'strike'],
+                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                            [{ 'align': [] }],
+                            ['link', 'image'],
+                            ['clean']
+                        ]
+                    }
+                });
+            }
+
+            if (writerOutlineList) {
+                writerOutlineList.innerHTML = '';
+                parsed.chapters.forEach(function(chap, index) {
+                    var li = document.createElement('li');
+                    li.className = 'writer-outline-item';
+                    if (index === 0) li.classList.add('active');
+                    li.dataset.chapter = chap;
+                    li.innerHTML = '<span class="status-icon"><i class="ph ph-check-circle" style="color: #10B981;"></i></span> ' +
+                                   '<span class="chap-title" style="flex:1;">' + chap + '</span>';
+                    li.onclick = function() {
+                        document.querySelectorAll('.writer-outline-item').forEach(function(el) { el.classList.remove('active'); });
+                        li.classList.add('active');
+                        var chapTitleEl = document.getElementById('currentChapterTitle');
+                        if (chapTitleEl) chapTitleEl.innerText = chap;
+                        if (window.quill) {
+                            window.quill.root.innerHTML = window.chaptersContent[chap] || '';
+                        }
+                    };
+                    writerOutlineList.appendChild(li);
+                });
+
+                var firstChap = parsed.chapters[0];
+                var chapTitleEl = document.getElementById('currentChapterTitle');
+                if (chapTitleEl) chapTitleEl.innerText = firstChap;
+                if (window.quill) {
+                    window.quill.root.innerHTML = window.chaptersContent[firstChap] || '';
+                }
+            }
+
+            var btnProceedToEditor = document.getElementById('btnProceedToEditor');
+            var btnCopyAllToCanvas = document.getElementById('btnCopyAllToCanvas');
+            if (btnProceedToEditor) btnProceedToEditor.classList.remove('hidden');
+            if (btnCopyAllToCanvas) btnCopyAllToCanvas.classList.remove('hidden');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        } catch (err) {
+            console.error('Direct Manuscript Generation Error:', err);
+            alert('Terjadi kendala saat generate naskah: ' + (err.message || err));
+        } finally {
+            if (btnDirect) btnDirect.disabled = false;
+            if (progressBox) progressBox.classList.add('hidden');
         }
     };
 
@@ -1391,6 +1765,6 @@ Penutup"></textarea>
     };
     </script>
     
-    <script src="/js/app.js?v=7.1"></script>
+    <script src="/js/app.js?v=7.2"></script>
 </body>
 </html>
