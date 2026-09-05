@@ -325,14 +325,16 @@ app.get('/api/user/profile', async (req, res) => {
     if (!token) return res.status(401).json({ error: 'Unauthorized' });
 
     try {
+        const authClient = adminSupabase || supabase;
+        const { data: { user }, error: userError } = await authClient.auth.getUser(token);
+        if (userError || !user) throw userError || new Error('Sesi pengguna tidak valid');
+
         const userSupabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
             global: { headers: { Authorization: `Bearer ${token}` } }
         });
 
-        const { data: { user }, error: userError } = await userSupabase.auth.getUser();
-        if (userError) throw userError;
-
-        const { data: profile, error: profileError } = await userSupabase
+        const dbClient = adminSupabase || userSupabase;
+        const { data: profile, error: profileError } = await dbClient
             .from('user_profiles')
             .select('*')
             .eq('id', user.id)
@@ -342,22 +344,24 @@ app.get('/api/user/profile', async (req, res) => {
 
         if (profileError || !profile) {
             // Jika belum ada profil (baru daftar), buatkan profil bawaan (free)
-            finalProfile = { role: 'free', quota_agency: 0, quota_personal: 0 };
+            finalProfile = { id: user.id, email: user.email, role: 'free', quota_agency: 0, quota_personal: 0 };
             
             // Simpan profil free ke database secara asinkron
-            userSupabase.from('user_profiles').upsert({
+            dbClient.from('user_profiles').upsert({
                 id: user.id,
+                email: user.email,
                 role: 'free',
                 quota_agency: 0,
                 quota_personal: 0
             }).then().catch(e => console.error("Error saving profile:", e));
         }
 
-        // Lampirkan API Key yang tersimpan di akun (user_metadata / profile)
+        // Lampirkan API Key yang tersimpan di akun (user_metadata)
         finalProfile.api_key = user.user_metadata?.api_key || (profile && profile.api_key) || null;
 
         res.json({ success: true, profile: finalProfile });
     } catch (error) {
+        console.error('Fetch profile error:', error.message);
         res.status(400).json({ success: false, error: error.message });
     }
 });
@@ -366,35 +370,36 @@ app.get('/api/user/profile', async (req, res) => {
 app.post('/api/user/save-api-key', async (req, res) => {
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1];
-    const { apiKey } = req.body;
+    const { apiKey } = req.body || {};
 
     if (!supabase) return res.status(500).json({ error: 'Database is not connected.' });
     if (!token) return res.status(401).json({ error: 'Unauthorized' });
 
     try {
-        const userSupabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
-            global: { headers: { Authorization: `Bearer ${token}` } }
-        });
-
-        const { data: { user }, error: userError } = await userSupabase.auth.getUser();
-        if (userError || !user) throw new Error('Pengguna tidak ditemukan');
+        const authClient = adminSupabase || supabase;
+        const { data: { user }, error: userError } = await authClient.auth.getUser(token);
+        if (userError || !user) throw new Error('Pengguna tidak ditemukan atau sesi telah berakhir');
 
         const cleanKey = (apiKey || '').trim();
 
         // Simpan ke user_metadata Supabase Auth agar permanen per akun di semua perangkat
-        await userSupabase.auth.updateUser({
-            data: { api_key: cleanKey }
-        });
-
-        // Coba simpan juga ke user_profiles jika tabel memiliki kolom api_key
-        try {
-            await userSupabase.from('user_profiles').update({ api_key: cleanKey }).eq('id', user.id);
-        } catch (e) {
-            // Abaikan jika kolom di tabel belum ada, user_metadata sudah cukup
+        if (adminSupabase) {
+            const { error: updateErr } = await adminSupabase.auth.admin.updateUserById(user.id, {
+                user_metadata: { ...(user.user_metadata || {}), api_key: cleanKey }
+            });
+            if (updateErr) console.warn('Admin update user metadata warning:', updateErr.message);
+        } else {
+            const userSupabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+                global: { headers: { Authorization: `Bearer ${token}` } }
+            });
+            await userSupabase.auth.updateUser({
+                data: { api_key: cleanKey }
+            });
         }
 
-        res.json({ success: true, message: 'API Key berhasil disimpan permanen ke akun Anda.' });
+        res.json({ success: true, message: 'API Key berhasil disimpan permanen ke akun Anda.', apiKey: cleanKey });
     } catch (error) {
+        console.error('Save API key error:', error.message);
         res.status(400).json({ success: false, error: error.message });
     }
 });
@@ -410,8 +415,9 @@ app.get('/api/agency/users', async (req, res) => {
             global: { headers: { Authorization: `Bearer ${token}` } }
         });
         
-        const { data: { user }, error: userError } = await userSupabase.auth.getUser();
-        if (userError) throw userError;
+        const authClient = adminSupabase || supabase;
+        const { data: { user }, error: userError } = await authClient.auth.getUser(token);
+        if (userError || !user) throw userError || new Error('Unauthorized');
 
         // Fetch children or all if owner
         const { data: profile } = await userSupabase.from('user_profiles').select('role').eq('id', user.id).single();
@@ -447,8 +453,9 @@ app.post('/api/agency/create-user', async (req, res) => {
         const userSupabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
             global: { headers: { Authorization: `Bearer ${token}` } }
         });
-        const { data: { user }, error: userError } = await userSupabase.auth.getUser();
-        if (userError) throw userError;
+        const authClient = adminSupabase || supabase;
+        const { data: { user }, error: userError } = await authClient.auth.getUser(token);
+        if (userError || !user) throw userError || new Error('Unauthorized');
 
         // Use SERVICE_ROLE_KEY for reliable user creation without affecting active sessions
         let newUserData;
@@ -499,8 +506,9 @@ app.post('/api/agency/add-quota', async (req, res) => {
         const userSupabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
             global: { headers: { Authorization: `Bearer ${token}` } }
         });
-        const { data: { user }, error: userError } = await userSupabase.auth.getUser();
-        if (userError) throw userError;
+        const authClient = adminSupabase || supabase;
+        const { data: { user }, error: userError } = await authClient.auth.getUser(token);
+        if (userError || !user) throw userError || new Error('Unauthorized');
 
         const { data: profile } = await userSupabase.from('user_profiles').select('role').eq('id', user.id).single();
         if (!profile || profile.role !== 'owner') {
@@ -536,8 +544,9 @@ app.post('/api/agency/update-role', async (req, res) => {
         const userSupabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
             global: { headers: { Authorization: `Bearer ${token}` } }
         });
-        const { data: { user }, error: userError } = await userSupabase.auth.getUser();
-        if (userError) throw userError;
+        const authClient = adminSupabase || supabase;
+        const { data: { user }, error: userError } = await authClient.auth.getUser(token);
+        if (userError || !user) throw userError || new Error('Unauthorized');
 
         const { data: profile } = await userSupabase.from('user_profiles').select('role').eq('id', user.id).single();
         if (!profile || profile.role !== 'owner') {
@@ -565,8 +574,9 @@ app.delete('/api/agency/users/:id', async (req, res) => {
         const userSupabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
             global: { headers: { Authorization: `Bearer ${token}` } }
         });
-        const { data: { user }, error: userError } = await userSupabase.auth.getUser();
-        if (userError) throw userError;
+        const authClient = adminSupabase || supabase;
+        const { data: { user }, error: userError } = await authClient.auth.getUser(token);
+        if (userError || !user) throw userError || new Error('Unauthorized');
 
         const { data: profile } = await userSupabase.from('user_profiles').select('role').eq('id', user.id).single();
         if (!profile || profile.role !== 'owner') {
@@ -1217,8 +1227,9 @@ app.delete('/api/ebooks/:id', async (req, res) => {
         });
 
         // Verify ownership via token
-        const { data: { user }, error: userError } = await userSupabase.auth.getUser();
-        if (userError) throw userError;
+        const authClient = adminSupabase || supabase;
+        const { data: { user }, error: userError } = await authClient.auth.getUser(token);
+        if (userError || !user) throw userError || new Error('Unauthorized');
 
         const { error } = await userSupabase
             .from('ebooks')

@@ -45,13 +45,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Smart fetch wrapper that refreshes token automatically if expired
     async function authenticatedFetch(url, options = {}) {
+        if (!options.headers) options.headers = {};
         if (window.currentUser && window.currentUser.token) {
             if (isTokenExpired(window.currentUser.token)) {
                 console.log('🔄 Token is expired or expiring soon, refreshing before request to:', url);
                 await refreshToken();
             }
-            if (!options.headers) options.headers = {};
             options.headers['Authorization'] = `Bearer ${window.currentUser.token}`;
+        }
+        if (options.body && typeof options.body === 'string') {
+            if (!options.headers['Content-Type'] && (options.body.trim().startsWith('{') || options.body.trim().startsWith('['))) {
+                options.headers['Content-Type'] = 'application/json';
+            }
         }
         return fetch(url, options);
     }
@@ -186,9 +191,19 @@ document.addEventListener('DOMContentLoaded', () => {
         authMessage.classList.add('hidden');
     });
 
-    // API Key Feedback
+    // API Key Feedback & Global Helper
     const inputApiKey = document.getElementById('inputApiKey');
     const apiKeyStatus = document.getElementById('apiKeyStatus');
+
+    window.getUserApiKey = function() {
+        if (window.userApiKey && window.userApiKey.trim()) return window.userApiKey.trim();
+        const inputEl = document.getElementById('inputApiKey');
+        if (inputEl && inputEl.value && inputEl.value.trim()) return inputEl.value.trim();
+        const localKey = localStorage.getItem('ebookMagicApiKey');
+        if (localKey && localKey.trim()) return localKey.trim();
+        return '';
+    };
+
     if (inputApiKey && apiKeyStatus) {
         const savedApiKey = localStorage.getItem('ebookMagicApiKey');
         if (savedApiKey) {
@@ -211,6 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.userApiKey = val;
                 localStorage.setItem('ebookMagicApiKey', val);
                 apiKeyStatus.style.display = 'inline-block';
+                apiKeyStatus.innerHTML = '<i class="ph-fill ph-check-circle"></i> Tersimpan';
                 inputApiKey.style.borderColor = '#10B981';
                 setTimeout(() => {
                     apiKeyStatus.style.display = 'none';
@@ -228,6 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.userApiKey = val;
                     localStorage.setItem('ebookMagicApiKey', val);
                     apiKeyStatus.style.display = 'inline-block';
+                    apiKeyStatus.innerHTML = '<i class="ph-fill ph-check-circle"></i> Tersimpan';
                     inputApiKey.style.borderColor = '#10B981';
                     setTimeout(() => {
                         apiKeyStatus.style.display = 'none';
@@ -244,24 +261,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 const val = inputApiKey.value.trim();
                 inputApiKey.value = val;
                 if (!val) {
-                    alert('Silakan masukkan API Key Anda terlebih dahulu.');
-                    return;
+                    if (!confirm('Apakah Anda ingin menghapus API Key yang tersimpan?')) {
+                        return;
+                    }
                 }
                 window.userApiKey = val;
-                localStorage.setItem('ebookMagicApiKey', val);
+                if (val) {
+                    localStorage.setItem('ebookMagicApiKey', val);
+                } else {
+                    localStorage.removeItem('ebookMagicApiKey');
+                }
                 apiKeyStatus.style.display = 'inline-block';
-                apiKeyStatus.innerHTML = '<i class="ph-fill ph-check-circle"></i> Tersimpan!';
-                inputApiKey.style.borderColor = '#10B981';
+                apiKeyStatus.innerHTML = '<i class="ph-fill ph-check-circle"></i> ' + (val ? 'Tersimpan!' : 'Dihapus');
+                inputApiKey.style.borderColor = val ? '#10B981' : '#ddd';
                 btnSaveApiKey.style.background = '#10B981';
-                btnSaveApiKey.innerHTML = '<i class="ph ph-check"></i> Disimpan';
+                btnSaveApiKey.innerHTML = '<i class="ph ph-check"></i> ' + (val ? 'Disimpan' : 'Dihapus');
 
                 // Simpan permanen ke akun database agar otomatis terhubung setiap kali login
                 if (window.currentUser && window.currentUser.token) {
                     try {
-                        await authenticatedFetch('/api/user/save-api-key', {
+                        const res = await authenticatedFetch('/api/user/save-api-key', {
                             method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ apiKey: val })
                         });
+                        const data = await res.json();
+                        if (data && data.success) {
+                            apiKeyStatus.innerHTML = '<i class="ph-fill ph-check-circle"></i> Akun Terhubung!';
+                        }
                     } catch (e) {
                         console.warn('Gagal sinkron API key ke server:', e);
                     }
@@ -1078,12 +1105,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Title Generation Logic
     if (btnGenerateTitles) {
         btnGenerateTitles.addEventListener('click', async () => {
-            const apiKey = document.getElementById('inputApiKey').value.trim();
+            const apiKey = window.getUserApiKey ? window.getUserApiKey() : (window.userApiKey || (document.getElementById('inputApiKey') && document.getElementById('inputApiKey').value) || localStorage.getItem('ebookMagicApiKey') || '').trim();
             const niche = document.getElementById('inputNiche').value;
             const audience = document.getElementById('inputAudience').value;
             const goal = document.getElementById('inputGoal') ? document.getElementById('inputGoal').value : '';
 
-            if(!apiKey) return alert('Silakan masukkan API Key (Gemini atau OpenAI) terlebih dahulu.');
+            if(!apiKey) return alert('Silakan masukkan API Key (Gemini atau OpenAI) terlebih dahulu pada menu kiri bawah.');
             if(!niche || !audience) return alert('Masukkan niche dan audiens.');
 
             btnGenerateTitles.disabled = true;
@@ -1331,12 +1358,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // AI Generation Logic (Outline)
     if (btnGenerateOutline) {
         btnGenerateOutline.addEventListener('click', async () => {
-            const apiKey = document.getElementById('inputApiKey').value.trim();
+            const apiKey = window.getUserApiKey ? window.getUserApiKey() : (window.userApiKey || (document.getElementById('inputApiKey') && document.getElementById('inputApiKey').value) || localStorage.getItem('ebookMagicApiKey') || '').trim();
             const niche = document.getElementById('inputNiche').value;
             const audience = document.getElementById('inputAudience').value;
 
             if(!apiKey) {
-                alert('Silakan masukkan API Key (Gemini atau OpenAI) terlebih dahulu.');
+                alert('Silakan masukkan API Key (Gemini atau OpenAI) terlebih dahulu pada menu kiri bawah.');
                 return;
             }
 
@@ -1700,7 +1727,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     type: window.currentEbookType || 'praktis',
                     tone: selectedTone,
                     customContext: customContext,
-                    apiKey: window.userApiKey,
+                    apiKey: (window.getUserApiKey ? window.getUserApiKey() : (window.userApiKey || '')),
                     authorProfile: window.currentAuthorProfile,
                     cta: window.currentCTA
                 })
@@ -1749,7 +1776,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify({ 
                         chapterTitle, 
                         niche: window.currentNiche,
-                        apiKey: window.userApiKey 
+                        apiKey: (window.getUserApiKey ? window.getUserApiKey() : (window.userApiKey || ''))
                     })
                 });
 
@@ -3764,6 +3791,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // Auto-sync API Key dari profil database akun
+                const localStoredKey = (localStorage.getItem('ebookMagicApiKey') || '').trim();
                 if (data.profile.api_key) {
                     const cleanKey = data.profile.api_key.trim();
                     window.userApiKey = cleanKey;
@@ -3775,16 +3803,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     const apiKeyStatus = document.getElementById('apiKeyStatus');
                     if (apiKeyStatus) {
                         apiKeyStatus.style.display = 'inline-block';
-                        apiKeyStatus.innerHTML = '<i class="ph-fill ph-check-circle"></i> Terhubung';
+                        apiKeyStatus.innerHTML = '<i class="ph-fill ph-check-circle"></i> Terhubung ke Akun';
                         setTimeout(() => {
                             apiKeyStatus.style.display = 'none';
                         }, 2500);
                     }
-                } else if (window.userApiKey) {
+                } else if (window.userApiKey || localStoredKey) {
+                    const fallbackKey = (window.userApiKey || localStoredKey).trim();
+                    window.userApiKey = fallbackKey;
+                    const inputApiKey = document.getElementById('inputApiKey');
+                    if (inputApiKey && !inputApiKey.value) {
+                        inputApiKey.value = fallbackKey;
+                    }
                     // Jika di database belum tersimpan tapi di browser lokal ada, sinkronkan ke database
                     authenticatedFetch('/api/user/save-api-key', {
                         method: 'POST',
-                        body: JSON.stringify({ apiKey: window.userApiKey })
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ apiKey: fallbackKey })
                     }).catch(() => {});
                 }
             }
@@ -4236,7 +4271,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const apiKey = window.userApiKey || localStorage.getItem('ebookMagicApiKey') || '';
+            const apiKey = window.getUserApiKey ? window.getUserApiKey() : (window.userApiKey || localStorage.getItem('ebookMagicApiKey') || '');
             const res = await fetch('/api/generate-titles', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -4300,7 +4335,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const apiKey = window.userApiKey || localStorage.getItem('ebookMagicApiKey') || '';
+            const apiKey = window.getUserApiKey ? window.getUserApiKey() : (window.userApiKey || localStorage.getItem('ebookMagicApiKey') || '');
             const count = parseInt(data.chapterCount, 10) || 5;
             const typeVal = count <= 5 ? 'ebook' : (count <= 10 ? 'panduan' : 'masterclass');
 
@@ -4360,7 +4395,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const apiKey = window.userApiKey || localStorage.getItem('ebookMagicApiKey') || '';
+            const apiKey = window.getUserApiKey ? window.getUserApiKey() : (window.userApiKey || localStorage.getItem('ebookMagicApiKey') || '');
             const res = await fetch('/api/generate-super-prompt', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -4409,7 +4444,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (statusText) statusText.innerText = 'AI sedang menyusun seluruh naskah ebook berdasarkan 12 parameter briefing... Mohon tunggu sebentar.';
 
         try {
-            const apiKey = window.userApiKey || localStorage.getItem('ebookMagicApiKey') || '';
+            const apiKey = window.getUserApiKey ? window.getUserApiKey() : (window.userApiKey || localStorage.getItem('ebookMagicApiKey') || '');
             const res = await fetch('/api/generate-full-manuscript', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

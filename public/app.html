@@ -1321,7 +1321,7 @@ Penutup"></textarea>
         }
 
         try {
-            var apiKey = window.userApiKey || localStorage.getItem('ebookMagicApiKey') || '';
+            var apiKey = (typeof window.getUserApiKey === 'function' ? window.getUserApiKey() : (window.userApiKey || localStorage.getItem('ebookMagicApiKey') || ''));
             var res = await fetch('/api/generate-titles', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1385,7 +1385,7 @@ Penutup"></textarea>
         }
 
         try {
-            var apiKey = window.userApiKey || localStorage.getItem('ebookMagicApiKey') || '';
+            var apiKey = (typeof window.getUserApiKey === 'function' ? window.getUserApiKey() : (window.userApiKey || localStorage.getItem('ebookMagicApiKey') || ''));
             var count = parseInt(data.chapterCount, 10) || 5;
             var typeVal = count <= 5 ? 'ebook' : (count <= 10 ? 'panduan' : 'masterclass');
 
@@ -1445,7 +1445,7 @@ Penutup"></textarea>
         }
 
         try {
-            var apiKey = window.userApiKey || localStorage.getItem('ebookMagicApiKey') || '';
+            var apiKey = (typeof window.getUserApiKey === 'function' ? window.getUserApiKey() : (window.userApiKey || localStorage.getItem('ebookMagicApiKey') || ''));
             var res = await fetch('/api/generate-super-prompt', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1493,7 +1493,7 @@ Penutup"></textarea>
         if (statusText) statusText.innerText = 'AI sedang menyusun seluruh naskah ebook berdasarkan 12 parameter briefing... Mohon tunggu sebentar.';
 
         try {
-            var apiKey = window.userApiKey || localStorage.getItem('ebookMagicApiKey') || '';
+            var apiKey = (typeof window.getUserApiKey === 'function' ? window.getUserApiKey() : (window.userApiKey || localStorage.getItem('ebookMagicApiKey') || ''));
             var res = await fetch('/api/generate-full-manuscript', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1765,6 +1765,6 @@ Penutup"></textarea>
     };
     </script>
     
-    <script src="/js/app.js?v=7.2"></script>
+    <script src="/js/app.js?v=7.3"></script>
 </body>
 </html>
