@@ -570,12 +570,82 @@ document.addEventListener('DOMContentLoaded', () => {
                         const firstKey = Object.keys(parsedChapters)[0];
                         const rawContent = firstKey ? parsedChapters[firstKey] : '';
                         if (rawContent && rawContent.length > 50) {
-                            const textToParse = rawContent.replace(/<[^>]+>/g, '\n').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
-                            const reParsed = typeof parseChatGPTMarkdown === 'function' ? parseChatGPTMarkdown(textToParse, ebook.title, ebook.niche) : null;
-                            if (reParsed && reParsed.chapters && reParsed.chapters.length > 1) {
-                                parsedOutline = reParsed.chapters;
-                                parsedChapters = reParsed.chaptersContent;
-                                window._isDirty = true;
+                            // Strategy 1: Try to split by HTML headings if content is HTML
+                            const isHtml = /<h[1-3][^>]*>/i.test(rawContent);
+                            if (isHtml) {
+                                // Helper: extract chapters by a given heading regex pattern
+                                function extractHtmlChapters(html, pattern) {
+                                    const result = [];
+                                    let m;
+                                    pattern.lastIndex = 0;
+                                    while ((m = pattern.exec(html)) !== null) {
+                                        const headingText = m[1].replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim();
+                                        if (headingText.length >= 2) {
+                                            result.push({ title: headingText, index: m.index });
+                                        }
+                                    }
+                                    return result;
+                                }
+
+                                // Try <h2> first (main chapter headings)
+                                let htmlChapters = extractHtmlChapters(rawContent, /<h2[^>]*>(.*?)<\/h2>/gi);
+
+                                // If not enough h2, try h3 with chapter keywords only
+                                if (htmlChapters.length < 2) {
+                                    const chapKeywords = /BAB|BAGIAN|CHAPTER|MODUL|PART|LANGKAH|STEP|KATA PENGANTAR|PRAKATA|PENDAHULUAN|PROLOG|PENUTUP|KESIMPULAN|EPILOG|BONUS|LAMPIRAN/i;
+                                    const h3Chapters = extractHtmlChapters(rawContent, /<h3[^>]*>(.*?)<\/h3>/gi)
+                                        .filter(c => chapKeywords.test(c.title));
+                                    if (h3Chapters.length >= 2) htmlChapters = h3Chapters;
+                                }
+
+                                // Last resort: any h2 OR h3 heading
+                                if (htmlChapters.length < 2) {
+                                    htmlChapters = extractHtmlChapters(rawContent, /<h[2-3][^>]*>(.*?)<\/h[2-3]>/gi);
+                                }
+
+                                if (htmlChapters.length > 1) {
+                                    const newOutline = [];
+                                    const newChaptersContent = {};
+                                    for (let ci = 0; ci < htmlChapters.length; ci++) {
+                                        const chapTitle = htmlChapters[ci].title;
+                                        const startIdx = htmlChapters[ci].index;
+                                        const endIdx = ci < htmlChapters.length - 1 ? htmlChapters[ci + 1].index : rawContent.length;
+                                        let chapBody = rawContent.substring(startIdx, endIdx).trim();
+                                        // Remove the heading tag itself from body
+                                        chapBody = chapBody.replace(/^<h[1-3][^>]*>.*?<\/h[1-3]>/i, '').trim();
+                                        let uniqueTitle = chapTitle;
+                                        let counter = 2;
+                                        while (newOutline.includes(uniqueTitle)) { uniqueTitle = `${chapTitle} (${counter++})`; }
+                                        newOutline.push(uniqueTitle);
+                                        newChaptersContent[uniqueTitle] = chapBody;
+                                    }
+                                    parsedOutline = newOutline;
+                                    parsedChapters = newChaptersContent;
+                                    window._isDirty = true;
+                                }
+                            }
+                            // Strategy 2: Fallback — strip HTML and use parseChatGPTMarkdown
+                            if (parsedOutline.length <= 1 && typeof parseChatGPTMarkdown === 'function') {
+                                const textToParse = rawContent.replace(/<[^>]+>/g, '\n').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\n{3,}/g, '\n\n');
+                                const reParsed = parseChatGPTMarkdown(textToParse, ebook.title, ebook.niche);
+                                if (reParsed && reParsed.chapters && reParsed.chapters.length > 1) {
+                                    // Re-build content from original HTML by splitting around detected chapter names
+                                    const newOutline = reParsed.chapters;
+                                    const newChaptersContent = {};
+                                    // Try to split original HTML content by each chapter title
+                                    let remaining = rawContent;
+                                    newOutline.forEach((chapTitle, idx) => {
+                                        const escapedTitle = chapTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                                        const nextTitle = newOutline[idx + 1];
+                                        const nextEscaped = nextTitle ? nextTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : null;
+                                        const splitReg = nextEscaped ? new RegExp(`([\\s\\S]*?)(?=.*?${nextEscaped}|$)`) : null;
+                                        // Simple approach: use reParsed.chaptersContent (already converted HTML)
+                                        newChaptersContent[chapTitle] = reParsed.chaptersContent[chapTitle] || '';
+                                    });
+                                    parsedOutline = newOutline;
+                                    parsedChapters = newChaptersContent;
+                                    window._isDirty = true;
+                                }
                             }
                         }
                     }
@@ -4968,9 +5038,24 @@ document.addEventListener('DOMContentLoaded', () => {
             return list;
         }
 
+        // Tier 0: HTML headings (<h1>, <h2>, <h3>) — for cases where input is already HTML
+        let matches = [];
+        if (/<h[1-3][^>]*>/i.test(text)) {
+            const regexHtmlHeadings = /<h[1-3][^>]*>(.*?)<\/h[1-3]>/gi;
+            const htmlHeadingMatches = [];
+            let hm;
+            while ((hm = regexHtmlHeadings.exec(text)) !== null) {
+                const headingText = hm[1].replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim();
+                if (headingText.length >= 2 && headingText.toLowerCase() !== title.toLowerCase() && headingText.toLowerCase() !== subtitle.toLowerCase()) {
+                    htmlHeadingMatches.push({ header: headingText, index: hm.index, matchLength: hm[0].length });
+                }
+            }
+            if (htmlHeadingMatches.length >= 2) matches = htmlHeadingMatches;
+        }
+
         // Tier 1: Explicit chapter & section keywords including brackets [BAGIAN 1 - ...], [BAB 1: ...], etc.
         const regex1 = /(?:^|\n)(?:#{1,3}\s+|\*{1,3}|\[|\(\s*)?((?:BAGIAN|BAB|CHAPTER|MODUL|PART|LANGKAH|STEP|KATA\s+PENGANTAR|PRAKATA|PENDAHULUAN|PROLOG|PENUTUP|KESIMPULAN|EPILOG|PROFIL\s+PENULIS|TENTANG\s+PENULIS|CALL\s+TO\s+ACTION|BONUS|LAMPIRAN)\b[\s\dIVXLCDMSatuDuaTigaEmpatLimaEnamTujuhDelapanSembilanSepuluh\:\.\-–—_\|\]\)\*]*[^\n\*\#\r]*)(?:\*{1,3}|\]|\))?(?:\r?\n|$)/gi;
-        let matches = findMatches(regex1);
+        if (matches.length < 2) matches = findMatches(regex1);
 
         // Tier 2: Numbered headings like ### 1. ... or [1. ...] or **1. ...**
         if (matches.length < 2) {
