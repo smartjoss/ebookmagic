@@ -2185,14 +2185,10 @@ document.addEventListener('DOMContentLoaded', () => {
         function processNode(node) {
             if (node.nodeType === Node.TEXT_NODE) {
                 const text = node.textContent.trim();
-                if (text) {
-                    elements.push({ type: 'paragraph', text: text });
-                }
+                if (text) elements.push({ type: 'paragraph', text: text });
                 return;
             }
-
             if (node.nodeType !== Node.ELEMENT_NODE) return;
-
             const tag = node.tagName.toLowerCase();
 
             if (['h1', 'h2', 'h3', 'h4'].includes(tag)) {
@@ -2205,40 +2201,34 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (t) items.push(t);
                 });
                 if (items.length > 0) {
-                    const prefix = tag === 'ol' ? 'num' : 'bullet';
-                    const bulletText = items.map((item, i) => {
-                        return prefix === 'num' ? `${i + 1}. ${item}` : `• ${item}`;
-                    }).join('\n');
+                    const bulletText = items.map((item, i) =>
+                        tag === 'ol' ? `${i + 1}. ${item}` : `• ${item}`
+                    ).join('\n');
                     elements.push({ type: 'list', text: bulletText });
                 }
             } else if (tag === 'p') {
                 let text = node.textContent.trim();
                 if (text) {
-                    const isBold = node.querySelector('strong, b') && node.textContent === (node.querySelector('strong, b')?.textContent || '');
-                    
-                    const MAX_CHARS = 1200;
+                    const isBold = !!(node.querySelector('strong, b') &&
+                        node.textContent.trim() === (node.querySelector('strong, b')?.textContent || '').trim());
+                    // Split very long paragraphs so they don't overflow
+                    const MAX_CHARS = 900;
                     while (text.length > MAX_CHARS) {
                         let splitIndex = text.lastIndexOf(' ', MAX_CHARS);
-                        if (splitIndex === -1) splitIndex = MAX_CHARS;
+                        if (splitIndex <= 0) splitIndex = MAX_CHARS;
                         elements.push({ type: 'paragraph', text: text.substring(0, splitIndex).trim(), bold: isBold });
                         text = text.substring(splitIndex).trim();
                     }
-                    if (text.length > 0) {
-                        elements.push({ type: 'paragraph', text: text, bold: isBold });
-                    }
+                    if (text.length > 0) elements.push({ type: 'paragraph', text: text, bold: isBold });
                 }
             } else if (tag === 'table') {
                 let tableText = '';
                 node.querySelectorAll('tr').forEach(tr => {
                     const cells = [];
-                    tr.querySelectorAll('td, th').forEach(cell => {
-                        cells.push(cell.textContent.trim());
-                    });
+                    tr.querySelectorAll('td, th').forEach(cell => cells.push(cell.textContent.trim()));
                     tableText += cells.join('  |  ') + '\n';
                 });
-                if (tableText.trim()) {
-                    elements.push({ type: 'table', text: tableText.trim() });
-                }
+                if (tableText.trim()) elements.push({ type: 'table', text: tableText.trim() });
             } else {
                 node.childNodes.forEach(child => processNode(child));
             }
@@ -2249,156 +2239,260 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     window.parseHtmlToElements = parseHtmlToElements;
 
-    // --- SMART COPY ALL CHAPTERS TO CANVAS ---
+    // --- Accurate height estimator for Fabric.js Textbox ---
+    function estimateTextboxHeight(text, fontSize, contentWidth, lineHeight) {
+        if (!text || text.trim() === '') return fontSize * (lineHeight || 1.5);
+        // Average char width ≈ fontSize * 0.52 for most fonts at normal weight
+        const avgCharWidth = fontSize * 0.52;
+        const charsPerLine = Math.max(1, Math.floor(contentWidth / avgCharWidth));
+        const lines = text.split('\n');
+        let totalLines = 0;
+        lines.forEach(line => {
+            if (line.trim() === '') { totalLines += 0.5; return; }
+            totalLines += Math.max(1, Math.ceil(line.length / charsPerLine));
+        });
+        return totalLines * fontSize * (lineHeight || 1.6) + 8;
+    }
+
+    // --- REBUILD: SMART COPY ALL CHAPTERS TO CANVAS (PER-BAB) ---
     const btnCopyAllToCanvas = document.getElementById('btnCopyAllToCanvas');
     if (btnCopyAllToCanvas) {
-        btnCopyAllToCanvas.addEventListener('click', () => {
+        btnCopyAllToCanvas.addEventListener('click', async () => {
             // Save current quill content first
-            if(activeChapterElement && quill) {
+            if (activeChapterElement && quill) {
                 window.chaptersContent[activeChapterElement.innerText] = quill.root.innerHTML;
             }
 
             if (!window.currentOutlineData || !window.currentOutlineData.outline) {
-                return alert('Tidak ada data bab untuk disalin.');
+                return alert('Tidak ada data bab untuk disalin. Buat outline terlebih dahulu.');
             }
 
-            // Show editor if not visible
+            // Show editor
             editorView.classList.remove('hidden');
             initCanvas();
 
             const outline = window.currentOutlineData.outline;
-            const chaptersWithContent = outline.filter(ch => window.chaptersContent[ch] && window.chaptersContent[ch].trim() !== '');
+            const chaptersWithContent = outline.filter(ch =>
+                window.chaptersContent[ch] && window.chaptersContent[ch].trim() !== ''
+            );
 
             if (chaptersWithContent.length === 0) {
                 return alert('Belum ada bab yang ditulis. Silakan generate konten AI dulu untuk minimal 1 bab.');
             }
 
-            if (!confirm(`Akan menyalin ${chaptersWithContent.length} bab ke halaman Canvas dengan format rapi.\n\nHalaman cover yang sudah ada akan dipertahankan.\nLanjutkan?`)) return;
+            if (!confirm(`Akan menyalin ${chaptersWithContent.length} bab ke Canvas.\n\nSetiap bab akan mendapat:\n• 1 halaman COVER BAB (judul besar)\n• Halaman isi (auto-split per halaman A4)\n\nHalaman cover ebook (halaman 1) tetap dipertahankan.\n\nLanjutkan?`)) return;
 
             btnCopyAllToCanvas.disabled = true;
-            btnCopyAllToCanvas.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Menyalin...';
+            btnCopyAllToCanvas.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Menyusun halaman...';
 
-            // Save current canvas page first
+            // Save current canvas page
             if (typeof saveCurrentPage === 'function') saveCurrentPage();
 
-            // --- Create canvas pages from parsed elements ---
-            const CANVAS_W = 800;
-            const CANVAS_H = 1131;
-            const MARGIN_X = 60;
-            const MARGIN_TOP = 70;
-            const MARGIN_BOTTOM = 80;
-            const CONTENT_W = CANVAS_W - (MARGIN_X * 2);
-            const MAX_Y = CANVAS_H - MARGIN_BOTTOM;
+            // ─── Layout constants (A4-like ratio) ───
+            const CW = 794;   // canvas width
+            const CH = 1123;  // canvas height
+            const MX = 64;    // margin x
+            const MT = 72;    // margin top for content pages
+            const MB = 72;    // margin bottom
+            const MAX_Y = CH - MB;
+            const CONTENT_W = CW - (MX * 2);
 
+            // ─── Template styling ───
             const template = window.selectedTemplateDetails || TEMPLATES_DATA[0];
-            const primaryFont = template.font.replace(/['"]/g, '').split(',')[0].trim();
-            const bgFill = template.bg;
-            const textFill = template.textColor;
-            const accentFill = template.accent;
+            const primaryFont = (template.font || 'Inter').replace(/['"]/g, '').split(',')[0].trim();
+            const bgFill   = template.bg        || '#1a1a2e';
+            const textFill = template.textColor || '#e2e8f0';
+            const accent   = template.accent    || '#6C63FF';
 
-            function createNewPage() {
-                const pageCanvas = new fabric.StaticCanvas(null, { width: CANVAS_W, height: CANVAS_H });
-                pageCanvas.backgroundColor = bgFill;
-                return pageCanvas;
+            // ─── Helpers ───
+            function makePageJSON(bgColor, objects) {
+                // Build a plain Fabric.js JSON manually — no StaticCanvas(null) needed
+                const fabricObjects = objects.map(obj => {
+                    const base = {
+                        type: obj.fabricType || 'textbox',
+                        version: '5.3.0',
+                        originX: 'left', originY: 'top',
+                        left: obj.left, top: obj.top,
+                        width: obj.width,
+                        fill: obj.fill || textFill,
+                        opacity: 1, visible: true,
+                        selectable: true, evented: true
+                    };
+                    if (obj.fabricType === 'rect') {
+                        return { ...base, height: obj.height, rx: obj.rx || 0, ry: obj.ry || 0, stroke: null };
+                    }
+                    // textbox
+                    return {
+                        ...base,
+                        text: obj.text,
+                        fontSize: obj.fontSize || 14,
+                        fontFamily: obj.fontFamily || primaryFont,
+                        fontWeight: obj.fontWeight || 'normal',
+                        fontStyle: 'normal',
+                        lineHeight: obj.lineHeight || 1.6,
+                        charSpacing: 0,
+                        textAlign: obj.textAlign || 'left',
+                        splitByGrapheme: false,
+                        styles: {}
+                    };
+                });
+                return JSON.stringify({
+                    version: '5.3.0',
+                    objects: fabricObjects,
+                    background: bgColor
+                });
             }
 
-            function getTextHeight(text, fontSize, fontWeight, width) {
-                // Approximate height calculation
-                const charsPerLine = Math.floor(width / (fontSize * 0.55));
-                const lines = text.split('\n').reduce((total, line) => {
-                    return total + Math.max(1, Math.ceil(line.length / charsPerLine));
-                }, 0);
-                return lines * (fontSize * 1.5) + 10;
+            function estimateH(text, fontSize, lh) {
+                return estimateTextboxHeight(text, fontSize, CONTENT_W, lh);
             }
 
+            // ─── Build all pages ───
             const allPages = [];
-            // Keep only the cover page (index 0) if it exists, to avoid duplicating chapter pages on re-copy
+
+            // Keep original cover page (index 0) if it exists
             if (canvasPages.length > 0) {
                 allPages.push(canvasPages[0]);
             }
 
-            chaptersWithContent.forEach(chapterTitle => {
+            chaptersWithContent.forEach((chapterTitle, chIdx) => {
+                // ── HALAMAN COVER BAB ──
+                const chNumText = `BAB ${chIdx + 1}`;
+                const coverObjs = [
+                    // Background accent band (top)
+                    { fabricType: 'rect', left: 0, top: 0, width: CW, height: 14, fill: accent },
+                    // Chapter number label
+                    {
+                        fabricType: 'textbox', text: chNumText,
+                        left: MX, top: CH * 0.35,
+                        width: CONTENT_W,
+                        fontSize: 18, fontFamily: primaryFont, fontWeight: '700',
+                        fill: accent, lineHeight: 1.3, textAlign: 'center'
+                    },
+                    // Divider line
+                    { fabricType: 'rect', left: CW / 2 - 40, top: CH * 0.35 + 30, width: 80, height: 4, fill: accent, rx: 2, ry: 2 },
+                    // Chapter title (big)
+                    {
+                        fabricType: 'textbox', text: chapterTitle,
+                        left: MX, top: CH * 0.35 + 55,
+                        width: CONTENT_W,
+                        fontSize: 36, fontFamily: primaryFont, fontWeight: '800',
+                        fill: textFill, lineHeight: 1.25, textAlign: 'center'
+                    },
+                    // Bottom accent band
+                    { fabricType: 'rect', left: 0, top: CH - 14, width: CW, height: 14, fill: accent }
+                ];
+                allPages.push(makePageJSON(bgFill, coverObjs));
+
+                // ── HALAMAN ISI BAB ──
                 const html = window.chaptersContent[chapterTitle];
                 const elements = parseHtmlToElements(html);
 
-                let currentPageObjs = [];
-                let yPos = MARGIN_TOP;
+                let pageObjs = [];
+                let yPos = MT;
 
-                function flushPage() {
-                    if (currentPageObjs.length === 0) return;
-                    const pg = createNewPage();
-                    currentPageObjs.forEach(obj => pg.add(obj));
-                    allPages.push(JSON.stringify(pg.toJSON()));
-                    currentPageObjs = [];
-                    yPos = MARGIN_TOP;
+                // Running header: chapter title (small, top of each content page)
+                function addHeader() {
+                    pageObjs.push({
+                        fabricType: 'textbox',
+                        text: chapterTitle,
+                        left: MX, top: 24, width: CONTENT_W,
+                        fontSize: 11, fontFamily: primaryFont, fontWeight: '600',
+                        fill: accent, lineHeight: 1.2, textAlign: 'left'
+                    });
+                    // Thin header rule
+                    pageObjs.push({
+                        fabricType: 'rect',
+                        left: MX, top: 42, width: CONTENT_W, height: 1,
+                        fill: accent, rx: 0, ry: 0
+                    });
                 }
 
-                // Add chapter title
-                const titleObj = new fabric.Textbox(chapterTitle, {
-                    left: MARGIN_X, top: yPos, width: CONTENT_W,
-                    fontSize: 28, fontFamily: primaryFont, fontWeight: 800,
-                    fill: accentFill, lineHeight: 1.3, splitByGrapheme: false
-                });
-                titleObj.setControlsVisibility({ mt: false, mb: false });
-                const titleHeight = titleObj.height || getTextHeight(chapterTitle, 28, 800, CONTENT_W);
-                currentPageObjs.push(titleObj);
-                yPos += titleHeight + 20;
-
-                // Add decorative line under chapter title
-                const decorLine = new fabric.Rect({
-                    left: MARGIN_X, top: yPos - 10,
-                    width: 80, height: 4,
-                    fill: accentFill, rx: 2, ry: 2
-                });
-                currentPageObjs.push(decorLine);
-                yPos += 15;
-
-                // Process each element
-                elements.forEach(el => {
-                    let fontSize = 14;
-                    let fontWeight = 'normal';
-                    let fill = textFill;
-                    let spacing = 12;
-
-                    if (el.type === 'h1') { fontSize = 24; fontWeight = 800; fill = textFill; spacing = 20; }
-                    else if (el.type === 'h2') { fontSize = 20; fontWeight = 700; fill = textFill; spacing = 18; }
-                    else if (el.type === 'h3') { fontSize = 17; fontWeight = 700; fill = textFill; spacing = 15; }
-                    else if (el.type === 'h4') { fontSize = 15; fontWeight = 700; fill = textFill; spacing = 12; }
-                    else if (el.type === 'list') { fontSize = 13; fill = textFill; spacing = 10; }
-                    else if (el.type === 'table') { fontSize = 12; fill = textFill; spacing = 10; }
-                    else if (el.bold) { fontWeight = 'bold'; }
-
-                    let textObj = new fabric.Textbox(el.text, {
-                        left: el.type === 'list' ? MARGIN_X + 15 : MARGIN_X,
-                        top: yPos,
-                        width: el.type === 'list' ? CONTENT_W - 15 : CONTENT_W,
-                        fontSize: fontSize,
-                        fontFamily: primaryFont,
-                        fontWeight: fontWeight,
-                        fill: fill,
-                        lineHeight: 1.6,
-                        splitByGrapheme: false
+                // Page number footer
+                function addFooter(pageNum) {
+                    pageObjs.push({
+                        fabricType: 'textbox',
+                        text: `— ${pageNum} —`,
+                        left: MX, top: CH - 45, width: CONTENT_W,
+                        fontSize: 11, fontFamily: primaryFont, fontWeight: 'normal',
+                        fill: accent, lineHeight: 1.2, textAlign: 'center'
                     });
+                }
 
-                    let elHeight = textObj.height || getTextHeight(el.text, fontSize, fontWeight, CONTENT_W);
+                let contentPageNum = 1;
 
-                    // Check if we need a new page
-                    if (yPos + elHeight > MAX_Y) {
-                        flushPage();
-                        // Update top position for the new page
-                        textObj.set('top', yPos);
+                function flushPage() {
+                    if (pageObjs.length === 0) return;
+                    addFooter(contentPageNum++);
+                    allPages.push(makePageJSON(bgFill, pageObjs));
+                    pageObjs = [];
+                    yPos = MT;
+                    addHeader();
+                }
+
+                // Start first content page with header
+                addHeader();
+
+                elements.forEach(el => {
+                    let fontSize   = 14;
+                    let fontWeight = 'normal';
+                    let fill       = textFill;
+                    let spacing    = 14;
+                    let lineH      = 1.65;
+                    let leftOffset = 0;
+                    let textAlign  = 'left';
+
+                    if (el.type === 'h1')        { fontSize = 26; fontWeight = '800'; fill = textFill;  spacing = 22; lineH = 1.3; }
+                    else if (el.type === 'h2')   { fontSize = 22; fontWeight = '700'; fill = accent;    spacing = 18; lineH = 1.35; }
+                    else if (el.type === 'h3')   { fontSize = 18; fontWeight = '700'; fill = textFill;  spacing = 16; lineH = 1.4; }
+                    else if (el.type === 'h4')   { fontSize = 15; fontWeight = '700'; fill = textFill;  spacing = 13; lineH = 1.4; }
+                    else if (el.type === 'list') { fontSize = 13; fill = textFill;    spacing = 10;     lineH = 1.6; leftOffset = 16; }
+                    else if (el.type === 'table'){ fontSize = 12; fill = textFill;    spacing = 10;     lineH = 1.5; }
+                    else if (el.bold)            { fontWeight = 'bold'; }
+
+                    // Add spacing before headings
+                    if (['h1','h2','h3','h4'].includes(el.type)) {
+                        yPos += spacing * 0.5;
                     }
 
-                    textObj.setControlsVisibility({ mt: false, mb: false });
-                    currentPageObjs.push(textObj);
-                    yPos += elHeight + spacing;
+                    const elH = estimateH(el.text, fontSize, lineH);
+
+                    // Page break if content overflows
+                    if (yPos + elH > MAX_Y) {
+                        flushPage();
+                    }
+
+                    pageObjs.push({
+                        fabricType: 'textbox',
+                        text: el.text,
+                        left: MX + leftOffset,
+                        top: yPos,
+                        width: CONTENT_W - leftOffset,
+                        fontSize, fontFamily: primaryFont,
+                        fontWeight, fill, lineHeight: lineH, textAlign
+                    });
+
+                    yPos += elH + spacing;
+
+                    // Add decorative accent line after h2
+                    if (el.type === 'h2') {
+                        if (yPos + 6 <= MAX_Y) {
+                            pageObjs.push({
+                                fabricType: 'rect',
+                                left: MX, top: yPos - spacing + 2,
+                                width: 50, height: 3,
+                                fill: accent, rx: 2, ry: 2
+                            });
+                            yPos += 4;
+                        }
+                    }
                 });
 
-                // Flush remaining content
-                flushPage();
+                // Flush any remaining content
+                if (pageObjs.length > 0) flushPage();
             });
 
-            // Apply to canvas
+            // ─── Apply to canvas ───
             canvasPages.length = 0;
             allPages.forEach(p => canvasPages.push(p));
             currentCanvasPage = 0;
@@ -2406,8 +2500,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             btnCopyAllToCanvas.disabled = false;
             btnCopyAllToCanvas.innerHTML = '<i class="ph ph-clipboard-text"></i> Salin Semua Bab ke Canvas';
-            
-            alert(`✅ Berhasil menyalin ${chaptersWithContent.length} bab ke ${canvasPages.length} halaman Canvas!\n\nGunakan navigasi halaman di bawah canvas untuk melihat semua halaman.`);
+
+            const totalContent = allPages.length - (canvasPages[0] ? 1 : 0);
+            alert(`✅ Berhasil! ${chaptersWithContent.length} bab → ${allPages.length} halaman Canvas\n\n• Setiap bab punya halaman cover + halaman isi\n• Gunakan tombol ◀ ▶ di bawah canvas untuk navigasi halaman`);
 
             // Scroll to editor
             setTimeout(() => {
@@ -5409,271 +5504,131 @@ document.addEventListener('DOMContentLoaded', () => {
         const CONTENT_W = CANVAS_W - (MARGIN_X * 2);
         const MAX_Y = CANVAS_H - MARGIN_BOTTOM;
 
-        const primaryFont = template.font.replace(/['"]/g, '').split(',')[0].trim();
-        const bgFill = template.bg;
-        const textFill = template.textColor;
-        const accentFill = template.accent;
+        const primaryFont = (template.font || 'Inter').replace(/['\"]/g, '').split(',')[0].trim();
+        const bgFill    = template.bg        || '#1a1a2e';
+        const textFill  = template.textColor || '#e2e8f0';
+        const accentFill = template.accent   || '#6C63FF';
 
-        function createNewPage() {
-            const pageCanvas = new fabric.StaticCanvas(null, { width: CANVAS_W, height: CANVAS_H });
-            pageCanvas.backgroundColor = bgFill;
-            return pageCanvas;
-        }
-
-        function getTextHeight(text, fontSize, fontWeight, width) {
-            const charsPerLine = Math.floor(width / (fontSize * 0.52));
-            const lines = text.split('\n').reduce((total, line) => {
-                return total + Math.max(1, Math.ceil((line.length || 1) / charsPerLine));
-            }, 0);
-            return Math.round(lines * (fontSize * 1.6) + 12);
+        // Pure-JSON page builder (no StaticCanvas(null) = no invisible text bug)
+        function makePg(bgColor, objects) {
+            const fabricObjects = objects.map(obj => {
+                const base = {
+                    type: obj.fabricType || 'textbox',
+                    version: '5.3.0',
+                    originX: 'left', originY: 'top',
+                    left: obj.left, top: obj.top,
+                    width: obj.width,
+                    fill: obj.fill || textFill,
+                    opacity: obj.opacity !== undefined ? obj.opacity : 1,
+                    visible: true, selectable: true, evented: true
+                };
+                if (obj.fabricType === 'rect') {
+                    return { ...base, height: obj.height, rx: obj.rx || 0, ry: obj.ry || 0, stroke: null };
+                }
+                if (obj.fabricType === 'circle') {
+                    return { ...base, radius: obj.radius, stroke: null };
+                }
+                return {
+                    ...base,
+                    text: obj.text,
+                    fontSize: obj.fontSize || 14,
+                    fontFamily: obj.fontFamily || primaryFont,
+                    fontWeight: obj.fontWeight || 'normal',
+                    fontStyle: 'normal',
+                    lineHeight: obj.lineHeight || 1.6,
+                    charSpacing: obj.charSpacing || 0,
+                    textAlign: obj.textAlign || 'left',
+                    splitByGrapheme: false,
+                    styles: {}
+                };
+            });
+            return JSON.stringify({ version: '5.3.0', objects: fabricObjects, background: bgColor });
         }
 
         const allPages = [];
 
-        // --- PAGE 0: COVER PAGE ---
-        const coverCanvas = createNewPage();
-
+        // ─── PAGE 0: EBOOK COVER ───
+        const coverDecoObjs = [];
         if (template.id === 'modern' || template.id === 'pastel' || template.id === 'islamic') {
-            const circleTop = new fabric.Circle({
-                left: CANVAS_W - 140,
-                top: -60,
-                radius: 120,
-                fill: accentFill,
-                opacity: 0.14,
-                selectable: false
-            });
-            const circleBottom = new fabric.Circle({
-                left: -80,
-                top: CANVAS_H - 180,
-                radius: 160,
-                fill: accentFill,
-                opacity: 0.09,
-                selectable: false
-            });
-            coverCanvas.add(circleTop, circleBottom);
+            coverDecoObjs.push({ fabricType: 'circle', left: CANVAS_W - 140, top: -60, radius: 120, fill: accentFill, opacity: 0.14 });
+            coverDecoObjs.push({ fabricType: 'circle', left: -80, top: CANVAS_H - 180, radius: 160, fill: accentFill, opacity: 0.09 });
         } else if (template.id === 'dark' || template.id === 'premium') {
-            const frameRect = new fabric.Rect({
-                left: 30,
-                top: 30,
-                width: CANVAS_W - 60,
-                height: CANVAS_H - 60,
-                fill: 'transparent',
-                stroke: accentFill,
-                strokeWidth: 2,
-                opacity: 0.35,
-                rx: 12,
-                ry: 12,
-                selectable: false
-            });
-            coverCanvas.add(frameRect);
+            coverDecoObjs.push({ fabricType: 'rect', left: 30, top: 30, width: CANVAS_W - 60, height: CANVAS_H - 60, fill: 'transparent', opacity: 0.35, rx: 12, ry: 12 });
         } else if (template.id === 'corporate') {
-            const topBanner = new fabric.Rect({
-                left: 0,
-                top: 0,
-                width: CANVAS_W,
-                height: 16,
-                fill: accentFill,
-                selectable: false
-            });
-            coverCanvas.add(topBanner);
+            coverDecoObjs.push({ fabricType: 'rect', left: 0, top: 0, width: CANVAS_W, height: 16, fill: accentFill });
         }
 
-        const badgeText = new fabric.Textbox('EDISI EBOOK EKSKLUSIF', {
-            left: 0,
-            top: 150,
-            width: CANVAS_W,
-            fontSize: 12,
-            fontFamily: primaryFont,
-            fontWeight: 800,
-            textAlign: 'center',
-            fill: accentFill,
-            charSpacing: 150
-        });
-        badgeText.setControlsVisibility({ mt: false, mb: false });
+        allPages.push(makePg(bgFill, [
+            ...coverDecoObjs,
+            { fabricType: 'textbox', text: 'EDISI EBOOK EKSKLUSIF', left: 0, top: 150, width: CANVAS_W, fontSize: 12, fontFamily: primaryFont, fontWeight: '800', fill: accentFill, charSpacing: 150, textAlign: 'center' },
+            { fabricType: 'rect', left: (CANVAS_W - 80) / 2, top: 200, width: 80, height: 5, fill: accentFill, rx: 3, ry: 3 },
+            { fabricType: 'textbox', text: title, left: 60, top: 245, width: CANVAS_W - 120, fontSize: title.length > 50 ? 32 : 40, fontFamily: primaryFont, fontWeight: '800', fill: textFill, lineHeight: 1.25, textAlign: 'center' },
+            { fabricType: 'textbox', text: subtitle, left: 80, top: 380, width: CANVAS_W - 160, fontSize: 17, fontFamily: primaryFont, fill: textFill, lineHeight: 1.5, textAlign: 'center', opacity: 0.85 },
+            { fabricType: 'textbox', text: 'DITULIS OLEH', left: 0, top: 960, width: CANVAS_W, fontSize: 11, fontFamily: primaryFont, fontWeight: '700', fill: accentFill, charSpacing: 120, textAlign: 'center', opacity: 0.8 },
+            { fabricType: 'textbox', text: author, left: 0, top: 985, width: CANVAS_W, fontSize: 18, fontFamily: primaryFont, fontWeight: '800', fill: textFill, textAlign: 'center' }
+        ]));
 
-        const decorLineCover = new fabric.Rect({
-            left: (CANVAS_W - 80) / 2,
-            top: 200,
-            width: 80,
-            height: 5,
-            fill: accentFill,
-            rx: 3,
-            ry: 3
-        });
+        // ─── PAGES: Per-Chapter Cover + Content ───
+        parsed.chapters.forEach((chapterTitle, chIdx) => {
+            // Chapter Cover Page
+            allPages.push(makePg(bgFill, [
+                { fabricType: 'rect', left: 0, top: 0, width: CANVAS_W, height: 14, fill: accentFill },
+                { fabricType: 'textbox', text: `BAB ${chIdx + 1}`, left: MARGIN_X, top: CANVAS_H * 0.35, width: CONTENT_W, fontSize: 18, fontFamily: primaryFont, fontWeight: '700', fill: accentFill, lineHeight: 1.3, textAlign: 'center' },
+                { fabricType: 'rect', left: CANVAS_W / 2 - 40, top: CANVAS_H * 0.35 + 30, width: 80, height: 4, fill: accentFill, rx: 2, ry: 2 },
+                { fabricType: 'textbox', text: chapterTitle, left: MARGIN_X, top: CANVAS_H * 0.35 + 55, width: CONTENT_W, fontSize: 34, fontFamily: primaryFont, fontWeight: '800', fill: textFill, lineHeight: 1.25, textAlign: 'center' },
+                { fabricType: 'rect', left: 0, top: CANVAS_H - 14, width: CANVAS_W, height: 14, fill: accentFill }
+            ]));
 
-        const titleObj = new fabric.Textbox(title, {
-            left: 60,
-            top: 245,
-            width: CANVAS_W - 120,
-            fontSize: title.length > 50 ? 32 : 40,
-            fontFamily: primaryFont,
-            fontWeight: 800,
-            textAlign: 'center',
-            fill: textFill,
-            lineHeight: 1.25
-        });
-        titleObj.setControlsVisibility({ mt: false, mb: false });
-
-        const titleHeightCover = titleObj.height || 100;
-        const subtitleObj = new fabric.Textbox(subtitle, {
-            left: 80,
-            top: 245 + titleHeightCover + 25,
-            width: CANVAS_W - 160,
-            fontSize: 17,
-            fontFamily: primaryFont,
-            textAlign: 'center',
-            fill: textFill,
-            opacity: 0.85,
-            lineHeight: 1.5
-        });
-        subtitleObj.setControlsVisibility({ mt: false, mb: false });
-
-        const authorLabel = new fabric.Textbox('DITULIS OLEH', {
-            left: 0,
-            top: 960,
-            width: CANVAS_W,
-            fontSize: 11,
-            fontFamily: primaryFont,
-            fontWeight: 700,
-            textAlign: 'center',
-            fill: accentFill,
-            charSpacing: 120,
-            opacity: 0.8
-        });
-        const authorObj = new fabric.Textbox(author, {
-            left: 0,
-            top: 985,
-            width: CANVAS_W,
-            fontSize: 18,
-            fontFamily: primaryFont,
-            fontWeight: 800,
-            textAlign: 'center',
-            fill: textFill
-        });
-        authorLabel.setControlsVisibility({ mt: false, mb: false });
-        authorObj.setControlsVisibility({ mt: false, mb: false });
-
-        coverCanvas.add(badgeText, decorLineCover, titleObj, subtitleObj, authorLabel, authorObj);
-        allPages.push(JSON.stringify(coverCanvas.toJSON()));
-
-        // --- PAGES 1..N: CONTENT PAGES ---
-        let pageNumber = 1;
-
-        parsed.chapters.forEach((chapterTitle) => {
+            // Content Pages
             const html = parsed.chaptersContent[chapterTitle] || '';
             const elements = parseHtmlToElements(html);
-
-            let currentPageObjs = [];
+            let pageObjs = [];
             let yPos = MARGIN_TOP;
+            let contentPageNum = 1;
 
+            function addHdr() {
+                pageObjs.push({ fabricType: 'textbox', text: chapterTitle, left: MARGIN_X, top: 24, width: CONTENT_W, fontSize: 10, fontFamily: primaryFont, fontWeight: '600', fill: accentFill, lineHeight: 1.2, textAlign: 'left', opacity: 0.7 });
+                pageObjs.push({ fabricType: 'rect', left: MARGIN_X, top: 40, width: CONTENT_W, height: 1, fill: accentFill });
+            }
+            function addFtr() {
+                pageObjs.push({ fabricType: 'textbox', text: `\u2014 ${contentPageNum} \u2014`, left: MARGIN_X, top: CANVAS_H - 45, width: CONTENT_W, fontSize: 11, fontFamily: primaryFont, fill: accentFill, lineHeight: 1.2, textAlign: 'center' });
+            }
             function flushPage() {
-                if (currentPageObjs.length === 0) return;
-                const pg = createNewPage();
-                currentPageObjs.forEach(obj => pg.add(obj));
-
-                // Add Page Number Footer
-                const pageFooter = new fabric.Textbox(`${pageNumber}`, {
-                    left: CANVAS_W - MARGIN_X - 100,
-                    top: CANVAS_H - 50,
-                    width: 100,
-                    fontSize: 12,
-                    fontFamily: primaryFont,
-                    textAlign: 'right',
-                    fill: textFill,
-                    opacity: 0.45
-                });
-                pageFooter.setControlsVisibility({ mt: false, mb: false });
-                pg.add(pageFooter);
-
-                // Add subtle top mini header (book title)
-                const miniHeader = new fabric.Textbox(title, {
-                    left: MARGIN_X,
-                    top: 28,
-                    width: CONTENT_W,
-                    fontSize: 10,
-                    fontFamily: primaryFont,
-                    fill: textFill,
-                    opacity: 0.35
-                });
-                miniHeader.setControlsVisibility({ mt: false, mb: false });
-                pg.add(miniHeader);
-
-                allPages.push(JSON.stringify(pg.toJSON()));
-                currentPageObjs = [];
-                yPos = MARGIN_TOP;
-                pageNumber++;
+                if (pageObjs.length === 0) return;
+                addFtr();
+                allPages.push(makePg(bgFill, pageObjs));
+                pageObjs = []; yPos = MARGIN_TOP; contentPageNum++;
+                addHdr();
             }
 
-            // Add Chapter Heading
-            const chapTitleObj = new fabric.Textbox(chapterTitle, {
-                left: MARGIN_X,
-                top: yPos,
-                width: CONTENT_W,
-                fontSize: 26,
-                fontFamily: primaryFont,
-                fontWeight: 800,
-                fill: accentFill,
-                lineHeight: 1.3,
-                splitByGrapheme: false
-            });
-            chapTitleObj.setControlsVisibility({ mt: false, mb: false });
-            const chHeight = chapTitleObj.height || getTextHeight(chapterTitle, 26, 800, CONTENT_W);
-            currentPageObjs.push(chapTitleObj);
-            yPos += chHeight + 15;
+            addHdr();
 
-            // Decorative Accent Line
-            const decorLine = new fabric.Rect({
-                left: MARGIN_X,
-                top: yPos - 8,
-                width: 70,
-                height: 4,
-                fill: accentFill,
-                rx: 2,
-                ry: 2
-            });
-            currentPageObjs.push(decorLine);
-            yPos += 18;
-
-            // Render each element
             elements.forEach(el => {
-                let fontSize = 14;
-                let fontWeight = 'normal';
-                let fill = textFill;
-                let spacing = 12;
+                let fontSize = 14, fontWeight = 'normal', fill = textFill;
+                let spacing = 14, lineH = 1.65, leftOff = 0, textAlign = 'left';
 
-                if (el.type === 'h1') { fontSize = 22; fontWeight = 800; fill = textFill; spacing = 18; }
-                else if (el.type === 'h2') { fontSize = 18; fontWeight = 700; fill = textFill; spacing = 16; }
-                else if (el.type === 'h3') { fontSize = 16; fontWeight = 700; fill = textFill; spacing = 14; }
-                else if (el.type === 'h4') { fontSize = 14; fontWeight = 700; fill = textFill; spacing = 12; }
-                else if (el.type === 'list') { fontSize = 13; fill = textFill; spacing = 10; }
-                else if (el.type === 'table') { fontSize = 12; fill = textFill; spacing = 10; }
-                else if (el.bold) { fontWeight = 'bold'; }
+                if (el.type === 'h1')        { fontSize = 24; fontWeight = '800'; spacing = 22; lineH = 1.3; }
+                else if (el.type === 'h2')   { fontSize = 20; fontWeight = '700'; fill = accentFill; spacing = 18; lineH = 1.35; }
+                else if (el.type === 'h3')   { fontSize = 17; fontWeight = '700'; spacing = 16; lineH = 1.4; }
+                else if (el.type === 'h4')   { fontSize = 15; fontWeight = '700'; spacing = 13; lineH = 1.4; }
+                else if (el.type === 'list') { fontSize = 13; spacing = 10; lineH = 1.6; leftOff = 16; }
+                else if (el.type === 'table'){ fontSize = 12; spacing = 10; lineH = 1.5; }
+                else if (el.bold)            { fontWeight = 'bold'; }
 
-                let textObj = new fabric.Textbox(el.text, {
-                    left: el.type === 'list' ? MARGIN_X + 15 : MARGIN_X,
-                    top: yPos,
-                    width: el.type === 'list' ? CONTENT_W - 15 : CONTENT_W,
-                    fontSize: fontSize,
-                    fontFamily: primaryFont,
-                    fontWeight: fontWeight,
-                    fill: fill,
-                    lineHeight: 1.6,
-                    splitByGrapheme: false
-                });
+                if (['h1','h2','h3','h4'].includes(el.type)) yPos += spacing * 0.5;
+                const elH = estimateTextboxHeight(el.text, fontSize, CONTENT_W - leftOff, lineH);
+                if (yPos + elH > MAX_Y) flushPage();
 
-                let elHeight = textObj.height || getTextHeight(el.text, fontSize, fontWeight, CONTENT_W);
+                pageObjs.push({ fabricType: 'textbox', text: el.text, left: MARGIN_X + leftOff, top: yPos, width: CONTENT_W - leftOff, fontSize, fontFamily: primaryFont, fontWeight, fill, lineHeight: lineH, textAlign });
+                yPos += elH + spacing;
 
-                if (yPos + elHeight > MAX_Y) {
-                    flushPage();
-                    textObj.set('top', yPos);
+                if (el.type === 'h2' && yPos + 6 <= MAX_Y) {
+                    pageObjs.push({ fabricType: 'rect', left: MARGIN_X, top: yPos - spacing + 2, width: 50, height: 3, fill: accentFill, rx: 2, ry: 2 });
+                    yPos += 4;
                 }
-
-                textObj.setControlsVisibility({ mt: false, mb: false });
-                currentPageObjs.push(textObj);
-                yPos += elHeight + spacing;
             });
 
-            flushPage();
+            if (pageObjs.length > 0) flushPage();
         });
 
         // Set into canvasPages
@@ -5693,7 +5648,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (editorView) editorView.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 200);
 
-        alert(`🎉 SELESAI!\n\nNaskah berhasil diterapkan ke Template '${template.name}'.\nTotal ${canvasPages.length} halaman (1 Cover + ${canvasPages.length - 1} Halaman Isi) telah dibuat rapi.\n\nAnda dapat mengedit langsung di Canvas atau klik tombol 'Export PDF' di panel editor!`);
+        alert(`\uD83C\uDF89 SELESAI!\n\nNaskah berhasil diterapkan ke Template '${template.name}'.\nTotal ${canvasPages.length} halaman telah dibuat:\n\u2022 1 Cover Ebook\n\u2022 ${parsed.chapters.length} Cover Bab\n\u2022 Halaman isi per bab\n\nAnda dapat mengedit langsung di Canvas!`);
     };
 
 });
