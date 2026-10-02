@@ -565,53 +565,47 @@ document.addEventListener('DOMContentLoaded', () => {
                         try { parsedChapters = JSON.parse(parsedChapters); } catch(e) { parsedChapters = {}; }
                     }
 
-                    // Auto-heal single-chapter projects that contain multiple sections/chapters in text
+                    // Auto-heal: HANYA aktif jika outline tersimpan <= 1 bab
+                    // HANYA memecah berdasarkan kata kunci bab EKSPLISIT (BAB, BAGIAN, CHAPTER, dll)
+                    // Tidak memecah sub-heading umum (h3/h4 di dalam bab)
                     if (parsedOutline.length <= 1 && parsedChapters) {
                         const firstKey = Object.keys(parsedChapters)[0];
                         const rawContent = firstKey ? parsedChapters[firstKey] : '';
-                        if (rawContent && rawContent.length > 50) {
-                            // Strategy 1: Try to split by HTML headings if content is HTML
+                        const CHAP_KW = /\b(BAB|BAGIAN|CHAPTER|MODUL|PART|LANGKAH|STEP|KATA\s+PENGANTAR|PRAKATA|PENDAHULUAN|PROLOG|PENUTUP|KESIMPULAN|EPILOG|BONUS|LAMPIRAN)\b/i;
+
+                        if (rawContent && rawContent.length > 200) {
+                            // Strategy 1: Cari <h2>/<h1> yang mengandung kata kunci bab saja
                             const isHtml = /<h[1-3][^>]*>/i.test(rawContent);
                             if (isHtml) {
-                                // Helper: extract chapters by a given heading regex pattern
-                                function extractHtmlChapters(html, pattern) {
-                                    const result = [];
-                                    let m;
-                                    pattern.lastIndex = 0;
-                                    while ((m = pattern.exec(html)) !== null) {
-                                        const headingText = m[1].replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim();
-                                        if (headingText.length >= 2) {
-                                            result.push({ title: headingText, index: m.index });
+                                const candidates = [];
+                                let hm;
+                                const h12Regex = /<h[1-2][^>]*>(.*?)<\/h[1-2]>/gi;
+                                while ((hm = h12Regex.exec(rawContent)) !== null) {
+                                    const txt = hm[1].replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim();
+                                    if (txt.length >= 2 && CHAP_KW.test(txt)) {
+                                        candidates.push({ title: txt, index: hm.index });
+                                    }
+                                }
+                                // Jika tidak cukup di h1/h2, cari h3 dengan keyword bab
+                                if (candidates.length < 2) {
+                                    const h3Regex = /<h3[^>]*>(.*?)<\/h3>/gi;
+                                    while ((hm = h3Regex.exec(rawContent)) !== null) {
+                                        const txt = hm[1].replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim();
+                                        if (txt.length >= 2 && CHAP_KW.test(txt)) {
+                                            candidates.push({ title: txt, index: hm.index });
                                         }
                                     }
-                                    return result;
+                                    candidates.sort((a, b) => a.index - b.index);
                                 }
 
-                                // Try <h2> first (main chapter headings)
-                                let htmlChapters = extractHtmlChapters(rawContent, /<h2[^>]*>(.*?)<\/h2>/gi);
-
-                                // If not enough h2, try h3 with chapter keywords only
-                                if (htmlChapters.length < 2) {
-                                    const chapKeywords = /BAB|BAGIAN|CHAPTER|MODUL|PART|LANGKAH|STEP|KATA PENGANTAR|PRAKATA|PENDAHULUAN|PROLOG|PENUTUP|KESIMPULAN|EPILOG|BONUS|LAMPIRAN/i;
-                                    const h3Chapters = extractHtmlChapters(rawContent, /<h3[^>]*>(.*?)<\/h3>/gi)
-                                        .filter(c => chapKeywords.test(c.title));
-                                    if (h3Chapters.length >= 2) htmlChapters = h3Chapters;
-                                }
-
-                                // Last resort: any h2 OR h3 heading
-                                if (htmlChapters.length < 2) {
-                                    htmlChapters = extractHtmlChapters(rawContent, /<h[2-3][^>]*>(.*?)<\/h[2-3]>/gi);
-                                }
-
-                                if (htmlChapters.length > 1) {
+                                if (candidates.length >= 2) {
                                     const newOutline = [];
                                     const newChaptersContent = {};
-                                    for (let ci = 0; ci < htmlChapters.length; ci++) {
-                                        const chapTitle = htmlChapters[ci].title;
-                                        const startIdx = htmlChapters[ci].index;
-                                        const endIdx = ci < htmlChapters.length - 1 ? htmlChapters[ci + 1].index : rawContent.length;
+                                    for (let ci = 0; ci < candidates.length; ci++) {
+                                        const chapTitle = candidates[ci].title;
+                                        const startIdx = candidates[ci].index;
+                                        const endIdx = ci < candidates.length - 1 ? candidates[ci + 1].index : rawContent.length;
                                         let chapBody = rawContent.substring(startIdx, endIdx).trim();
-                                        // Remove the heading tag itself from body
                                         chapBody = chapBody.replace(/^<h[1-3][^>]*>.*?<\/h[1-3]>/i, '').trim();
                                         let uniqueTitle = chapTitle;
                                         let counter = 2;
@@ -624,25 +618,22 @@ document.addEventListener('DOMContentLoaded', () => {
                                     window._isDirty = true;
                                 }
                             }
-                            // Strategy 2: Fallback — strip HTML and use parseChatGPTMarkdown
+
+                            // Strategy 2: Fallback — strip HTML, gunakan parseChatGPTMarkdown
+                            // Hanya terima jika semua chapter mengandung keyword bab eksplisit
                             if (parsedOutline.length <= 1 && typeof parseChatGPTMarkdown === 'function') {
-                                const textToParse = rawContent.replace(/<[^>]+>/g, '\n').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\n{3,}/g, '\n\n');
+                                const textToParse = rawContent
+                                    .replace(/<[^>]+>/g, '\n')
+                                    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+                                    .replace(/\n{3,}/g, '\n\n');
                                 const reParsed = parseChatGPTMarkdown(textToParse, ebook.title, ebook.niche);
-                                if (reParsed && reParsed.chapters && reParsed.chapters.length > 1) {
-                                    // Re-build content from original HTML by splitting around detected chapter names
-                                    const newOutline = reParsed.chapters;
+                                if (reParsed && reParsed.chapters && reParsed.chapters.length > 1
+                                    && reParsed.chapters.every(c => CHAP_KW.test(c))) {
                                     const newChaptersContent = {};
-                                    // Try to split original HTML content by each chapter title
-                                    let remaining = rawContent;
-                                    newOutline.forEach((chapTitle, idx) => {
-                                        const escapedTitle = chapTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                                        const nextTitle = newOutline[idx + 1];
-                                        const nextEscaped = nextTitle ? nextTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : null;
-                                        const splitReg = nextEscaped ? new RegExp(`([\\s\\S]*?)(?=.*?${nextEscaped}|$)`) : null;
-                                        // Simple approach: use reParsed.chaptersContent (already converted HTML)
+                                    reParsed.chapters.forEach(chapTitle => {
                                         newChaptersContent[chapTitle] = reParsed.chaptersContent[chapTitle] || '';
                                     });
-                                    parsedOutline = newOutline;
+                                    parsedOutline = reParsed.chapters;
                                     parsedChapters = newChaptersContent;
                                     window._isDirty = true;
                                 }
