@@ -565,6 +565,21 @@ document.addEventListener('DOMContentLoaded', () => {
                         try { parsedChapters = JSON.parse(parsedChapters); } catch(e) { parsedChapters = {}; }
                     }
 
+                    // Auto-heal single-chapter projects that contain multiple sections/chapters in text
+                    if (parsedOutline.length <= 1 && parsedChapters) {
+                        const firstKey = Object.keys(parsedChapters)[0];
+                        const rawContent = firstKey ? parsedChapters[firstKey] : '';
+                        if (rawContent && rawContent.length > 50) {
+                            const textToParse = rawContent.replace(/<[^>]+>/g, '\n').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+                            const reParsed = typeof parseChatGPTMarkdown === 'function' ? parseChatGPTMarkdown(textToParse, ebook.title, ebook.niche) : null;
+                            if (reParsed && reParsed.chapters && reParsed.chapters.length > 1) {
+                                parsedOutline = reParsed.chapters;
+                                parsedChapters = reParsed.chaptersContent;
+                                window._isDirty = true;
+                            }
+                        }
+                    }
+
                     window.currentProjectId = ebook.id;
                     window.currentOutlineData = { title: ebook.title || 'Untitled Ebook', subtitle: ebook.niche || '', outline: parsedOutline };
                     window.currentNiche = ebook.niche;
@@ -1766,6 +1781,43 @@ document.addEventListener('DOMContentLoaded', () => {
                     alert('Bab dengan nama tersebut sudah ada.');
                 }
             }
+        });
+    }
+
+    // --- AUTO-SPLIT CHAPTERS FROM EDITOR CONTENT ---
+    const btnAutoSplitChapters = document.getElementById('btnAutoSplitChapters');
+    if (btnAutoSplitChapters) {
+        btnAutoSplitChapters.addEventListener('click', () => {
+            let currentText = '';
+            if (quill) {
+                currentText = quill.getText();
+            }
+            if (!currentText || currentText.trim().length < 30) {
+                if (activeChapterElement && activeChapterElement.dataset && activeChapterElement.dataset.chapterTitle) {
+                    currentText = window.chaptersContent[activeChapterElement.dataset.chapterTitle] || '';
+                }
+            }
+            if (!currentText || currentText.trim().length < 30) {
+                return alert('⚠️ Editor masih kosong. Silakan tempel atau masukkan naskah terlebih dahulu.');
+            }
+
+            const textToParse = currentText.replace(/<[^>]+>/g, '\n').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+            const parsed = parseChatGPTMarkdown(textToParse, window.currentOutlineData?.title, window.currentOutlineData?.subtitle);
+
+            if (!parsed || !parsed.chapters || parsed.chapters.length <= 1) {
+                return alert('⚠️ Tidak ditemukan penanda bab (seperti [BAGIAN 1], [BAB 1], ### Bab 1, dll) di dalam naskah ini.');
+            }
+
+            if (!confirm(`Ditemukan ${parsed.chapters.length} Bab dalam naskah:\n\n${parsed.chapters.map((c, i) => `${i + 1}. ${c}`).join('\n')}\n\nPecah naskah menjadi ${parsed.chapters.length} bab terpisah sekarang?`)) return;
+
+            window.currentOutlineData.outline = parsed.chapters;
+            window.chaptersContent = parsed.chaptersContent;
+            window._isDirty = true;
+
+            renderWriterOutlineList();
+            updateWriterSidebarStatus();
+
+            alert(`🎉 Berhasil! Naskah telah dipecah menjadi ${parsed.chapters.length} bab terpisah di daftar isi.`);
         });
     }
 
