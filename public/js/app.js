@@ -1592,41 +1592,98 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Populate Sidebar
-        writerOutlineList.innerHTML = '';
-        window.currentOutlineData.outline.forEach((chapter, index) => {
-            const li = document.createElement('li');
-            li.innerText = chapter;
-            if (index === 0) {
-                li.classList.add('active');
-                activeChapterElement = li;
-                currentChapterTitle.innerText = chapter;
-                if(window.chaptersContent && window.chaptersContent[chapter]) {
-                    quill.clipboard.dangerouslyPasteHTML(window.chaptersContent[chapter]);
-                } else {
-                    quill.setText('');
-                }
-            }
-            li.addEventListener('click', () => {
-                // Save current quill content before switching
-                if(activeChapterElement) {
-                    window.chaptersContent[activeChapterElement.innerText] = quill.root.innerHTML;
-                    activeChapterElement.classList.remove('active');
-                }
-                
-                li.classList.add('active');
-                activeChapterElement = li;
-                currentChapterTitle.innerText = chapter;
-                
-                // Load saved content if exists
-                if(window.chaptersContent[chapter]) {
-                    quill.clipboard.dangerouslyPasteHTML(window.chaptersContent[chapter]);
-                } else {
-                    quill.setText('');
+        let activeChapterTitle = null;
+
+        function updateWriterSidebarStatus() {
+            if (!writerOutlineList) return;
+            const lis = writerOutlineList.querySelectorAll('li');
+            lis.forEach(li => {
+                const chTitle = li.dataset.chapterTitle;
+                const statusSpan = li.querySelector('.chap-status-icon');
+                if (statusSpan && chTitle) {
+                    const hasContent = window.chaptersContent && window.chaptersContent[chTitle] && window.chaptersContent[chTitle].trim() !== '';
+                    statusSpan.innerHTML = hasContent 
+                        ? '<i class="ph ph-check-circle" style="color: #10B981; font-size: 16px;" title="Bab sudah terisi"></i>' 
+                        : '<i class="ph ph-circle" style="color: #64748B; font-size: 16px;" title="Bab masih kosong"></i>';
                 }
             });
-            writerOutlineList.appendChild(li);
-        });
+
+            // Show editor buttons if at least 1 chapter has content
+            const hasExistingContent = window.chaptersContent && Object.keys(window.chaptersContent).some(k => window.chaptersContent[k] && window.chaptersContent[k].trim() !== '');
+            if (hasExistingContent) {
+                if (btnProceedToEditor) btnProceedToEditor.classList.remove('hidden');
+                const btnCopy = document.getElementById('btnCopyAllToCanvas');
+                if (btnCopy) btnCopy.classList.remove('hidden');
+            }
+        }
+
+        function renderWriterOutlineList() {
+            if (!writerOutlineList || !window.currentOutlineData || !Array.isArray(window.currentOutlineData.outline)) return;
+            
+            writerOutlineList.innerHTML = '';
+            window.currentOutlineData.outline.forEach((chapter, index) => {
+                const li = document.createElement('li');
+                li.dataset.chapterTitle = chapter;
+                
+                const hasContent = window.chaptersContent && window.chaptersContent[chapter] && window.chaptersContent[chapter].trim() !== '';
+                const statusIcon = hasContent 
+                    ? '<i class="ph ph-check-circle" style="color: #10B981; font-size: 16px;" title="Bab sudah terisi"></i>' 
+                    : '<i class="ph ph-circle" style="color: #64748B; font-size: 16px;" title="Bab masih kosong"></i>';
+                
+                li.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;">
+                        <span class="chap-title-text" style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(chapter)}</span>
+                        <span class="chap-status-icon">${statusIcon}</span>
+                    </div>
+                `;
+
+                if (activeChapterTitle === chapter || (!activeChapterTitle && index === 0)) {
+                    li.classList.add('active');
+                    activeChapterElement = li;
+                    activeChapterTitle = chapter;
+                    if (currentChapterTitle) currentChapterTitle.innerText = chapter;
+                    if (quill) {
+                        if (hasContent) {
+                            quill.clipboard.dangerouslyPasteHTML(window.chaptersContent[chapter]);
+                        } else {
+                            quill.setText('');
+                        }
+                    }
+                }
+
+                li.addEventListener('click', () => {
+                    if (window._isBatchGeneratingChapters) return;
+
+                    // Save current quill content before switching
+                    if (activeChapterTitle && quill) {
+                        window.chaptersContent[activeChapterTitle] = quill.root.innerHTML;
+                    }
+                    
+                    document.querySelectorAll('#writerOutlineList li').forEach(el => el.classList.remove('active'));
+                    li.classList.add('active');
+                    activeChapterElement = li;
+                    activeChapterTitle = chapter;
+                    if (currentChapterTitle) currentChapterTitle.innerText = chapter;
+                    
+                    // Load saved content if exists
+                    const content = window.chaptersContent && window.chaptersContent[chapter];
+                    if (content && content.trim() !== '') {
+                        quill.clipboard.dangerouslyPasteHTML(content);
+                    } else {
+                        quill.setText('');
+                    }
+
+                    updateWriterSidebarStatus();
+                });
+
+                writerOutlineList.appendChild(li);
+            });
+
+            updateWriterSidebarStatus();
+        }
+
+        // Render outline in Chapter Writer sidebar
+        renderWriterOutlineList();
 
         // Show editor buttons if project already has chapter content
         const hasExistingContent = window.chaptersContent && Object.keys(window.chaptersContent).some(k => window.chaptersContent[k] && window.chaptersContent[k].trim() !== '');
@@ -1645,7 +1702,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnBackToOutline.addEventListener('click', () => {
         // Save current quill content before leaving
-        if (activeChapterElement && quill) {
+        if (activeChapterElement && quill && activeChapterElement.dataset && activeChapterElement.dataset.chapterTitle) {
+            window.chaptersContent[activeChapterElement.dataset.chapterTitle] = quill.root.innerHTML;
+        } else if (activeChapterElement && quill) {
             window.chaptersContent[activeChapterElement.innerText] = quill.root.innerHTML;
         }
         // Hide both chapter writer and editor views
@@ -1673,14 +1732,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     window._isDirty = true;
                     
                     const li = document.createElement('li');
-                    li.innerText = newChapter;
+                    li.dataset.chapterTitle = newChapter;
+                    li.innerHTML = `
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;">
+                            <span class="chap-title-text" style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(newChapter)}</span>
+                            <span class="chap-status-icon"><i class="ph ph-circle" style="color: #64748B; font-size: 16px;"></i></span>
+                        </div>
+                    `;
                     
                     li.addEventListener('click', () => {
-                        if(activeChapterElement) {
-                            window.chaptersContent[activeChapterElement.innerText] = quill.root.innerHTML;
-                            activeChapterElement.classList.remove('active');
+                        if (window._isBatchGeneratingChapters) return;
+                        if(activeChapterElement && activeChapterElement.dataset && activeChapterElement.dataset.chapterTitle) {
+                            window.chaptersContent[activeChapterElement.dataset.chapterTitle] = quill.root.innerHTML;
                         }
                         
+                        document.querySelectorAll('#writerOutlineList li').forEach(el => el.classList.remove('active'));
                         li.classList.add('active');
                         activeChapterElement = li;
                         currentChapterTitle.innerText = newChapter;
@@ -1703,9 +1769,173 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- BATCH AUTO-GENERATE ALL CHAPTERS (AI) ---
+    const btnGenerateAllChapters = document.getElementById('btnGenerateAllChapters');
+    const btnCancelAllChapters = document.getElementById('btnCancelAllChapters');
+    const allChaptersProgressBox = document.getElementById('allChaptersProgressBox');
+    const allChaptersStatusText = document.getElementById('allChaptersStatusText');
+    const allChaptersProgressBar = document.getElementById('allChaptersProgressBar');
+
+    if (btnCancelAllChapters) {
+        btnCancelAllChapters.addEventListener('click', () => {
+            window._isBatchGeneratingChapters = false;
+            if (allChaptersStatusText) allChaptersStatusText.innerText = '⏸️ Menulis otomatis dibatalkan.';
+            if (btnGenerateAllChapters) {
+                btnGenerateAllChapters.disabled = false;
+                btnGenerateAllChapters.innerHTML = '<i class="ph ph-lightning"></i> ⚡ Tulis SEMUA Bab Otomatis (AI)';
+            }
+            setTimeout(() => {
+                if (allChaptersProgressBox) allChaptersProgressBox.classList.add('hidden');
+            }, 1500);
+        });
+    }
+
+    if (btnGenerateAllChapters) {
+        btnGenerateAllChapters.addEventListener('click', async () => {
+            if (!window.currentOutlineData || !Array.isArray(window.currentOutlineData.outline) || window.currentOutlineData.outline.length === 0) {
+                return alert('Kerangka / Daftar Isi belum ada.');
+            }
+
+            const apiKey = window.getUserApiKey ? window.getUserApiKey() : (window.userApiKey || localStorage.getItem('ebookMagicApiKey') || '');
+            if (!apiKey) {
+                return alert('Silakan masukkan API Key AI Anda terlebih dahulu di menu kiri bawah.');
+            }
+
+            const outline = window.currentOutlineData.outline;
+            if (!confirm(`AI akan menulis SEMUA ${outline.length} bab secara berurutan dan otomatis.\n\nEstimasi waktu: 30-60 detik.\nLanjutkan?`)) return;
+
+            window._isBatchGeneratingChapters = true;
+            btnGenerateAllChapters.disabled = true;
+            btnGenerateAllChapters.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Sedang Menulis Semua Bab...';
+            if (btnGenerateChapterContent) btnGenerateChapterContent.disabled = true;
+
+            if (allChaptersProgressBox) allChaptersProgressBox.classList.remove('hidden');
+
+            const toneSelector = document.getElementById('chapterToneSelector');
+            const selectedTone = toneSelector ? toneSelector.value : 'standar';
+            const contextInput = document.getElementById('chapterContextInput');
+            const customContext = contextInput ? contextInput.value : '';
+
+            let successCount = 0;
+
+            for (let i = 0; i < outline.length; i++) {
+                if (!window._isBatchGeneratingChapters) break;
+
+                const chapterTitle = outline[i];
+                if (currentChapterTitle) currentChapterTitle.innerText = chapterTitle;
+
+                const percent = Math.round(((i) / outline.length) * 100);
+                if (allChaptersProgressBar) allChaptersProgressBar.style.width = `${percent}%`;
+                if (allChaptersStatusText) {
+                    allChaptersStatusText.innerText = `Sedang menulis Bab ${i + 1} dari ${outline.length}: "${chapterTitle}" (${percent}%)...`;
+                }
+
+                // Highlight active item in sidebar
+                document.querySelectorAll('#writerOutlineList li').forEach(el => {
+                    if (el.dataset.chapterTitle === chapterTitle) {
+                        el.classList.add('active');
+                        activeChapterElement = el;
+                        const iconSpan = el.querySelector('.chap-status-icon');
+                        if (iconSpan) iconSpan.innerHTML = '<i class="ph ph-spinner ph-spin" style="color: #F59E0B; font-size: 16px;"></i>';
+                    } else {
+                        el.classList.remove('active');
+                    }
+                });
+
+                if (quill) {
+                    quill.setText(`AI sedang menyusun konten Bab ${i + 1} ("${chapterTitle}")...\nMohon tunggu beberapa saat.`);
+                }
+
+                try {
+                    const response = await fetch('/api/generate-chapter', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            chapterTitle, 
+                            niche: window.currentNiche, 
+                            audience: window.currentAudience,
+                            type: window.currentEbookType || 'praktis',
+                            tone: selectedTone,
+                            customContext: customContext,
+                            apiKey: apiKey,
+                            authorProfile: window.currentAuthorProfile,
+                            cta: window.currentCTA
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.error) throw new Error(data.error);
+
+                    window.chaptersContent[chapterTitle] = data.content;
+                    window._isDirty = true;
+                    successCount++;
+
+                    if (quill) {
+                        quill.clipboard.dangerouslyPasteHTML(data.content);
+                    }
+
+                    // Update this item's icon to checkmark
+                    const curLi = document.querySelector(`#writerOutlineList li[data-chapter-title="${CSS.escape(chapterTitle)}"]`);
+                    if (curLi) {
+                        const iconSpan = curLi.querySelector('.chap-status-icon');
+                        if (iconSpan) iconSpan.innerHTML = '<i class="ph ph-check-circle" style="color: #10B981; font-size: 16px;"></i>';
+                    }
+                } catch (err) {
+                    console.error(`Error generating chapter "${chapterTitle}":`, err);
+                    if (quill) {
+                        quill.setText(`Gagal menulis bab: ${err.message}. Anda dapat mengulanginya dengan klik 'Tulis Konten (AI)'.`);
+                    }
+                }
+            }
+
+            window._isBatchGeneratingChapters = false;
+            if (allChaptersProgressBar) allChaptersProgressBar.style.width = '100%';
+            if (allChaptersStatusText) {
+                allChaptersStatusText.innerText = `✅ Selesai! ${successCount} dari ${outline.length} bab berhasil ditulis lengkap oleh AI.`;
+            }
+
+            btnGenerateAllChapters.disabled = false;
+            btnGenerateAllChapters.innerHTML = '<i class="ph ph-lightning"></i> ⚡ Tulis SEMUA Bab Otomatis (AI)';
+            if (btnGenerateChapterContent) btnGenerateChapterContent.disabled = false;
+
+            // Show editor buttons
+            if (btnProceedToEditor) btnProceedToEditor.classList.remove('hidden');
+            const btnCopy = document.getElementById('btnCopyAllToCanvas');
+            if (btnCopy) btnCopy.classList.remove('hidden');
+
+            // Set active chapter back to Chapter 1
+            if (outline.length > 0) {
+                const firstChap = outline[0];
+                if (currentChapterTitle) currentChapterTitle.innerText = firstChap;
+                if (quill && window.chaptersContent[firstChap]) {
+                    quill.clipboard.dangerouslyPasteHTML(window.chaptersContent[firstChap]);
+                }
+                document.querySelectorAll('#writerOutlineList li').forEach((el, idx) => {
+                    if (idx === 0) el.classList.add('active');
+                    else el.classList.remove('active');
+                    const ch = el.dataset.chapterTitle;
+                    const hasC = window.chaptersContent && window.chaptersContent[ch] && window.chaptersContent[ch].trim() !== '';
+                    const iconSpan = el.querySelector('.chap-status-icon');
+                    if (iconSpan) {
+                        iconSpan.innerHTML = hasC 
+                            ? '<i class="ph ph-check-circle" style="color: #10B981; font-size: 16px;"></i>' 
+                            : '<i class="ph ph-circle" style="color: #64748B; font-size: 16px;"></i>';
+                    }
+                });
+            }
+
+            setTimeout(() => {
+                if (allChaptersProgressBox) allChaptersProgressBox.classList.add('hidden');
+            }, 4000);
+
+            alert(`🎉 SELURUH BAB SELESAI DITULIS!\n\nTotal ${successCount} bab telah disusun oleh AI.\nKlik tombol "Salin Semua Bab ke Canvas" atau "Lanjut ke Editor Desain" untuk mengekspor ke PDF!`);
+        });
+    }
+
+    // --- SINGLE CHAPTER GENERATION (AI) ---
     btnGenerateChapterContent.addEventListener('click', async () => {
         if(!activeChapterElement) return;
-        const chapterTitle = activeChapterElement.innerText;
+        const chapterTitle = activeChapterElement.dataset?.chapterTitle || activeChapterElement.innerText.trim();
         
         btnGenerateChapterContent.disabled = true;
         btnGenerateChapterContent.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Menulis...';
@@ -1741,6 +1971,10 @@ document.addEventListener('DOMContentLoaded', () => {
             window.chaptersContent[chapterTitle] = data.content; // Save to memory
             window._isDirty = true;
             
+            // Update sidebar status icon to green checkmark
+            const iconSpan = activeChapterElement.querySelector('.chap-status-icon');
+            if (iconSpan) iconSpan.innerHTML = '<i class="ph ph-check-circle" style="color: #10B981; font-size: 16px;"></i>';
+
             // Show the editor buttons once content is generated
             if (btnProceedToEditor) btnProceedToEditor.classList.remove('hidden');
             const btnCopy = document.getElementById('btnCopyAllToCanvas');
@@ -4648,35 +4882,77 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!rawText || !rawText.trim()) return null;
 
         let text = rawText.trim();
+        // Remove markdown code fences if present (e.g. ```markdown ... ```)
+        text = text.replace(/^```(?:markdown|md)?\s*/i, '').replace(/\s*```$/i, '').trim();
+
         let title = userTitle ? userTitle.trim() : '';
         let subtitle = userSubtitle ? userSubtitle.trim() : '';
 
-        // Extract # Title if present
+        // Extract # Title if present at beginning
         const h1Match = text.match(/^#\s+(.+)$/m);
         if (h1Match && !title) {
             title = h1Match[1].replace(/[\*\_\[\]]/g, '').trim();
         }
 
-        // Extract ## Subtitle if present
+        // Extract ## Subtitle if present at beginning
         const h2Match = text.match(/^##\s+(.+)$/m);
-        if (h2Match && !subtitle) {
+        if (h2Match && !subtitle && (!h1Match || h2Match.index > h1Match.index)) {
             subtitle = h2Match[1].replace(/[\*\_\[\]]/g, '').trim();
         }
 
         if (!title) title = 'Ebook Hasil Racikan Super-Prompt';
         if (!subtitle) subtitle = 'Panduan Komprehensif Berdasarkan Blueprint AI';
 
-        // Regex to detect Chapter headers
-        // Matches: ### Kata Pengantar, ### Bab 1: ..., ### Penutup, **Bab 1: ...**, Bab 1: ..., etc.
-        const chapterHeaderRegex = /(?:^|\n)(?:#{1,4}\s+|\*{1,3})?(Kata\s+Pengantar|Prakata|Pendahuluan|Bab\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Bagian\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Chapter\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Modul\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Penutup[^\n\*\#]*|Kesimpulan[^\n\*\#]*)(?:\*{1,3})?/gi;
+        function findMatches(regex) {
+            const list = [];
+            let m;
+            while ((m = regex.exec(text)) !== null) {
+                let h = m[1].replace(/^[#\*\_\-\s\:\.\[\(\]\)]+|[#\*\_\-\s\:\.\[\(\]\)]+$/g, '').trim();
+                h = h.replace(/[\]\)]+$/, '').replace(/^[\[\(]+/, '').trim();
+                if (h.length >= 2 && h.toLowerCase() !== title.toLowerCase() && h.toLowerCase() !== subtitle.toLowerCase()) {
+                    list.push({ header: h, index: m.index, matchLength: m[0].length });
+                }
+            }
+            return list;
+        }
 
-        const matches = [];
-        let match;
-        while ((match = chapterHeaderRegex.exec(text)) !== null) {
-            matches.push({
-                header: match[1].trim(),
-                index: match.index
-            });
+        // Tier 1: Explicit chapter & section keywords including brackets [BAGIAN 1 - ...], [BAB 1: ...], etc.
+        const regex1 = /(?:^|\n)(?:#{1,3}\s+|\*{1,3}|\[|\(\s*)?((?:BAGIAN|BAB|CHAPTER|MODUL|PART|LANGKAH|STEP|KATA\s+PENGANTAR|PRAKATA|PENDAHULUAN|PROLOG|PENUTUP|KESIMPULAN|EPILOG|PROFIL\s+PENULIS|TENTANG\s+PENULIS|CALL\s+TO\s+ACTION|BONUS|LAMPIRAN)\b[\s\dIVXLCDMSatuDuaTigaEmpatLimaEnamTujuhDelapanSembilanSepuluh\:\.\-–—_\|\]\)\*]*[^\n\*\#\r]*)(?:\*{1,3}|\]|\))?(?:\r?\n|$)/gi;
+        let matches = findMatches(regex1);
+
+        // Tier 2: Numbered headings like ### 1. ... or [1. ...] or **1. ...**
+        if (matches.length < 2) {
+            const regexNumbered = /(?:^|\n)(?:#{1,3}\s+|\*{1,3}|\[)?(\d+[\.\:\-–—]\s+[^\n\*\#\r]{3,80})(?:\*{1,3}|\])?(?:\r?\n|$)/gi;
+            const numMatches = findMatches(regexNumbered);
+            if (numMatches.length >= 2) matches = numMatches;
+        }
+
+        // Tier 3: All ### Headings if Tier 1 and 2 found < 2 chapters
+        if (matches.length < 2) {
+            const regexH3 = /(?:^|\n)###\s+([^\n]+)(?:\r?\n|$)/gi;
+            const h3Matches = findMatches(regexH3);
+            if (h3Matches.length >= 2) matches = h3Matches;
+        }
+
+        // Tier 4: All ## Headings (if no ### found)
+        if (matches.length < 2) {
+            const regexH2 = /(?:^|\n)##\s+([^\n]+)(?:\r?\n|$)/gi;
+            const h2Matches = findMatches(regexH2);
+            if (h2Matches.length >= 2) matches = h2Matches;
+        }
+
+        // Tier 5: Standalone bold lines as headers
+        if (matches.length < 2) {
+            const regexBold = /(?:^|\n)\*\*([^\n\*]{3,80})\*\*(?:\r?\n|$)/gi;
+            const boldMatches = findMatches(regexBold);
+            if (boldMatches.length >= 2) matches = boldMatches;
+        }
+
+        // Tier 6: Standalone Bracketed lines like [JUDUL BAB]
+        if (matches.length < 2) {
+            const regexBrackets = /(?:^|\n)\[([^\]\n]{3,80})\](?:\r?\n|$)/gi;
+            const bracketMatches = findMatches(regexBrackets);
+            if (bracketMatches.length >= 2) matches = bracketMatches;
         }
 
         const chapters = [];
@@ -4684,20 +4960,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (matches.length > 0) {
             for (let i = 0; i < matches.length; i++) {
-                let chTitle = matches[i].header.replace(/^[#\*\_\-\s]+|[#\*\_\-\s]+$/g, '').trim();
+                let chTitle = matches[i].header.replace(/^[#\*\_\-\s\[\(\]\)]+|[#\*\_\-\s\[\(\]\)]+$/g, '').trim();
+                
+                // Disambiguate duplicate titles if any
+                let uniqueTitle = chTitle;
+                let counter = 2;
+                while (chapters.includes(uniqueTitle)) {
+                    uniqueTitle = `${chTitle} (${counter++})`;
+                }
+
                 const startIdx = matches[i].index;
                 const endIdx = (i < matches.length - 1) ? matches[i + 1].index : text.length;
                 let chBody = text.substring(startIdx, endIdx).trim();
 
-                // Strip the chapter title line from the beginning of body
-                chBody = chBody.replace(/^(?:#{1,4}\s+|\*{1,3})?(Kata\s+Pengantar|Prakata|Pendahuluan|Bab\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Bagian\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Chapter\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Modul\s+\d+[\s\:\.\-–—]*[^\n\*\#]*|Penutup[^\n\*\#]*|Kesimpulan[^\n\*\#]*)(?:\*{1,3})?\n*/i, '').trim();
+                // Strip the chapter heading line from the beginning of body
+                chBody = chBody.replace(/^(?:#{1,3}\s+|\*{1,3}|\[|\(\s*)?[^\n\r]+(?:\*{1,3}|\]|\))?[\r\n]*/, '').trim();
 
                 const htmlContent = convertMarkdownToCleanHtml(chBody);
-                chapters.push(chTitle);
-                chaptersContent[chTitle] = htmlContent;
+                chapters.push(uniqueTitle);
+                chaptersContent[uniqueTitle] = htmlContent;
             }
         } else {
-            // If no chapter headers detected, create default single chapter
+            // If no chapter headers detected at all, create default single chapter
             const defaultChap = 'Bab 1: Isi Utama Ebook';
             chapters.push(defaultChap);
             chaptersContent[defaultChap] = convertMarkdownToCleanHtml(text);
